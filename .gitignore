@@ -1,0 +1,43 @@
+# Ignore tempfiles
+*.sw[op]
+.*sw?
+.DS_Store
+*~
+
+.ruby-version
+.ruby-gemset
+
+# RVM
+.rvmrc
+
+# Gems
+*.gem
+vendor/cache
+.bundle
+
+# IDEs
+.idea
+.project
+.vimrc
+
+# SimpleCov
+coverage/
+
+*.iml
+target/
+node_modules/
+airpal/src/main/resources/assets/js/main.js
+dependency-reduced-pom.xml
+*.tar.gz
+
+# Gradle
+.gradle/
+gradle/
+build/
+out/
+gradlew
+gradlew.bat
+
+# IntelliJ
+*.ipr
+*.iws
