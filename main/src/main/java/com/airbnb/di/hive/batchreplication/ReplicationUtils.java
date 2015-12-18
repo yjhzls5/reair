@@ -3,6 +3,7 @@ package com.airbnb.di.hive.batchreplication;
 import com.airbnb.di.hive.batchreplication.hivecopy.HdfsPath;
 import com.google.common.base.Joiner;
 import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -11,6 +12,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Progressable;
 
 public class ReplicationUtils {
@@ -19,26 +21,7 @@ public class ReplicationUtils {
     public ReplicationUtils() {
     }
 
-    private static long copyFile(FSDataInputStream inputStream, FSDataOutputStream outputStream, Progressable progressable)
-            throws IOException {
-        byte[] buffer = new byte[4194304];
-        int it = 0;
-        long copiedSize = 0L;
-
-        int bytesRead;
-        while((bytesRead = inputStream.read(buffer)) > 0) {
-            ++it;
-            outputStream.write(buffer, 0, bytesRead);
-            copiedSize += (long)bytesRead;
-            if(it % 1000 == 0) {
-                progressable.progress();
-            }
-        }
-
-        return copiedSize;
-    }
-
-    public static String doCopyFileAction(ExtendedFileStatus srcFileStatus, FileSystem srcFs, String dstFolderPath,
+    public static String doCopyFileAction(Configuration conf, ExtendedFileStatus srcFileStatus, FileSystem srcFs, String dstFolderPath,
                                           FileSystem dstFs, Progressable progressable, boolean forceUpdate, String identifier) {
         int retry = 3;
         String lastError = null;
@@ -76,8 +59,9 @@ public class ReplicationUtils {
                     dstFs.delete(tmpDstPath, false);
                 }
 
-                FSDataOutputStream outputStream = dstFs.create(tmpDstPath);
-                copyFile(inputStream, outputStream, progressable);
+                FSDataOutputStream outputStream = dstFs.create(tmpDstPath,
+                        progressable);
+                IOUtils.copyBytes(inputStream, outputStream, conf);
                 inputStream.close();
                 outputStream.close();
                 if(forceUpdate && dstFs.exists(dstPath)) {

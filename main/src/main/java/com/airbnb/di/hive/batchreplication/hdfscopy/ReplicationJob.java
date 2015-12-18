@@ -1,6 +1,7 @@
 package com.airbnb.di.hive.batchreplication.hdfscopy;
 
 import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
+import com.airbnb.di.hive.batchreplication.ReplicationUtils;
 import com.google.common.base.*;
 import com.google.common.collect.*;
 import com.google.common.hash.*;
@@ -10,6 +11,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.*;
+import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.GzipCodec;
@@ -274,86 +276,6 @@ public class ReplicationJob extends Configured implements Tool {
                     new Path("hdfs://" + dstHost + "/").getFileSystem(context.getConfiguration()));
         }
 
-        private void copyFile(FSDataInputStream inputStream, FSDataOutputStream outputStream, Context context) throws IOException {
-            byte[] buffer = new byte[4*1024*1024];
-            int bytesRead;
-            int it = 0;
-            while ((bytesRead = inputStream.read(buffer)) > 0) {
-                it++;
-                outputStream.write(buffer, 0, bytesRead);
-                copiedSize += bytesRead;
-                if (it % 1000 == 0) {
-                    context.progress();
-                }
-            }
-        }
-
-        private boolean doCopyFileAction(ExtendedFileStatus srcFileStatus, String dstFolderPath, Context context, boolean update) {
-            try {
-                // check src existance
-                FileSystem srcFs = fileSystemHashMap.get(srcFileStatus.getHostName());
-                Path srcPath = new Path(srcFileStatus.getFullPath());
-                if (!srcFs.exists(srcPath)) {
-                    //src file does not exist anymore, skip copy
-                    LOG.info("Src does not exist. " + srcFileStatus.getFullPath());
-                    return false;
-                }
-
-                FSDataInputStream inputStream = srcFs.open(srcPath);
-
-                // check dst existance
-                Path dstPath = new Path("hdfs://" + dstHost + "/" + dstFolderPath + "/" + srcFileStatus.getFileName());
-                FileSystem dstFs = fileSystemHashMap.get(dstHost);
-                if (dstFs.exists(dstPath) && !update) {
-                    //if dst file already exist and it is not update action, skip copy
-                    LOG.info("dst already exists. " + dstPath.toString());
-                    return false;
-                }
-
-                // make sure dstFolder created
-                Path dstParentPath = new Path(dstFolderPath);
-                if (!dstFs.exists(dstParentPath)) {
-                    if(!dstFs.mkdirs(dstParentPath)) {
-                        LOG.info("Could not create directory: " + dstFolderPath);
-                        return false;
-                    }
-                }
-
-                // copy to a tmp file
-                Path tmpDstPath = new Path("hdfs://" + dstHost + "/" + dstFolderPath + "/__tmp__copy__file." + System.currentTimeMillis());
-                if (dstFs.exists(tmpDstPath)) {
-                    dstFs.delete(tmpDstPath, false);
-                }
-
-                FSDataOutputStream outputStream = dstFs.create(tmpDstPath);
-                copyFile(inputStream, outputStream, context);
-                inputStream.close();
-                outputStream.close();
-
-                // for update if dstPath exist, we need to remove it.
-                if (update && dstFs.exists(dstPath)) {
-                    dstFs.delete(dstPath, false);
-                }
-
-                // if dst exist, rename will fail so we will skip.
-                dstFs.rename(tmpDstPath, dstPath);
-
-                // set proper file properties, owner, group, last modified time
-                FileStatus srcStatus = srcFs.getFileStatus(srcPath);
-                //dstFs.setOwner(dstPath, srcStatus.getOwner(), srcStatus.getGroup());
-                dstFs.setTimes(dstPath, srcStatus.getModificationTime(), srcStatus.getAccessTime());
-
-                LOG.info(dstPath.toString() + " file copied");
-                context.progress();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                LOG.info(e.getMessage());
-                return false;
-            }
-            return true;
-        }
-
         @Override
         protected void reduce(LongWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             for(Text value : values) {
@@ -364,7 +286,17 @@ public class ReplicationJob extends Configured implements Tool {
                     ExtendedFileStatus fileStatus = new ExtendedFileStatus(fields[2], Long.valueOf(fields[3]), Long.valueOf(fields[4]));
                     Path dstFile = new Path(fields[0]);
 
-                    if (doCopyFileAction(fileStatus, dstFile.getParent().toString(), context, fields[1].equals("update"))) {
+                    String copyError = ReplicationUtils.doCopyFileAction(
+                            context.getConfiguration(),
+                            fileStatus,
+                            fileSystemHashMap.get(fileStatus.getHostName()),
+                            dstFile.getParent().toString(),
+                            fileSystemHashMap.get(dstHost),
+                            context,
+                            fields[1].equals("update"),
+                            "");
+
+                    if (copyError == null) {
                         context.write(new Text(fields[0]), generateValue("copied", fileStatus));
                     } else {
                         context.write(new Text(fields[0]), generateValue("skip copy", fileStatus));

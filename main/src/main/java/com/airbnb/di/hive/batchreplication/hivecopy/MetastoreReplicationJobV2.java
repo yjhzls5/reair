@@ -745,7 +745,7 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
                 ExtendedFileStatus fileStatus = new ExtendedFileStatus(srcFileName, size, 0L);
                 FileSystem srcFs = (new Path(srcFileName)).getFileSystem(this.conf);
                 FileSystem dstFs = (new Path(dstFolder)).getFileSystem(this.conf);
-                String result = ReplicationUtils.doCopyFileAction(fileStatus, srcFs, dstFolder, dstFs, context, false, context.getTaskAttemptID().toString());
+                String result = ReplicationUtils.doCopyFileAction(conf, fileStatus, srcFs, dstFolder, dstFs, context, false, context.getTaskAttemptID().toString());
                 if(result == null) {
                     context.write(new Text("copied"), new Text(genValue(value.toString(), " ", String.valueOf(System.currentTimeMillis()))));
                 } else {
