@@ -8,6 +8,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.util.ToolRunner;
 import org.datanucleus.util.StringUtils;
@@ -34,13 +35,19 @@ public class FsUtils {
     /**
      * @param input string to sanitize
      * @return the same string with non alphanumeric characters replaced by
-     * underscores - needed as filesystems don't support some characters well.
+     * underscores - needed as filesystems don't support all characters well.
      * E.g. : in HDFS
      */
     public static String sanitize(String input) {
         return input.replaceAll("[^\\w\\-=]", "_");
     }
 
+    public static boolean sameFs(Path p1, Path p2) {
+        return StringUtils.areStringsEqual(p1.toUri().getScheme(),
+                p2.toUri().getScheme()) &&
+                StringUtils.areStringsEqual(p1.toUri().getAuthority(),
+                        p2.toUri().getAuthority());
+    }
 
     public static long getSize(Configuration conf, Path p)
             throws IOException {
@@ -49,13 +56,12 @@ public class FsUtils {
     /**
      * @param conf
      * @param p
-     * @param skipPrefix Don't count the sizes of files or directories that
-     *                   that start with this prefix
+     * @param filter use this to filter out files and directories
      * @return the size of the given location in bytes, including the size of
      * any subdirectories.
      * @throws java.io.IOException
      */
-    public static long getSize(Configuration conf, Path p, String skipPrefix)
+    public static long getSize(Configuration conf, Path p, PathFilter filter)
             throws IOException {
         long totalSize = 0;
         /*
@@ -75,8 +81,8 @@ public class FsUtils {
         // related to block locations when using with s3n
         while (pathsToCheck.size() > 0) {
             Path pathToCheck = pathsToCheck.remove();
-            if (skipPrefix != null &&
-                    pathToCheck.getName().startsWith(skipPrefix)) {
+            if (filter != null &&
+                    !filter.accept(pathToCheck)) {
                 LOG.warn("Skipping check of directory: " +
                         pathToCheck);
                 continue;
@@ -130,8 +136,8 @@ public class FsUtils {
      * @throws IOException
      */
     public static Set<FileStatus> getFileStatusesRecursive(Configuration conf,
-                                                            Path p,
-                                                            String skipPrefix)
+                                                           Path p,
+                                                           PathFilter filter)
             throws IOException {
         FileSystem fs = FileSystem.get(p.toUri(), conf);
         Set<FileStatus> fileStatuses = new HashSet<FileStatus>();
@@ -144,8 +150,8 @@ public class FsUtils {
         // related to block locations when using with s3n
         while (pathsToCheck.size() > 0) {
             Path pathToCheck = pathsToCheck.remove();
-            if (skipPrefix != null &&
-                    pathToCheck.getName().startsWith(skipPrefix)) {
+            if (filter != null &&
+                    !filter.accept(pathToCheck)) {
                 LOG.warn("Skipping check of directory: " +
                         pathToCheck);
                 continue;
@@ -240,8 +246,7 @@ public class FsUtils {
      * @param conf
      * @param src
      * @param dest
-     * @param skipPrefix files or directories starting with this name are
-     *                   excluded when checking the dest directory
+     * @param filter filter to use when traversing through the directories
      * @return true if there are any file names on the destination directory
      * that are not in the source directory
      * @throws IOException
@@ -249,12 +254,12 @@ public class FsUtils {
     public static boolean filesExistOnDestButNotSrc(Configuration conf,
                                                      Path src,
                                                      Path dest,
-                                                     String skipPrefix)
+                                                     PathFilter filter)
             throws IOException {
         Set<FileStatus> srcFileStatuses = getFileStatusesRecursive(conf, src,
-                skipPrefix);
+                filter);
         Set<FileStatus> destFileStatuses = getFileStatusesRecursive(conf, dest,
-                skipPrefix);
+                filter);
 
         Map<String, Long> srcFileSizes = null;
         Map<String, Long> destFileSizes = null;
@@ -286,7 +291,7 @@ public class FsUtils {
      * @param conf
      * @param src
      * @param dest
-     * @param skipPrefix files or directories starting with this name are not
+     * @param filter files or directories starting with this name are not
      *                   checked
      * @return true if the files in the source and the destination are the
      * 'same'. 'same' is defined as having the same set of files with matching
@@ -294,13 +299,13 @@ public class FsUtils {
      * @throws IOException
      */
     public static boolean equalDirs(Configuration conf, Path src, Path dest,
-                                    String skipPrefix)
+                                    PathFilter filter)
             throws IOException {
-        return equalDirs(conf, src, dest, skipPrefix, false);
+        return equalDirs(conf, src, dest, filter, false);
     }
 
     public static boolean equalDirs(Configuration conf, Path src, Path dest,
-                                    String skipPrefix,
+                                    PathFilter filter,
                                     boolean compareModificationTimes)
             throws IOException {
         boolean srcExists = src.getFileSystem(conf).exists(src);
@@ -311,9 +316,9 @@ public class FsUtils {
         }
 
         Set<FileStatus> srcFileStatuses = getFileStatusesRecursive(conf, src,
-                skipPrefix);
+                filter);
         Set<FileStatus> destFileStatuses = getFileStatusesRecursive(conf, dest,
-                skipPrefix);
+                filter);
 
         Map<String, Long> srcFileSizes = null;
         Map<String, Long> destFileSizes = null;
@@ -389,10 +394,10 @@ public class FsUtils {
 
     public static void syncModificationTimes(Configuration conf,
                                              Path src, Path dest,
-                                             String skipPrefix)
+                                             PathFilter filter)
             throws IOException {
         Set<FileStatus> srcFileStatuses = getFileStatusesRecursive(conf, src,
-                skipPrefix);
+                filter);
 
         Map<String, Long> srcFileModificationTimes = null;
 
@@ -439,12 +444,7 @@ public class FsUtils {
                 LOG.info("Parent directory exists: " + destPathParent);
             }
         } else {
-            // Parent directory doesn't exist. Create a dummy file to create
-            // the "directory"
             destFs.mkdirs(destPathParent);
-            //Path fileToTouch = new Path(destPathParent, "$folder$");
-            //LOG.info("Creating " + fileToTouch);
-            //touchFile(destFs, fileToTouch);
         }
         boolean successful = srcFs.rename(src, dest);
         if (!successful) {
@@ -463,298 +463,8 @@ public class FsUtils {
     public static boolean dirExists(Configuration conf, Path p)
             throws IOException {
         FileSystem fs = FileSystem.get(p.toUri(), conf);
-        boolean seemsToExist = fs.exists(p) && fs.isDirectory(p);
-        if (seemsToExist) {
-            try {
-                fs.getStatus(p);
-                return true;
-            } catch (FileNotFoundException e) {
-                LOG.warn("Path " + p + " was said to exist, but getStatus() " +
-                        "failed! Assuming to not actually exist");
-                return false;
-            }
-        }
-        return false;
+        return fs.exists(p) && fs.isDirectory(p);
     }
-
-    /**
-     *
-     * @param conf
-     * @param p
-     * @return true if the path specifies a file that exists
-     * @throws IOException
-     */
-    public static boolean fileExists(Configuration conf, Path p)
-            throws IOException {
-        FileSystem fs = FileSystem.get(p.toUri(), conf);
-        return fs.exists(p) && !fs.isDirectory(p);
-    }
-
-    public static long oneWaySync(Configuration conf,
-                                  Path srcDir,
-                                  Path destDir,
-                                  boolean atomic,
-                                  Path distCpTmpDir,
-                                  Path distCpLogDir)
-            throws DistCpException, IOException {
-        return oneWaySync(conf, srcDir, destDir, atomic, true, distCpTmpDir,
-                distCpLogDir,
-                conf.get(ConfigurationKeys.SKIP_CHECK_FILE_PREFIX),
-                Integer.parseInt(conf.get(
-                        ConfigurationKeys.FILESYSTEM_CONSISTENCY_WAIT_TIME)));
-    }
-
-    /**
-     * Syncs a directory from srcDir to destDir using distcp. It's a one way
-     * sync in that at the end of the method, the destination should be
-     * identical to the source. It's idempotent in that it does not do a copy if
-     * the files are identical on the source and destination. If atomic is
-     * specified, data is first copied to a temporary directory and then moved
-     * to the destination to avoid having partial or corrupt data in the
-     * destination directory. If canDeleteDest is specified, then the
-     * destination directory may be deleted to accomplish the sync.
-     *
-     * @param conf
-     * @param srcDir
-     * @param destDir
-     * @param distCpTmpDir the temporary directory to copy to before moving
-     *                     to destDir if doing an atomic copy
-     * @param distCpLogDir the directory where distcp should write logs for the
-     *                     copy
-     * @param skipPrefix files or directories starting with this name are not
-     *                   checked for proper copying.
-     * @param fsConsistencyWaitTime The number of seconds to wait after doing a
-     *                              major FS operation before checking
-     *                              filesystem stats. This is mostly to handle
-     *                              S3's eventual consistency.
-     * @return the number of bytes copied
-     * @throws IOException
-     * @throws com.airbnb.di.common.DistCpException
-     */
-    public static long oneWaySync(Configuration conf,
-                                  Path srcDir,
-                                  Path destDir,
-                                  boolean atomic,
-                                  boolean canDeleteDest,
-                                  Path distCpTmpDir,
-                                  Path distCpLogDir,
-                                  String skipPrefix,
-                                  int fsConsistencyWaitTime)
-        throws IOException, DistCpException {
-        return oneWaySync(conf,
-                srcDir,
-                destDir,
-                atomic,
-                canDeleteDest,
-                distCpTmpDir,
-                distCpLogDir,
-                skipPrefix,
-                fsConsistencyWaitTime,
-                false);
-    }
-
-    public static boolean sameFs(Path p1, Path p2) {
-        return StringUtils.areStringsEqual(p1.toUri().getScheme(),
-                p2.toUri().getScheme()) &&
-                StringUtils.areStringsEqual(p1.toUri().getAuthority(),
-                        p2.toUri().getAuthority());
-    }
-
-    public static long oneWaySync(Configuration conf,
-                                  Path srcDir,
-                                  Path destDir,
-                                  boolean atomic,
-                                  boolean canDeleteDest,
-                                  Path distCpTmpDir,
-                                  Path distCpLogDir,
-                                  String skipPrefix,
-                                  int fsConsistencyWaitTime,
-                                  boolean syncModificationTimes)
-            throws IOException, DistCpException {
-
-        if (Thread.currentThread().isInterrupted()) {
-            throw new DistCpException("Current thread has been interrupted");
-        }
-
-        boolean destDirExists = FsUtils.dirExists(conf, destDir);
-        LOG.info("Dest dir " + destDir + " exists is " +
-                destDirExists);
-
-        if (destDirExists &&
-                FsUtils.equalDirs(conf,
-                        srcDir,
-                        destDir,
-                        skipPrefix,
-                        syncModificationTimes)) {
-            LOG.info("Source and destination paths are already equal!");
-            return 0;
-        }
-
-        boolean useDistcpUpdate = false;
-        // Distcp -update can be used for cases where we're not doing an atomic
-        // copy and there aren't any files in the destination that are not in
-        // the source. If you delete specific files on the destination, it's
-        // possible to do distcp update with unique files in the dest. However,
-        // that functionality is not yet built out. Instead, this deletes the
-        // destination directory and does a fresh copy.
-        if (!atomic) {
-            useDistcpUpdate = destDirExists &&
-                    !FsUtils.filesExistOnDestButNotSrc(conf, srcDir, destDir,
-                            null);
-            if (useDistcpUpdate) {
-                LOG.info("Doing a distcp update from " + srcDir +
-                        " to " + destDir);
-            }
-        }
-
-        if (destDirExists && !canDeleteDest && !useDistcpUpdate) {
-            throw new IOException("Destination directory (" +
-                    destDir + ") exists, can't use update, and can't " +
-                    "overwrite!");
-        }
-
-        if (destDirExists && canDeleteDest && !useDistcpUpdate &&!atomic) {
-            LOG.info("Unable to use distcp update, so deleting " + destDir +
-                    " since it already exists");
-            FsUtils.deleteDirectory(conf, destDir);
-            sleep(fsConsistencyWaitTime);
-        }
-
-        Path distcpDestDir;
-        // For atomic moves, copy to a temporary location and then move the
-        // directory to the final destination. Note: S3 doesn't support atomic
-        // directory moves so don't use this option for S3 destinations.
-        if (atomic) {
-            distcpDestDir = distCpTmpDir;
-        } else {
-            distcpDestDir = destDir;
-        }
-
-        LOG.info(String.format("Copying %s to %s",
-                srcDir, distcpDestDir));
-
-
-        long srcSize = FsUtils.getSize(conf, srcDir, skipPrefix);
-        LOG.info("Source size is: " + srcSize);
-
-        // TODO: make more configurable
-        // Use shell to copy
-        if (srcSize < 25e6) {
-            String [] mkdirArgs = {"-mkdir",
-                    "-p",
-                    distcpDestDir.getParent().toString()
-            };
-            String[] copyArgs = {"-cp",
-                    srcDir.toString(),
-                    distcpDestDir.toString()
-            };
-
-            FsShell shell = new FsShell();
-            try {
-                LOG.info("Using shell to mkdir with args " + Arrays.asList(mkdirArgs));
-                ToolRunner.run(shell, mkdirArgs);
-                LOG.info("Using shell to copy with args " + Arrays.asList(copyArgs));
-                ToolRunner.run(shell, copyArgs);
-            } catch (Exception e) {
-               throw new DistCpException(e);
-            } finally {
-                shell.close();
-            }
-        } else {
-
-            LOG.info("DistCp log dir: " + distCpLogDir);
-            LOG.info("DistCp dest dir: " + distcpDestDir);
-            LOG.info("DistCp tmp dir: " + distCpTmpDir);
-            // Make sure that the tmp dir and the destination directory are on
-            // the same schema
-            if (!sameFs(distCpTmpDir, distcpDestDir)) {
-                throw new DistCpException(
-                        String.format("Filesystems do not match for tmp (%s) " +
-                                "and destination (%s)",
-                                distCpTmpDir,
-                                distcpDestDir));
-            }
-
-            List<String> distcpArgs = new ArrayList<String>();
-            // TODO: Make num mappers more configurable
-            distcpArgs.add("-m");
-            distcpArgs.add(Long.toString(srcSize / (long)256e6 + 1));
-            distcpArgs.add("-log");
-            distcpArgs.add(distCpLogDir.toString());
-            if (useDistcpUpdate) {
-                distcpArgs.add("-update");
-            }
-            // Preserve user, group, permissions
-            distcpArgs.add("-pugp");
-            distcpArgs.add(srcDir.toString());
-            distcpArgs.add(distcpDestDir.toString());
-            LOG.info("Running DistCp with args: " + distcpArgs);
-            String poolName = conf.get(ConfigurationKeys.DISTCP_POOL);
-            LOG.info("Using pool: " + poolName);
-
-            // For distcp v1
-            // conf.set("pool.name", poolName);
-            // DistCp distCp = new DistCp(conf);
-
-            // For distcp v2
-            conf.set("mapreduce.job.queuename", poolName);
-            DistCp distCp = new DistCp();
-            distCp.setConf(conf);
-
-            int ret = distCp.run(distcpArgs.toArray(new String[]{}));
-
-            if (ret != 0) {
-                throw new DistCpException("Distcp failed");
-            }
-        }
-
-        // For S3, waiting a little bit for better consistency has been helpful
-        // for increasing the copy success rate.
-        sleep(fsConsistencyWaitTime);
-
-        if (!FsUtils.equalDirs(conf,
-                srcDir,
-                distcpDestDir,
-                skipPrefix)) {
-            LOG.error("Source and destination sizes don't match!");
-            if (atomic) {
-                LOG.info("Since it's an atomic copy, deleting " +
-                        distcpDestDir);
-                FsUtils.deleteDirectory(conf, distcpDestDir);
-                throw new DistCpException("distcp result mismatch");
-            }
-        } else {
-            LOG.info("Size of source and destinations match");
-        }
-
-        if (Thread.currentThread().isInterrupted()) {
-            throw new DistCpException("Current thread has been interrupted");
-        }
-
-        if (syncModificationTimes) {
-            FsUtils.syncModificationTimes(conf, srcDir, distCpTmpDir,
-                    skipPrefix);
-        }
-
-        if (atomic) {
-            // Size is good, clear out the final destination directory and
-            // replace with the copied version.
-            destDirExists = FsUtils.dirExists(conf, destDir);
-            if (destDirExists) {
-                LOG.info("Deleting existing directory " + destDir);
-                FsUtils.deleteDirectory(conf, destDir);
-            }
-            LOG.info("Moving from " + distCpTmpDir + " to " + destDir);
-            FsUtils.moveDir(conf, distcpDestDir, destDir);
-        }
-
-        LOG.info("Deleting log directory " + distCpLogDir);
-        deleteDirectory(conf, distCpLogDir);
-
-        // TODO: Not necessarily the bytes copied if using -update
-        return srcSize;
-    }
-
 
     /**
      * Delete the specified directory. Use FsShell by default, but use s3cmd
@@ -770,182 +480,18 @@ public class FsUtils {
         boolean canUseS3cmd = Boolean.parseBoolean(conf.get(
                 ConfigurationKeys.S3CMD_DELETES_ENABLED, "false"));
         try {
-            if ("s3n".equals(p.toUri().getScheme()) && canUseS3cmd) {
-                int ret = deleteUsingS3cmd(conf, p);
-                if (ret != 0) {
-                    throw new IOException("Error deleting " + p +
-                            " with s3cmd!");
-                }
-            } else {
-                String[] deleteArgs = {"-rm", "-r",
-                        p.toString()};
-                // At Airbnb, the deployed FsShell has some protections to
-                // prevent deleting of important datasets. Hence, we use it
-                // instead of directly calling FileSystem.rm
-                FsShell shell = new FsShell();
-                try {
-                    ToolRunner.run(shell, deleteArgs);
-                } finally {
-                    shell.close();
-                }
+            String[] deleteArgs = {"-rm", "-r",
+                    p.toString()};
+            // The delete can be done through the native API as well.
+            FsShell shell = new FsShell();
+            try {
+                ToolRunner.run(shell, deleteArgs);
+            } finally {
+                shell.close();
             }
         } catch (Exception e) {
             throw new IOException(e);
         }
-    }
-
-    private static int deleteUsingS3cmd(Configuration conf,
-                                         Path p) throws IOException {
-        try {
-            RetryingProcessRunner s3cmdRunner = new RetryingProcessRunner();
-
-            List<String> args = new ArrayList<String>();
-            args.add("s3cmd");
-            args.add("del");
-            args.add("--recursive");
-            String s3cmdConfigFile = conf.get(
-                    ConfigurationKeys.S3CMD_CONFIGURATION_FILE, "");
-            if (s3cmdConfigFile.length() > 0) {
-                args.add("-c");
-                args.add(s3cmdConfigFile);
-            }
-            args.add(p.toString().replace("s3n://", "s3://"));
-
-            RunResult result = s3cmdRunner.run(args);
-            return result.getReturnCode();
-        } catch (ProcessRunException e) {
-            throw new IOException(e);
-        }
-    }
-
-    /**
-     * Reads a (small) text file into a string.
-     * @param conf
-     * @param path
-     * @return a single string representing the contents of the file at path
-     * @throws IOException
-     */
-    public static String readSmallFile(Configuration conf, Path path)
-            throws IOException {
-        FileSystem fs = FileSystem.get(path.toUri(), conf);
-        FSDataInputStream inputStream = fs.open(path);
-        return readIntoString(inputStream);
-    }
-
-    /**
-     * Given an input stream with text, read into a single string.
-     * @param inputStream
-     * @return a single string representing the contents of the stream
-     * @throws IOException
-     */
-    private static String readIntoString(FSDataInputStream inputStream)
-            throws IOException {
-        // TODO: Should be able to read >BUFFER_SIZE
-        // Leaving as is since this is only used to read metadata files that are
-        // very small.
-        final int BUFFER_SIZE = 1048576;
-        byte [] bytes = new byte[BUFFER_SIZE];
-        int bytesRead = inputStream.read(bytes);
-        if (bytesRead >= BUFFER_SIZE) {
-            throw new RuntimeException("Buffer size " + BUFFER_SIZE +
-                    " is too small!");
-        }
-        return new String(bytes, "UTF-8");
-    }
-
-    public static boolean mkdirs(Configuration conf, Path p)
-            throws  IOException {
-        FileSystem fs = FileSystem.get(p.toUri(), conf);
-        return fs.mkdirs(p);
-    }
-
-    private static void sleep(int seconds) {
-        try {
-            LOG.info("Sleeping for " + seconds + " seconds");
-            Thread.sleep(seconds * 1000);
-        } catch (InterruptedException e) {
-            LOG.error("Interrupted!");
-        }
-    }
-
-    /**
-     * @param conf
-     * @param p
-     * @param maxDepth The maximum depth to search for subdirectories
-     * @return a set of subdirectories that, when combined together, is the same
-     * as p
-     * @throws IOException
-     */
-    public static  Set<Path> getConstituentSubdirs(Configuration conf,
-                                                   Path p,
-                                                   int maxDepth)
-            throws IOException {
-        return getConstituentSubdirsHelper(conf, p, 0, maxDepth);
-    }
-
-    /**
-     * Recursive function that's called on each directory while traversing a
-     * directory tree to figure out a set of subdirectories that make up a
-     * directory. maxDepth is how deep to search, while the currentDepth is the
-     * depth of the current directory.
-     *
-     * @param conf
-     * @param p
-     * @param currentDepth
-     * @param maxDepth
-     * @return
-     * @throws IOException
-     */
-    private static Set<Path> getConstituentSubdirsHelper(Configuration conf,
-                                                         Path p,
-                                                         int currentDepth,
-                                                         int maxDepth)
-            throws IOException {
-        if (currentDepth > maxDepth) {
-            throw new RuntimeException("maxDepth > currentDepth");
-        }
-
-        Set<Path> subDirectories = new HashSet<Path>();
-
-        if (currentDepth == maxDepth) {
-            // If we're not searching any further, we have to add this whole
-            // directory to get everything
-            subDirectories.add(p);
-            return subDirectories;
-        }
-
-        FileSystem fs = FileSystem.get(p.toUri(), conf);
-        FileStatus[] statuses = fs.listStatus(p);
-
-        // Nothing in this directory so no need to go any further
-        if (statuses.length == 0) {
-            subDirectories.add(p);
-            return subDirectories;
-        }
-
-        for (FileStatus status : statuses) {
-            // If a directory has any files, then it's tricky to distribute the
-            // copy with multiple distcp's. Just copy the whole directory.
-            if (status.isFile()) {
-                subDirectories.add(p);
-                return subDirectories;
-            }
-        }
-
-        for (FileStatus status : statuses) {
-            if (status.isDirectory()) {
-                // Recursive case, find all subdirectories within
-                subDirectories.addAll(getConstituentSubdirsHelper(
-                        conf,
-                        status.getPath(),
-                        currentDepth + 1,
-                        maxDepth
-                ));
-            } else {
-                throw new RuntimeException("Shouldn't happen!");
-            }
-        }
-        return subDirectories;
     }
 
     /**
