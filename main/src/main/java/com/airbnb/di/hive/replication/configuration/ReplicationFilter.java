@@ -1,14 +1,19 @@
 package com.airbnb.di.hive.replication.configuration;
 
+import com.airbnb.di.hive.common.NamedPartition;
 import com.airbnb.di.hive.replication.auditlog.AuditLogEntry;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 public interface ReplicationFilter {
 
-    public boolean accept(AuditLogEntry entry);
+    void setConf(Configuration conf);
 
-    public boolean accept(Table table);
+    boolean accept(AuditLogEntry entry);
 
-    public boolean accept(Table table, Partition partition);
+    boolean accept(Table table);
+
+    boolean accept(Table table, NamedPartition partition);
 }

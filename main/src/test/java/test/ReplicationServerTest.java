@@ -130,6 +130,7 @@ public class ReplicationServerTest extends MockClusterTest {
                         REPLICATION_JOB_STATE_TABLE_NAME);
 
         replicationFilter = new PassThoughReplicationFilter();
+        replicationFilter.setConf(conf);
     }
 
     public static void clearMetastores() throws HiveMetastoreException {

@@ -528,7 +528,8 @@ public class ReplicationJobFactory {
                 exchangeToPartition.setValues(parser.getPartitionValues());
                 if (!replicationFilter.accept(
                         exchangeToTable,
-                        exchangeToPartition)) {
+                        new NamedPartition(exchangeToSpec.getPartitionName(),
+                                exchangeToPartition))) {
                     LOG.info(String.format("Exchange partition from audit log" +
                                     " id: %s filtered out by %s",
                             auditLogEntry.getId(),
@@ -709,7 +710,7 @@ public class ReplicationJobFactory {
 
             Table table = tableLookupMap.get(new HiveObjectSpec(
                     partition.getDbName(), partition.getTableName()));
-            if (!filter.accept(table, partition)) {
+            if (!filter.accept(table, pwn)) {
                 LOG.info("Filtering out: " + partitionSpec);
                 partitionIterator.remove();
             }

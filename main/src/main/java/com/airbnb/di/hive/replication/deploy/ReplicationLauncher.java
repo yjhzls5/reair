@@ -162,6 +162,7 @@ public class ReplicationLauncher {
                     ReplicationFilter.class.getName()));
         }
         ReplicationFilter filter = (ReplicationFilter) obj;
+        filter.setConf(conf);
 
         int numWorkers = conf.getInt(
                 DeployConfigurationKeys.WORKER_THREADS,

@@ -39,9 +39,6 @@ public class HiveUtils {
         t.setTableType("EXTERNAL_TABLE");
     }
 
-    public static void getPartitionName(Partition p) {
-    }
-
     /**
      * Converts a partition name into a spec used for DDL commands. For example,
      * ds=1/hr=2 -> PARTITION(ds='1', hr='2')
