@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Creates the Hive thrift object that should be on the destination cluster.
+ * Creates the Hive thrift object that should be created on the destination cluster
  */
 public class DestinationObjectFactory {
 

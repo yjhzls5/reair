@@ -3,6 +3,8 @@ package com.airbnb.di.hive.hooks;
 import com.airbnb.di.utils.RetryableTask;
 import com.airbnb.di.utils.RetryingTaskRunner;
 import com.airbnb.di.db.DbCredentials;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -43,7 +45,7 @@ public class AuditLogHook implements PostExecute {
 
     public static Logger LOG = Logger.getLogger(AuditLogHook.class);
 
-    // The objects table stores serialize forms of the relevant Hive objects
+    // The objects table stores serialized forms of the relevant Hive objects
     // for that query.
     //
     // The category describes why the object was logged.
@@ -61,22 +63,17 @@ public class AuditLogHook implements PostExecute {
 
     // Keys for values in hive-site.xml
     public static String JDBC_URL_KEY =
-            "airbnb.logging.audit_log.jdbc_url";
+            "airbnb.hive.audit_log.jdbc_url";
     public static String TABLE_NAME_KEY =
-            "airbnb.logging.audit_log.table_name";
+            "airbnb.hive.audit_log.table_name";
     public static String OBJECT_TABLE_NAME_KEY =
-            "airbnb.logging.audit_log.objects.table_name";
+            "airbnb.hive.audit_log.objects.table_name";
+    public static String DB_USERNAME =
+            "airbnb.hive.audit_log.db.username";
+    public static String DB_PASSWORD =
+            "airbnb.hive.audit_log.db.password";
 
-    // Names of the environment variables that contain execution info
-    private static String chronosJobNameEnvVar =
-            "CHRONOS_JOB";
-    private static String chronosJobOwnerEnvVar =
-            "CHRONOS_JOB_OWNER";
-    private static String mesosTaskIdEnvVar =
-            "mesos_task_id";
-
-    private DbCredentials dbCreds =
-            new DataInfraDbCredentials();
+    private DbCredentials dbCreds;
 
     public AuditLogHook() {
     }
@@ -84,6 +81,13 @@ public class AuditLogHook implements PostExecute {
     // Constructor used for testing
     public AuditLogHook(DbCredentials dbCreds) {
         this.dbCreds = dbCreds;
+    }
+
+    protected DbCredentials getDbCreds(Configuration conf) {
+        if (dbCreds == null) {
+            dbCreds = new ConfigurationDbCredentials(conf, DB_USERNAME, DB_PASSWORD);
+        }
+        return dbCreds;
     }
 
     @Override
@@ -94,6 +98,8 @@ public class AuditLogHook implements PostExecute {
                     final UserGroupInformation userGroupInformation)
             throws Exception {
         HiveConf conf = sessionState.getConf();
+
+        final DbCredentials dbCreds = getDbCreds(conf);
 
         final String jdbcUrl = conf.get(JDBC_URL_KEY);
         final String auditLogTableName = conf.get(TABLE_NAME_KEY);
@@ -115,27 +121,25 @@ public class AuditLogHook implements PostExecute {
         RetryingTaskRunner runner = new RetryingTaskRunner(NUM_ATTEMPTS,
                 BASE_SLEEP);
 
-        final String auditLogQuery = "INSERT INTO " + auditLogTableName + " (" +
+        final String auditLogQuery = String.format("INSERT INTO %s (" +
                 "query_id, " +
                 "command_type, " +
                 "command, " +
                 "inputs, " +
                 "outputs, " +
                 "username, " +
-                "chronos_job_name, " +
-                "chronos_job_owner, " +
-                "mesos_task_id, " +
                 "ip) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                auditLogTableName);
 
-        final String outputObjQuery = "INSERT INTO " +
-                objectsTableName + " (" +
+        final String outputObjQuery = String.format("INSERT INTO %s (" +
                 "audit_log_id, " +
                 "category, " +
                 "type, " +
                 "name, " +
                 "serialized_object) " +
-                "VALUES (?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?)",
+                objectsTableName);
 
         long startTime = System.currentTimeMillis();
         LOG.debug("Starting insert into audit log");
@@ -169,12 +173,6 @@ public class AuditLogHook implements PostExecute {
                 auditLogPs.setString(auditLogPsIndex++,
                         userGroupInformation == null ? null :
                                 userGroupInformation.getUserName());
-                auditLogPs.setString(auditLogPsIndex++,
-                        System.getenv(chronosJobNameEnvVar));
-                auditLogPs.setString(auditLogPsIndex++,
-                        System.getenv(chronosJobOwnerEnvVar));
-                auditLogPs.setString(auditLogPsIndex++,
-                        System.getenv(mesosTaskIdEnvVar));
                 auditLogPs.setString(auditLogPsIndex++,
                         InetAddress.getLocalHost().getHostAddress());
                 auditLogPs.executeUpdate();
