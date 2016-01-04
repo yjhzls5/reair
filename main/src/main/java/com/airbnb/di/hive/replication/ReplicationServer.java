@@ -324,7 +324,16 @@ public class ReplicationServer implements TReplicationService.Iface {
             LOG.info("Fetching last persisted audit log ID");
             String lastPersistedIdString = keyValueStore.get(
                     LAST_PERSISTED_AUDIT_LOG_ID_KEY);
-            if (lastPersistedIdString != null) {
+
+            if (lastPersistedIdString == null) {
+                Long maxId = auditLogReader.getMaxId();
+                if (maxId == null) {
+                    maxId = Long.valueOf(0);
+                }
+                LOG.warn(String.format("Since the last persisted ID was not previously set, " +
+                        "using max ID in the audit log: %s", maxId));
+                lastPersistedAuditLogId = maxId;
+            } else {
                 lastPersistedAuditLogId = Long.parseLong(lastPersistedIdString);
             }
         }

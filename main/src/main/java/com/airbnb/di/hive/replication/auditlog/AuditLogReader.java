@@ -114,7 +114,11 @@ public class AuditLogReader {
             return null;
         }
 
-        return HiveOperation.valueOf(operation);
+        try {
+            return HiveOperation.valueOf(operation);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     /**
@@ -208,8 +212,13 @@ public class AuditLogReader {
         while(rs.next()) {
             id = rs.getLong("id");
             createTime = rs.getTimestamp("create_time");
-            // TODO: Handle invalid command types
-            commandType = convertToHiveOperation(rs.getString("command_type"));
+            // Invalid operations are returned as null
+            String commandTypeString = rs.getString("command_type");
+            commandType = convertToHiveOperation(commandTypeString);
+            if (commandType == null) {
+                LOG.debug(String.format("Invalid operation %s in audit " +
+                        "log id: %s", commandTypeString, id));
+            }
             command = rs.getString("command");
             objectName = rs.getString("name");
             objectCategory = rs.getString("category");
@@ -321,11 +330,15 @@ public class AuditLogReader {
             auditLogEntries.add(entry);
             return;
         }
-        // TODO: Handle persisting of ID when we constantly get empty results
-        // Can happen if the range selected has no objects
+        // If we constantly get empty results, then this won't be updated. This
+        // can happen if the range selected has no objects, but it should be
         lastReadId = idsToRead.getMaximumLong();
     }
 
+    /**
+     * Change the reader to start reading entries after this ID
+     * @param lastReadId
+     */
     public synchronized void setReadAfterId(long lastReadId) {
         this.lastReadId = lastReadId;
         // Clear the audit log entries since it's possible that the reader
@@ -334,7 +347,15 @@ public class AuditLogReader {
         auditLogEntries.clear();
     }
 
-    private void setLastReadId(long id) {
-        this.lastReadId = id;
+    public synchronized long getMaxId() throws SQLException {
+        String query = String.format("SELECT MAX(id) FROM %s",
+                auditLogTableName);
+        Connection connection = dbConnectionFactory.getConnection();
+        PreparedStatement ps = connection.prepareStatement(query);
+
+        ResultSet rs = ps.executeQuery();
+
+        rs.next();
+        return rs.getLong(1);
     }
 }

@@ -198,7 +198,7 @@ public class ReplicationServerTest extends MockClusterTest {
                 new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
                 1,
                 1,
-                null);
+                Long.valueOf(0));
 
         replicationServer.run(1);
 
@@ -233,7 +233,7 @@ public class ReplicationServerTest extends MockClusterTest {
                 new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
                 1,
                 1,
-                null);
+                Long.valueOf(0));
 
         replicationServer.run(2);
 
@@ -275,7 +275,7 @@ public class ReplicationServerTest extends MockClusterTest {
                 new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
                 1,
                 1,
-                null);
+                Long.valueOf(0));
 
         replicationServer.run(2);
         LOG.error("Server stopped");
@@ -677,7 +677,7 @@ public class ReplicationServerTest extends MockClusterTest {
                 new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
                 1,
                 1,
-                null);
+                Long.valueOf(0));
         replicationServer.run(2);
 
         // Verify that the partition is on the destination
@@ -719,7 +719,7 @@ public class ReplicationServerTest extends MockClusterTest {
                 new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
                 1,
                 1,
-                null);
+                Long.valueOf(0));
         replicationServer.run(1);
 
         // Verify that the partition is on the destination
@@ -815,7 +815,7 @@ public class ReplicationServerTest extends MockClusterTest {
                 new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
                 1,
                 1,
-                null);
+                Long.valueOf(0));
         replicationServer.run(1);
 
         // Verify that the table is on the destination
@@ -860,7 +860,8 @@ public class ReplicationServerTest extends MockClusterTest {
                 replicationFilter,
                 new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
                 1,
-                1, null);
+                1,
+                Long.valueOf(0));
         replicationServer.run(1);
 
         // Verify that the table is on the destination
@@ -918,7 +919,7 @@ public class ReplicationServerTest extends MockClusterTest {
                 new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
                 1,
                 1,
-                null);
+                Long.valueOf(0));
 
         replicationServer.run(4);
 
@@ -937,9 +938,9 @@ public class ReplicationServerTest extends MockClusterTest {
         embeddedMySqlDb.stopDb();
     }
 
-
-
-    // Additional cases to test - restore copy partition, copy unpartitioned table
-    // Filtering out tables / partitions from renames
-    // Table partition scheme changes
+    // Additional cases to test
+    // * Copy partition after a restart
+    // * Copy unpartitioned table
+    // * Different rename cases with filters
+    // * Copying partitions after a table schema change
 }
