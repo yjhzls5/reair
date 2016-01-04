@@ -34,7 +34,6 @@ public class ReplicationLauncher {
             ReplicationLauncher.class);
 
     private static URI makeURI(String thriftUri) throws ConfigurationException {
-
         try {
             URI uri = new URI(thriftUri);
 
@@ -53,7 +52,7 @@ public class ReplicationLauncher {
         }
     }
 
-    public static void launch(Configuration conf, Long startAfterAuditLogId)
+    public static void launch(Configuration conf, Long startAfterAuditLogId, boolean resetState)
             throws Exception {
 
         // Create the audit log reader
@@ -107,6 +106,11 @@ public class ReplicationLauncher {
                 new PersistedJobInfoStore(
                         stateConnectionFactory,
                         stateTableName);
+
+        if (resetState) {
+            LOG.info("Resetting state by aborting non-completed jobs");
+            persistedJobInfoStore.abortRunnableFromDb();
+        }
 
         // Create the source cluster object
         String srcClusterName = conf.get(
@@ -241,7 +245,10 @@ public class ReplicationLauncher {
                 .withDescription("Start processing entries from the audit " +
                         "log after this ID")
                 .hasArg()
-                .withArgName("PATH")
+                .withArgName("ID")
+                .create());
+
+        options.addOption(OptionBuilder.withLongOpt("reset-state")
                 .create());
 
         CommandLineParser parser = new BasicParser();
@@ -249,6 +256,7 @@ public class ReplicationLauncher {
 
         String configPaths = null;
         Long startAfterId = null;
+        boolean resetState = false;
 
         if (cl.hasOption("config-files")) {
             configPaths = cl.getOptionValue("config-files");
@@ -260,6 +268,17 @@ public class ReplicationLauncher {
             LOG.info("startAfterId="  + startAfterId);
         }
 
+        if (cl.hasOption("reset-state")) {
+            resetState = true;
+            LOG.info("resetState=" + resetState);
+        }
+
+        // Require specifying the start ID if resetting the state to make it easier to reason
+        if (resetState && startAfterId == null) {
+            throw new ConfigurationException("Start after ID must be specified when resetting " +
+                    "state");
+        }
+
         Configuration conf = new Configuration();
 
         if (configPaths != null) {
@@ -269,7 +288,7 @@ public class ReplicationLauncher {
         }
 
         try {
-            launch(conf, startAfterId);
+            launch(conf, startAfterId, resetState);
         } catch (Exception e) {
             LOG.fatal(e);
             throw e;

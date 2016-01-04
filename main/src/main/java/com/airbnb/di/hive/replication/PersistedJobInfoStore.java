@@ -1,15 +1,17 @@
 package com.airbnb.di.hive.replication;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
+
 import com.airbnb.di.common.Container;
-import com.airbnb.di.db.DbCredentials;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.db.DbConnectionFactory;
-import com.airbnb.di.db.StaticDbConnectionFactory;
 import com.airbnb.di.utils.RetryableTask;
 import com.airbnb.di.utils.RetryingTaskRunner;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.util.StringUtils;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -19,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,12 @@ import java.util.Map;
 public class PersistedJobInfoStore {
 
     private static final Log LOG = LogFactory.getLog(PersistedJobInfoStore.class);
+
+    private static final String[] completedStateStrings = {
+            ReplicationStatus.SUCCESSFUL.name(),
+            ReplicationStatus.FAILED.name(),
+            ReplicationStatus.NOT_COMPLETABLE.name()
+    };
 
     private DbConnectionFactory dbConnectionFactory;
     private String dbTableName;
@@ -81,16 +90,43 @@ public class PersistedJobInfoStore {
         return ret;
     }
 
+    synchronized public void abortRunnableFromDb() throws SQLException {
+        // Convert from ['a', 'b'] to "'a', 'b'"
+        String completedStateList = StringUtils.join(", ",
+                Lists.transform(Arrays.asList(completedStateStrings),
+                        new Function<String, String>() {
+                            public String apply(String s) {
+                                return String.format("'%s'", s);
+                            }
+                        }));
+        String query = String.format("UPDATE %s SET status = 'ABORTED' " +
+                "WHERE status NOT IN (%s)",
+                dbTableName,
+                completedStateList);
+        Connection connection = dbConnectionFactory.getConnection();
+        Statement statement = connection.createStatement();
+        statement.execute(query);
+    }
+
     synchronized public List<PersistedJobInfo> getRunnableFromDb()
             throws SQLException {
-        // TODO: Maybe make this more iterative with next()?
-        String query = "SELECT id, create_time, operation, status, src_path, " +
+        // Convert from ['a', 'b'] to "'a', 'b'"
+        String completedStateList = StringUtils.join(", ",
+                Lists.transform(Arrays.asList(completedStateStrings),
+                        new Function<String, String>() {
+                            public String apply(String s) {
+                                return String.format("'%s'", s);
+                            }
+                        }));
+        String query = String.format(
+                "SELECT id, create_time, operation, status, src_path, " +
                 "src_cluster, src_db, " +
                 "src_table, src_partitions, src_tldt, " +
                 "rename_to_db, rename_to_table, rename_to_partition, " +
                 "rename_to_path, extras " +
-                "FROM " + dbTableName + " WHERE status NOT IN ('SUCCESSFUL', " +
-                "'FAILED', 'NOT_COMPLETABLE') ORDER BY id";
+                "FROM %s WHERE status NOT IN (%s) ORDER BY id",
+                dbTableName,
+                completedStateList);
 
         List<PersistedJobInfo> persistedJobInfos = new ArrayList<PersistedJobInfo>();
         Connection connection = dbConnectionFactory.getConnection();
@@ -100,8 +136,8 @@ public class PersistedJobInfoStore {
 
         while(rs.next()) {
             long id = rs.getLong("id");
-            // TODO: Handle invalid values
-            long createTime = rs.getTimestamp("create_time").getTime();
+            Timestamp createTimestamp = rs.getTimestamp("create_time");
+            long createTime = createTimestamp == null ? 0 : createTimestamp.getTime();
             ReplicationOperation operation =
                     ReplicationOperation.valueOf(rs.getString("operation"));
             ReplicationStatus status = ReplicationStatus.valueOf(
