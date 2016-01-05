@@ -8,7 +8,7 @@ import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.hooks.HiveOperation;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
-import com.airbnb.di.hive.replication.configuration.ReplicationFilter;
+import com.airbnb.di.hive.replication.filter.ReplicationFilter;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionsTask;
@@ -711,7 +711,9 @@ public class ReplicationJobFactory {
             Table table = tableLookupMap.get(new HiveObjectSpec(
                     partition.getDbName(), partition.getTableName()));
             if (!filter.accept(table, pwn)) {
-                LOG.info("Filtering out: " + partitionSpec);
+                LOG.info(String.format("%s filtering out: %s",
+                        filter.getClass().getName(),
+                        partitionSpec));
                 partitionIterator.remove();
             }
         }
@@ -723,7 +725,9 @@ public class ReplicationJobFactory {
             Table table = tableIterator.next();
             HiveObjectSpec tableSpec = new HiveObjectSpec(table);
             if (!filter.accept(table)) {
-                LOG.info("Filtering out: " + tableSpec);
+                LOG.info(String.format("%s filtering out: %s",
+                        filter.getClass().getName(),
+                        tableSpec));
                 tableIterator.remove();
             }
 

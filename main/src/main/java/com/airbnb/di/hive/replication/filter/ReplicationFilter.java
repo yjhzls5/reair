@@ -1,4 +1,4 @@
-package com.airbnb.di.hive.replication.configuration;
+package com.airbnb.di.hive.replication.filter;
 
 import com.airbnb.di.hive.common.NamedPartition;
 import com.airbnb.di.hive.replication.auditlog.AuditLogEntry;

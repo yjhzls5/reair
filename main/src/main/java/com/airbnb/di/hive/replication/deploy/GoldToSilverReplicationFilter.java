@@ -2,11 +2,10 @@ package com.airbnb.di.hive.replication.deploy;
 
 import com.airbnb.di.hive.common.NamedPartition;
 import com.airbnb.di.hive.replication.auditlog.AuditLogEntry;
-import com.airbnb.di.hive.replication.configuration.ReplicationFilter;
+import com.airbnb.di.hive.replication.filter.ReplicationFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 public class GoldToSilverReplicationFilter implements ReplicationFilter {

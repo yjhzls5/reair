@@ -8,7 +8,7 @@ import com.airbnb.di.db.DbKeyValueStore;
 import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.configuration.HardCodedCluster;
 import com.airbnb.di.hive.replication.PersistedJobInfoStore;
-import com.airbnb.di.hive.replication.configuration.ReplicationFilter;
+import com.airbnb.di.hive.replication.filter.ReplicationFilter;
 import com.airbnb.di.hive.replication.ReplicationServer;
 import com.airbnb.di.db.StaticDbConnectionFactory;
 import com.airbnb.di.hive.replication.thrift.TReplicationService;
