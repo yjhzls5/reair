@@ -14,7 +14,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
  * Util class for metastore compare
  */
 public class MetastoreCompareUtils {
-    private static final Log LOG = LogFactory.getLog(MetastoreReplicationJob.class);
+    private static final Log LOG = LogFactory.getLog(MetastoreCompareUtils.class);
 
     private MetastoreCompareUtils() {
     }

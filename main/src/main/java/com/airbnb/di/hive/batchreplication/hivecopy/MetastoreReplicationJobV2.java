@@ -3,8 +3,9 @@ package com.airbnb.di.hive.batchreplication.hivecopy;
 import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
 import com.airbnb.di.hive.batchreplication.ReplicationUtils;
 import com.airbnb.di.hive.batchreplication.hivecopy.MetastoreCompareUtils.UpdateAction;
-import com.airbnb.di.hive.batchreplication.metastore.HiveMetastoreClient;
-import com.airbnb.di.hive.batchreplication.metastore.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveMetastoreClient;
+import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.ThriftHiveMetastoreClient;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -456,9 +457,9 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
             try {
                 String[] srcHostParts = context.getConfiguration().get(REPLICATION_METASTORE_SRC_HOST).split(":");
-                this.srcClient = new HiveMetastoreClient(srcHostParts[0], Integer.valueOf(srcHostParts[1]));
+                this.srcClient = new ThriftHiveMetastoreClient(srcHostParts[0], Integer.valueOf(srcHostParts[1]));
                 String[] dstHostParts = context.getConfiguration().get(REPLICATION_METASTORE_DST_HOST).split(":");
-                this.dstClient = new HiveMetastoreClient(dstHostParts[0], Integer.valueOf(dstHostParts[1]));
+                this.dstClient = new ThriftHiveMetastoreClient(dstHostParts[0], Integer.valueOf(dstHostParts[1]));
                 this.allowS3TableSync = context.getConfiguration().getBoolean(REPLICATION_ALLOW_S3, false);
                 this.dstMetasotre = context.getConfiguration().get(REPLICATION_METASTORE_COPYTO, "silver");
                 this.conf = context.getConfiguration();
@@ -599,7 +600,7 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
                             // s3 need to create partition first then set path otherwise aws will be overwhelm
                             p1.getSd().setLocation(null);
                             try {
-                                dstClient.createPartition(p1);
+                                dstClient.addPartition(p1);
                                 p1.getSd().setLocation(partitionPath.getFullPath());
                                 dstClient.alterPartition(db, table, p1);
                             } catch (HiveMetastoreException e) {
@@ -620,7 +621,7 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
                                         "create partition aborted because it is changed since it is copied " + re));
                             } else {
                                 try {
-                                    dstClient.createPartition(p1);
+                                    dstClient.addPartition(p1);
                                 } catch (HiveMetastoreException e) {
                                     LOG.info("Race condition. Partition already created." + e.getMessage());
                                 }
@@ -686,7 +687,7 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
                                         "partition update succeeded"));
                             } else if (compareResult == RECREATE) {
                                 dstClient.dropPartition(db, table, opt, false);
-                                dstClient.createPartition(p11);
+                                dstClient.addPartition(p11);
                                 context.write(value, new Text("partition recreated succeeded"));
 
                             } else {
@@ -767,9 +768,9 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
             try {
                 String[] srcHostParts = context.getConfiguration().get(REPLICATION_METASTORE_SRC_HOST).split(":");
-                this.srcClient = new HiveMetastoreClient(srcHostParts[0], Integer.valueOf(srcHostParts[1]).intValue());
+                this.srcClient = new ThriftHiveMetastoreClient(srcHostParts[0], Integer.valueOf(srcHostParts[1]).intValue());
                 String[] dstHostParts = context.getConfiguration().get(REPLICATION_METASTORE_DST_HOST).split(":");
-                this.dstClient = new HiveMetastoreClient(dstHostParts[0], Integer.valueOf(dstHostParts[1]).intValue());
+                this.dstClient = new ThriftHiveMetastoreClient(dstHostParts[0], Integer.valueOf(dstHostParts[1]).intValue());
                 this.metastore = context.getConfiguration().get(REPLICATION_METASTORE_COPYFROM, "brain");
                 this.dstMetastore = context.getConfiguration().get(REPLICATION_METASTORE_COPYTO, "silver");
                 this.conf = context.getConfiguration();
@@ -924,9 +925,9 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
         protected void setup(org.apache.hadoop.mapreduce.Reducer.Context context) throws IOException, InterruptedException {
             try {
                 String[] srcHostParts = context.getConfiguration().get(REPLICATION_METASTORE_SRC_HOST).split(":");
-                this.srcClient = new HiveMetastoreClient(srcHostParts[0], Integer.valueOf(srcHostParts[1]).intValue());
+                this.srcClient = new ThriftHiveMetastoreClient(srcHostParts[0], Integer.valueOf(srcHostParts[1]).intValue());
                 String[] dstHostParts = context.getConfiguration().get(REPLICATION_METASTORE_DST_HOST).split(":");
-                this.dstClient = new HiveMetastoreClient(dstHostParts[0], Integer.valueOf(dstHostParts[1]).intValue());
+                this.dstClient = new ThriftHiveMetastoreClient(dstHostParts[0], Integer.valueOf(dstHostParts[1]).intValue());
                 this.metastore = context.getConfiguration().get(REPLICATION_METASTORE_COPYFROM, "brain");
                 this.dstMetastore = context.getConfiguration().get(REPLICATION_METASTORE_COPYTO, "silver");
                 this.conf = context.getConfiguration();
@@ -1131,9 +1132,9 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
         protected void setup(Mapper.Context context) throws IOException, InterruptedException {
             try {
                 String[] srcHostPart = context.getConfiguration().get(REPLICATION_METASTORE_SRC_HOST).split(":");
-                this.srcClient = new HiveMetastoreClient(srcHostPart[0], Integer.valueOf(srcHostPart[1]).intValue());
+                this.srcClient = new ThriftHiveMetastoreClient(srcHostPart[0], Integer.valueOf(srcHostPart[1]).intValue());
                 String[] dstHostPart = context.getConfiguration().get(REPLICATION_METASTORE_DST_HOST).split(":");
-                this.dstClient = new HiveMetastoreClient(dstHostPart[0], Integer.valueOf(dstHostPart[1]).intValue());
+                this.dstClient = new ThriftHiveMetastoreClient(dstHostPart[0], Integer.valueOf(dstHostPart[1]).intValue());
                 this.metastoreBlackList = Arrays.asList(context.getConfiguration().get(REPLICATION_METASTORE_BLACKLIST).split(","));
                 this.metastore = context.getConfiguration().get(REPLICATION_METASTORE_COPYFROM, "brain");
                 this.allowS3TableSync = context.getConfiguration().getBoolean(REPLICATION_ALLOW_S3, false);

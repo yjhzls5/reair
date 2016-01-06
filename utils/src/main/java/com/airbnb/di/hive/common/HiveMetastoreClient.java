@@ -81,4 +81,10 @@ public interface HiveMetastoreClient {
                                 List<String> partitionValues,
                                 Partition p)
         throws HiveMetastoreException;
+
+    public List<String> getAllDatabases() throws HiveMetastoreException;
+
+    public List<String> getAllTables(String db_name) throws HiveMetastoreException;
+
+    public void close();
 }

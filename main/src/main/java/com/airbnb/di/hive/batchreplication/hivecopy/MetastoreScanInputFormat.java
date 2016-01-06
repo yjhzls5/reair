@@ -1,7 +1,8 @@
 package com.airbnb.di.hive.batchreplication.hivecopy;
 
-import com.airbnb.di.hive.batchreplication.metastore.HiveMetastoreClient;
-import com.airbnb.di.hive.batchreplication.metastore.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveMetastoreClient;
+import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.ThriftHiveMetastoreClient;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
@@ -58,7 +59,7 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
 
         String[] parts = metastoreHost.split(":");
         try {
-            client = new HiveMetastoreClient(parts[0], Integer.valueOf(parts[1]));
+            client = new ThriftHiveMetastoreClient(parts[0], Integer.valueOf(parts[1]));
         } catch (HiveMetastoreException e) {
             throw new IOException(e);
         }
@@ -132,7 +133,7 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
         public List<String> call() throws Exception
         {
             ArrayList<String> tables = new ArrayList<>();
-            HiveMetastoreClient client = new HiveMetastoreClient(host, port);
+            HiveMetastoreClient client = new ThriftHiveMetastoreClient(host, port);
             for(final String db : candidates) {
                 tables.addAll(Lists.transform(client.getAllTables(db), new Function<String, String>() {
                     @Override

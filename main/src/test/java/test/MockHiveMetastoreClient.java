@@ -3,12 +3,17 @@ package test;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -366,5 +371,30 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
         Partition removed = specToPartition.remove(renameFromSpec);
         removed.setValues(new ArrayList<String>(p.getValues()));
         specToPartition.put(renameToSpec, removed);
+    }
+
+    @Override
+    public List<String> getAllDatabases() throws HiveMetastoreException {
+        return Lists.newArrayList(dbNameToDatabase.keySet());
+    }
+
+    @Override
+    public List<String> getAllTables(final String db_name) throws HiveMetastoreException {
+        ArrayList<String> tables = new ArrayList<>();
+
+        for (HiveObjectSpec spec :
+                specToTable.keySet()) {
+            if (spec.getDbName().equals(db_name)) {
+                tables.add(spec.getTableName());
+            }
+
+        }
+
+        return tables;
+    }
+
+    @Override
+    public void close() {
+
     }
 }

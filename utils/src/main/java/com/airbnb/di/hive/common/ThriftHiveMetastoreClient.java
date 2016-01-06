@@ -51,7 +51,7 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
         }
     }
 
-    private void close() {
+    public void close() {
         transport.close();
     }
 
@@ -257,6 +257,22 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
                     table,
                     partitionValues,
                     p);
+        } catch (TException e) {
+            throw new HiveMetastoreException(e);
+        }
+    }
+
+    public List<String> getAllDatabases() throws HiveMetastoreException {
+        try {
+            return client.get_all_databases();
+        } catch (TException e) {
+            throw new HiveMetastoreException(e);
+        }
+    }
+
+    public List<String> getAllTables(String db_name) throws HiveMetastoreException {
+        try {
+            return client.get_all_tables(db_name);
         } catch (TException e) {
             throw new HiveMetastoreException(e);
         }
