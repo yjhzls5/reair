@@ -63,8 +63,8 @@ import static com.airbnb.di.hive.batchreplication.ReplicationUtils.removeOutputD
 import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreCompareUtils.UpdateAction.RECREATE;
 import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreCompareUtils.UpdateAction.UPDATE;
 
-public class MetastoreReplicationJobV2 extends Configured implements Tool {
-    private static final Log LOG = LogFactory.getLog(MetastoreReplicationJobV2.class);
+public class MetastoreReplicationJob extends Configured implements Tool {
+    private static final Log LOG = LogFactory.getLog(MetastoreReplicationJob.class);
 
     public static final String REPLICATION_METASTORE_BLACKLIST = "replication.metastore.blacklist";
     public static final String REPLICATION_METASTORE_COPYFROM = "replication.metastore.copyfrom";
@@ -84,7 +84,7 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
         }
     };
     public static final String USAGE_COMMAND_STR = "Usage: hadoop jar ReplicationJob-0.1-job.jar " +
-            "com.airbnb.replication.hivecopy.MetastoreReplicationJobV2 -libjar <path hive-metastore.jar> options";
+            "com.airbnb.replication.hivecopy.MetastoreReplicationJob -libjar <path hive-metastore.jar> options";
     public static final String REPLICATED_FROM_PINKY_BRAIN = "ReplicatedFromPinkyBrain";
 
     /**
@@ -151,7 +151,7 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
         DROP_PARTITION
     }
 
-    public MetastoreReplicationJobV2() {
+    public MetastoreReplicationJob() {
     }
 
     private static String hdfsFileChanged(String db, String table, String part, HdfsPath src, HdfsPath dst, Configuration conf)
@@ -440,7 +440,7 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        int res = ToolRunner.run(new MetastoreReplicationJobV2(), args);
+        int res = ToolRunner.run(new MetastoreReplicationJob(), args);
         System.exit(res);
     }
 
@@ -1176,7 +1176,7 @@ public class MetastoreReplicationJobV2 extends Configured implements Tool {
                                 genValue(MetastoreAction.SKIP_TABLE.name(), db, table,
                                         "s3 backed table skipped"));
                     } else {
-                        if (!ret.getHost().matches(MetastoreReplicationJobV2.HDFSPATH_CHECK_MAP.get(this.metastore)) &&
+                        if (!ret.getHost().matches(MetastoreReplicationJob.HDFSPATH_CHECK_MAP.get(this.metastore)) &&
                                 !ret.getProto().contains("s3")) {
                             return ImmutableList.of(
                                     genValue(MetastoreAction.SKIP_TABLE.name(), db, table,
