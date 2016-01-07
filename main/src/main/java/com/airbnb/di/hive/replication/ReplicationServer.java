@@ -38,12 +38,15 @@ public class ReplicationServer implements TReplicationService.Iface {
     private static final Log LOG = LogFactory.getLog(
             ReplicationServer.class);
 
-    // If there is a need to wait to poll, wait this many ms
     private final long POLL_WAIT_TIME_MS = 10 * 1000;
+
+    // If there is a need to wait to poll, wait this many ms
+    private long pollWaitTimeMs = POLL_WAIT_TIME_MS;
 
     // Key used for storing the last persisted audit log ID in the key value
     // store
-    private final String LAST_PERSISTED_AUDIT_LOG_ID_KEY = "last_persisted_id";
+    public static final String LAST_PERSISTED_AUDIT_LOG_ID_KEY =
+            "last_persisted_id";
 
     private Configuration conf;
     private Cluster srcCluster;
@@ -362,7 +365,7 @@ public class ReplicationServer implements TReplicationService.Iface {
         while (true) {
             if (pauseRequested) {
                 LOG.info("Pause requested. Sleeping...");
-                ReplicationUtils.sleep(POLL_WAIT_TIME_MS);
+                ReplicationUtils.sleep(pollWaitTimeMs);
                 continue;
             }
 
@@ -373,6 +376,9 @@ public class ReplicationServer implements TReplicationService.Iface {
                             ReplicationCounters.Type.SUCCESSFUL_TASKS) +
                     counters.getCounter(
                             ReplicationCounters.Type.NOT_COMPLETABLE_TASKS);
+
+            LOG.error("job to complete is " + jobsToComplete);
+            LOG.error("completed jobs is " + completedJobs);
 
             if (jobsToComplete > 0 && completedJobs >= jobsToComplete) {
                 LOG.info(String.format("Hit the limit for the number of " +
@@ -385,7 +391,7 @@ public class ReplicationServer implements TReplicationService.Iface {
                 LOG.info(String.format("There are too many jobs in memory. " +
                         "Waiting until more complete. (limit: %d)",
                         maxJobsInMemory));
-                ReplicationUtils.sleep(POLL_WAIT_TIME_MS);
+                ReplicationUtils.sleep(pollWaitTimeMs);
                 continue;
             }
 
@@ -397,8 +403,8 @@ public class ReplicationServer implements TReplicationService.Iface {
             // and then try again.
             if (auditLogEntry == null) {
                 LOG.info(String.format("No more entries from the audit log. " +
-                        "Sleeping for %s ms", POLL_WAIT_TIME_MS));
-                ReplicationUtils.sleep(POLL_WAIT_TIME_MS);
+                        "Sleeping for %s ms", pollWaitTimeMs));
+                ReplicationUtils.sleep(pollWaitTimeMs);
                 continue;
             }
 
@@ -439,7 +445,7 @@ public class ReplicationServer implements TReplicationService.Iface {
                     LOG.warn(String.format("Not submitting %s for execution " +
                                     " due to the limit for the number of " +
                                     "jobs to execute", replicationJob));
-                    return;
+                    continue;
                 } else {
                     queueJobForExecution(replicationJob);
                 }
@@ -591,5 +597,21 @@ public class ReplicationServer implements TReplicationService.Iface {
                     job.getPersistedJobInfo().getOperation(),
                     srcSpecs));
         }
+    }
+
+    /**
+     * Start processing audit log entries after this ID. This should only be
+     * called before run() is called.
+     */
+    public void setStartAfterAuditLogId(long auditLogId) {
+        this.startAfterAuditLogId = auditLogId;
+    }
+
+    /**
+     * For polling operations that need to sleep, sleep for this many
+     * milliseconds.
+     */
+    public void setPollWaitTimeMs(long pollWaitTimeMs) {
+        this.pollWaitTimeMs = pollWaitTimeMs;
     }
 }
