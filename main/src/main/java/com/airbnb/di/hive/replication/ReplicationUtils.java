@@ -191,13 +191,13 @@ public class ReplicationUtils {
     }
 
     public static String convertToJson(List<String> list) throws IOException {
-        ObjectWriter ow = new ObjectMapper().defaultPrettyPrintingWriter();
+        ObjectWriter ow = new ObjectMapper().writerWithDefaultPrettyPrinter();
         return ow.writeValueAsString(list);
     }
 
     public static String convertToJson(Map<String, String> map)
             throws IOException {
-        ObjectWriter ow = new ObjectMapper().defaultPrettyPrintingWriter();
+        ObjectWriter ow = new ObjectMapper().writerWithDefaultPrettyPrinter();
         return ow.writeValueAsString(map);
     }
 
