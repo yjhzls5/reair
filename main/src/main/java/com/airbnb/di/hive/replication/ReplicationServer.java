@@ -377,9 +377,6 @@ public class ReplicationServer implements TReplicationService.Iface {
                     counters.getCounter(
                             ReplicationCounters.Type.NOT_COMPLETABLE_TASKS);
 
-            LOG.error("job to complete is " + jobsToComplete);
-            LOG.error("completed jobs is " + completedJobs);
-
             if (jobsToComplete > 0 && completedJobs >= jobsToComplete) {
                 LOG.info(String.format("Hit the limit for the number of " +
                 "successful jobs (%d) - returning.", jobsToComplete));
@@ -477,8 +474,6 @@ public class ReplicationServer implements TReplicationService.Iface {
                 jobsToReturn.add(tJob);
             }
         }
-        // TODO: Remove test log line
-        LOG.info("getActiveJobs: returning " + jobsToReturn.size() + " jobs");
         return jobsToReturn;
     }
 
@@ -538,8 +533,6 @@ public class ReplicationServer implements TReplicationService.Iface {
                 jobsToReturn.add(tJob);
             }
         }
-        // TODO: Remove test log line
-        LOG.info("getRetiredJobs: returning " + jobsToReturn.size() + " jobs");
         return jobsToReturn;
     }
 
