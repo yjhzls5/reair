@@ -13,6 +13,7 @@
         <module>main</module>
         <module>hive-hooks</module>
         <module>utils</module>
+        <module>thrift</module>
     </modules>
 
 
