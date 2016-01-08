@@ -176,7 +176,7 @@ public class ReplicationLauncher {
                 DeployConfigurationKeys.THRIFT_SERVER_PORT,
                 9996);
 
-        LOG.info("Running replication server");
+        LOG.debug("Running replication server");
 
         ReplicationServer replicationServer = new ReplicationServer(
                 conf,
@@ -205,7 +205,7 @@ public class ReplicationLauncher {
                             new TServer.Args(
                                     serverTransport).processor(processor));
 
-                    LOG.info("Starting the thrift server...");
+                    LOG.debug("Starting the thrift server...");
                     server.serve();
                 } catch (Exception e) {
                     LOG.error("Thrift server died!", e);
@@ -226,7 +226,7 @@ public class ReplicationLauncher {
         try {
             replicationServer.run(Long.MAX_VALUE);
         } finally {
-            LOG.info("Replication server stopped running");
+            LOG.debug("Replication server stopped running");
         }
     }
 

@@ -57,7 +57,7 @@ public class ProcessRunner {
                 Field f = process.getClass().getDeclaredField("pid");
                 f.setAccessible(true);
                 long pid = f.getInt(process);
-                LOG.info("PID is " + pid);
+                LOG.debug("PID is " + pid);
             } catch (Throwable e) {
                 LOG.error("Unable to get PID!");
             }

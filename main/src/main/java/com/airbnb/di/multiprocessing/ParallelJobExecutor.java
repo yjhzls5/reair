@@ -49,7 +49,7 @@ public class ParallelJobExecutor {
     synchronized public void add(Job job) {
         boolean canRunImmediately = dagManager.addJob(job);
         if (canRunImmediately) {
-            LOG.info("Job " + job + " is ready to run.");
+            LOG.debug("Job " + job + " is ready to run.");
             jobsToRun.add(job);
         }
         incrementSubmittedJobCount();
@@ -63,17 +63,17 @@ public class ParallelJobExecutor {
      * @param doneJob
      */
     public synchronized void notifyDone(Job doneJob) {
-        LOG.info("Done notification received for " + doneJob);
+        LOG.debug("Done notification received for " + doneJob);
         Set<Job> newReadyJobs = dagManager.removeJob(doneJob);
         for (Job jobToRun : newReadyJobs) {
-            LOG.info("Job " + jobToRun + " is ready to run.");
+            LOG.debug("Job " + jobToRun + " is ready to run.");
             jobsToRun.add(jobToRun);
         }
         incrementDoneJobCount();
 
         countLock.lock();
         try {
-            LOG.info("Submitted jobs: " + submittedJobCount +
+            LOG.debug("Submitted jobs: " + submittedJobCount +
                             " Pending jobs: " +
                             (submittedJobCount - doneJobCount) +
                             " Completed jobs: " + doneJobCount);

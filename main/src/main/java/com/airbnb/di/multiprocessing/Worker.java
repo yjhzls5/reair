@@ -44,12 +44,12 @@ public class Worker <T extends Job> extends Thread {
         try {
             while (true) {
                 if (job == null) {
-                    LOG.info("Waiting for a job");
+                    LOG.debug("Waiting for a job");
                     job = inputQueue.take();
                 } else {
-                    LOG.info("Using existing job");
+                    LOG.debug("Using existing job");
                 }
-                LOG.info("**** Running job: " + job + " ****");
+                LOG.debug("**** Running job: " + job + " ****");
                 int ret = job.run();
                 if (ret != 0) {
                     LOG.error("Error running job " + job + " return code: " +
@@ -57,12 +57,12 @@ public class Worker <T extends Job> extends Thread {
                     // TODO: Need to recover from failures with retires
                     System.exit(-1);
                 }
-                LOG.info("**** Done running job: " + job + " ****");
+                LOG.debug("**** Done running job: " + job + " ****");
                 parallelJobExecutor.notifyDone(job);
                 job = null;
             }
         } catch (InterruptedException e) {
-            LOG.info("Got interrupted");
+            LOG.debug("Got interrupted");
         } catch (RuntimeException e) {
             LOG.error("Worker got a runtime exception: ", e);
             System.exit(-1);

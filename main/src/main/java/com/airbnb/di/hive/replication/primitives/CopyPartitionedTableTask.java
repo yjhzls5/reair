@@ -47,7 +47,7 @@ public class CopyPartitionedTableTask implements ReplicationTask {
     }
 
     public RunInfo runTask() throws HiveMetastoreException {
-        LOG.info("Copying " + spec);
+        LOG.debug("Copying " + spec);
         HiveMetastoreClient destMs = destCluster.getMetastoreClient();
 
         HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
@@ -79,7 +79,7 @@ public class CopyPartitionedTableTask implements ReplicationTask {
 
 
         if (existingTable != null) {
-            LOG.info("Table " + spec + " exists on destination!");
+            LOG.debug("Table " + spec + " exists on destination!");
             objectConflictHandler.handleCopyConflict(srcCluster, destCluster,
                     freshSrcTable, existingTable);
         }
@@ -100,27 +100,27 @@ public class CopyPartitionedTableTask implements ReplicationTask {
         // Take necessary action
         switch (action) {
             case CREATE:
-                LOG.info("Creating " + spec + " since it does not exist on " +
+                LOG.debug("Creating " + spec + " since it does not exist on " +
                         "the destination");
                 ReplicationUtils.createDbIfNecessary(srcMs, destMs,
                         destTable.getDbName());
-                LOG.info("Creating: " + destTable);
+                LOG.debug("Creating: " + destTable);
                 destMs.createTable(destTable);
-                LOG.info("Successfully created table " + spec);
+                LOG.debug("Successfully created table " + spec);
                 break;
 
             case ALTER:
-                LOG.info("Altering table " + spec + " on destination");
-                LOG.info("Existing table: " + existingTable);
-                LOG.info("Replacement table: " + destTable);
+                LOG.debug("Altering table " + spec + " on destination");
+                LOG.debug("Existing table: " + existingTable);
+                LOG.debug("Replacement table: " + destTable);
                 destMs.alterTable(destTable.getDbName(),
                         destTable.getTableName(),
                         destTable);
-                LOG.info("Successfully altered " + spec);
+                LOG.debug("Successfully altered " + spec);
                 break;
 
             case NOOP:
-                LOG.info("Destination table " + spec + " is up to date, so " +
+                LOG.debug("Destination table " + spec + " is up to date, so " +
                         "not doing anything");
                 break;
 

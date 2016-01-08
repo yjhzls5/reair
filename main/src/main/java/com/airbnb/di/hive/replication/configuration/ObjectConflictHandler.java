@@ -56,11 +56,11 @@ public class ObjectConflictHandler {
             }
             HiveMetastoreClient destMs = destCluster.getMetastoreClient();
 
-            LOG.info(String.format("Dropping %s on destination (delete " +
+            LOG.debug(String.format("Dropping %s on destination (delete " +
                             "data: %s)",
                     spec, dropData));
             destMs.dropTable(spec.getDbName(), spec.getTableName(), dropData);
-            LOG.info("Dropped " + spec);
+            LOG.debug("Dropped " + spec);
         }
 
         return true;

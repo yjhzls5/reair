@@ -35,7 +35,7 @@ public class CopyPartitionJob extends Job {
         while (true) {
             try {
                 RunInfo runInfo = copyPartitionTask.runTask();
-                LOG.info(String.format("Copy partition task %s finished " +
+                LOG.debug(String.format("Copy partition task %s finished " +
                                 "with status %s",
                         copyPartitionTask.getSpec(),
                         runInfo.getRunStatus()));

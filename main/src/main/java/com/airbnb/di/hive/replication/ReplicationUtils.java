@@ -93,7 +93,7 @@ public class ReplicationUtils {
                                     String dbName)
             throws HiveMetastoreException {
         if (destMs.existsDb(dbName)) {
-            LOG.info("DB " + dbName + " already exists on destination.");
+            LOG.debug("DB " + dbName + " already exists on destination.");
             return;
         } else {
             Database srcDb = srcMs.getDatabase(dbName);
@@ -105,7 +105,7 @@ public class ReplicationUtils {
             }
             Database dbToCreate = new Database(srcDb.getName(),
                     srcDb.getDescription(), null, null);
-            LOG.info("Creating DB: " + dbToCreate);
+            LOG.debug("Creating DB: " + dbToCreate);
             destMs.createDatabase(dbToCreate);
         }
     }
@@ -355,7 +355,7 @@ public class ReplicationUtils {
             throws InterruptedException {
         long sleepSeconds = (long) Math.min(max,
                 Math.pow(base, attempt));
-        LOG.info(String.format("Attempt %d: sleeping for %d seconds",
+        LOG.debug(String.format("Attempt %d: sleeping for %d seconds",
                 attempt, sleepSeconds));
         Thread.sleep(1000 * sleepSeconds);
     }

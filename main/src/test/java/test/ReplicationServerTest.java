@@ -648,7 +648,7 @@ public class ReplicationServerTest extends MockClusterTest {
                 partitionName));
 
         // Simulate the drop
-        LOG.info("Dropping " + partitionSpec);
+        LOG.debug("Dropping " + partitionSpec);
         simulateDropPartition(dbName, tableName, partitionName);
 
         // Run replication so that it picks up the drop command

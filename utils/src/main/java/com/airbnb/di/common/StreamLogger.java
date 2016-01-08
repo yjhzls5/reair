@@ -42,7 +42,7 @@ public class StreamLogger extends Thread {
             BufferedReader br = new BufferedReader(isr);
             String line;
             while ((line = br.readLine()) != null) {
-                LOG.info(line);
+                LOG.debug(line);
                 if (saveToString) {
                     sb.append(line);
                 }

@@ -336,8 +336,8 @@ public class FsUtils {
         long destSize = totalSize(destFileSizes);
 
         // Size check is sort of redundant, but is a quick one to show.
-        LOG.info("Size of " + src + " is " + srcSize);
-        LOG.info("Size of " + dest + " is " + destSize);
+        LOG.debug("Size of " + src + " is " + srcSize);
+        LOG.debug("Size of " + dest + " is " + destSize);
 
         if (srcSize != destSize) {
             LOG.warn(String.format("Size of %s and %s do not match!",
@@ -390,7 +390,7 @@ public class FsUtils {
             }
         }
 
-        LOG.info(String.format("%s and %s are the same", src, dest));
+        LOG.debug(String.format("%s and %s are the same", src, dest));
         return true;
     }
 
@@ -443,7 +443,7 @@ public class FsUtils {
                 throw new IOException("File exists instead of destination " +
                         destPathParent);
             } else {
-                LOG.info("Parent directory exists: " + destPathParent);
+                LOG.debug("Parent directory exists: " + destPathParent);
             }
         } else {
             destFs.mkdirs(destPathParent);
@@ -503,10 +503,10 @@ public class FsUtils {
                                         Path dest) throws IOException {
         FileSystem fs = dest.getFileSystem(conf);
         if (fs.exists(dest)) {
-            LOG.info("Removing " + dest + " since it exists");
+            LOG.debug("Removing " + dest + " since it exists");
             deleteDirectory(conf, dest);
         }
-        LOG.info("Renaming " + src + " to " + dest);
+        LOG.debug("Renaming " + src + " to " + dest);
         fs.rename(src, dest);
     }
 }

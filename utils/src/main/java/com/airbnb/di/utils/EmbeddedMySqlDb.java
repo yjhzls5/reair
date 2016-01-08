@@ -49,12 +49,12 @@ public class EmbeddedMySqlDb {
             throw new RuntimeException("Failed to start embedded MySQL DB!");
         }
 
-        LOG.info("MySQL started successfully");
+        LOG.debug("MySQL started successfully");
     }
 
     public void stopDb() {
         mysqldResource.shutdown();
-        LOG.info("MySQL stoppped succcessfully");
+        LOG.debug("MySQL stoppped succcessfully");
     }
 
     public String getUsername() {

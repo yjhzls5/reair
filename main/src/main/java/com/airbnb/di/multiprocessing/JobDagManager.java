@@ -127,7 +127,7 @@ public class JobDagManager {
      * @return true if the job that was added can be run immediately.
      */
     synchronized public boolean addJob(Job jobToAdd) {
-        LOG.info("Adding job " + jobToAdd + " requiring locks " +
+        LOG.debug("Adding job " + jobToAdd + " requiring locks " +
                 jobToAdd.getRequiredLocks());
 
         LockSet lockSet = jobToAdd.getRequiredLocks();
@@ -156,7 +156,7 @@ public class JobDagManager {
         // the exclusive lock.
         for (String exclusiveLockToGet :
                 lockSet.getExclusiveLocks()) {
-            //LOG.info("Lock " + lockToGet + " is needed by " +
+            //LOG.debug("Lock " + lockToGet + " is needed by " +
             //        lockToJobsNeedingLock.get(lockToGet));
             if (!lockToJobsNeedingLock.containsKey(exclusiveLockToGet)) {
                 // No need to do anything if no job is waiting for it
@@ -229,7 +229,7 @@ public class JobDagManager {
             addLockToJobsNeedingLock(lock, jobToAdd);
         }
 
-        LOG.info("Added job " + jobToAdd + " with parents " + parents);
+        LOG.debug("Added job " + jobToAdd + " with parents " + parents);
         return false;
     }
 
@@ -313,7 +313,7 @@ public class JobDagManager {
         // be run.
         Set<Job> newJobsWithRequiredLocks = new HashSet<Job>();
         for (Job child : childJobs) {
-            LOG.info("Job " + child + " has parents " + child.getParentJobs());
+            LOG.debug("Job " + child + " has parents " + child.getParentJobs());
             if (child.getParentJobs().size() == 0) {
                 LockSet childLockSet = child.getRequiredLocks();
                 // Job is ready to run

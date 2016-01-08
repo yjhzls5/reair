@@ -41,7 +41,7 @@ public class DistCpWrapper {
         Path distCpLogDir = options.getDistCpLogDir();
 
         boolean destDirExists = FsUtils.dirExists(conf, destDir);
-        LOG.info("Dest dir " + destDir + " exists is " +
+        LOG.debug("Dest dir " + destDir + " exists is " +
                 destDirExists);
 
         boolean syncModificationTimes = options.getSyncModificationTimes();
@@ -54,7 +54,7 @@ public class DistCpWrapper {
                         destDir,
                         null,
                         syncModificationTimes)) {
-            LOG.info("Source and destination paths are already equal!");
+            LOG.debug("Source and destination paths are already equal!");
             return 0;
         }
 
@@ -70,7 +70,7 @@ public class DistCpWrapper {
                     !FsUtils.filesExistOnDestButNotSrc(conf, srcDir, destDir,
                             null);
             if (useDistcpUpdate) {
-                LOG.info("Doing a distcp update from " + srcDir +
+                LOG.debug("Doing a distcp update from " + srcDir +
                         " to " + destDir);
             }
         }
@@ -82,7 +82,7 @@ public class DistCpWrapper {
         }
 
         if (destDirExists && canDeleteDest && !useDistcpUpdate && !atomic) {
-            LOG.info("Unable to use distcp update, so deleting " + destDir +
+            LOG.debug("Unable to use distcp update, so deleting " + destDir +
                     " since it already exists");
             FsUtils.deleteDirectory(conf, destDir);
         }
@@ -97,12 +97,12 @@ public class DistCpWrapper {
             distcpDestDir = destDir;
         }
 
-        LOG.info(String.format("Copying %s to %s",
+        LOG.debug(String.format("Copying %s to %s",
                 srcDir, distcpDestDir));
 
 
         long srcSize = FsUtils.getSize(conf, srcDir, null);
-        LOG.info("Source size is: " + srcSize);
+        LOG.debug("Source size is: " + srcSize);
 
         // Use shell to copy for small files
         if (srcSize < options.getLocalCopyThreshold()) {
@@ -117,9 +117,9 @@ public class DistCpWrapper {
 
             FsShell shell = new FsShell();
             try {
-                LOG.info("Using shell to mkdir with args " + Arrays.asList(mkdirArgs));
+                LOG.debug("Using shell to mkdir with args " + Arrays.asList(mkdirArgs));
                 ToolRunner.run(shell, mkdirArgs);
-                LOG.info("Using shell to copy with args " + Arrays.asList(copyArgs));
+                LOG.debug("Using shell to copy with args " + Arrays.asList(copyArgs));
                 ToolRunner.run(shell, copyArgs);
             } catch (Exception e) {
                 throw new DistCpException(e);
@@ -133,9 +133,9 @@ public class DistCpWrapper {
             }
         } else {
 
-            LOG.info("DistCp log dir: " + distCpLogDir);
-            LOG.info("DistCp dest dir: " + distcpDestDir);
-            LOG.info("DistCp tmp dir: " + distCpTmpDir);
+            LOG.debug("DistCp log dir: " + distCpLogDir);
+            LOG.debug("DistCp dest dir: " + distcpDestDir);
+            LOG.debug("DistCp tmp dir: " + distCpTmpDir);
             // Make sure that the tmp dir and the destination directory are on
             // the same schema
             if (!FsUtils.sameFs(distCpTmpDir, distcpDestDir)) {
@@ -159,7 +159,7 @@ public class DistCpWrapper {
             distcpArgs.add("-pugp");
             distcpArgs.add(srcDir.toString());
             distcpArgs.add(distcpDestDir.toString());
-            LOG.info("Running DistCp with args: " + distcpArgs);
+            LOG.debug("Running DistCp with args: " + distcpArgs);
 
             // For distcp v1,  do something like
             // DistCp distCp = new DistCp(conf);
@@ -188,13 +188,13 @@ public class DistCpWrapper {
                 null)) {
             LOG.error("Source and destination sizes don't match!");
             if (atomic) {
-                LOG.info("Since it's an atomic copy, deleting " +
+                LOG.debug("Since it's an atomic copy, deleting " +
                         distcpDestDir);
                 FsUtils.deleteDirectory(conf, distcpDestDir);
                 throw new DistCpException("distcp result mismatch");
             }
         } else {
-            LOG.info("Size of source and destinations match");
+            LOG.debug("Size of source and destinations match");
         }
 
         if (syncModificationTimes) {
@@ -207,14 +207,14 @@ public class DistCpWrapper {
             // replace with the copied version.
             destDirExists = FsUtils.dirExists(conf, destDir);
             if (destDirExists) {
-                LOG.info("Deleting existing directory " + destDir);
+                LOG.debug("Deleting existing directory " + destDir);
                 FsUtils.deleteDirectory(conf, destDir);
             }
-            LOG.info("Moving from " + distCpTmpDir + " to " + destDir);
+            LOG.debug("Moving from " + distCpTmpDir + " to " + destDir);
             FsUtils.moveDir(conf, distcpDestDir, destDir);
         }
 
-        LOG.info("Deleting log directory " + distCpLogDir);
+        LOG.debug("Deleting log directory " + distCpLogDir);
         FsUtils.deleteDirectory(conf, distCpLogDir);
 
         // Not necessarily the bytes copied if using -update
@@ -255,7 +255,7 @@ public class DistCpWrapper {
         long startTime = System.currentTimeMillis();
         while (true) {
             if (System.currentTimeMillis() - startTime > timeout) {
-                LOG.info(String.format("DistCp exceeded timeout of %sms",
+                LOG.debug(String.format("DistCp exceeded timeout of %sms",
                         timeout));
                 distCpRunner.interrupt();
                 break;

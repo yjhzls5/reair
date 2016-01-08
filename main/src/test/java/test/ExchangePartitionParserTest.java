@@ -18,9 +18,9 @@ public class ExchangePartitionParserTest {
         String query3 = "ALTER TABLE tmp_brain.extrema_listing_decline_dates_unavailable_20120814 EXCHANGE PARTITION(ds='2012-08-14') WITH TABLE extrema.listing_decline_dates_unavailable";
         ExchangePartitionParser parser = new ExchangePartitionParser();
         boolean parsed = parser.parse(query);
-        LOG.info("parsed=" + parsed);
-        LOG.info("exchangeFromSpec=" + parser.getExchangeFromSpec());
-        LOG.info("exchangeToSpec=" + parser.getExchangeToSpec());
-        LOG.info("partitionName=" + parser.getPartitionName());
+        LOG.debug("parsed=" + parsed);
+        LOG.debug("exchangeFromSpec=" + parser.getExchangeFromSpec());
+        LOG.debug("exchangeToSpec=" + parser.getExchangeToSpec());
+        LOG.debug("partitionName=" + parser.getPartitionName());
     }
 }

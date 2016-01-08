@@ -26,7 +26,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 
-
 public class HiveCopy {
 
     private static final Log LOG = LogFactory.getLog(HiveCopy.class);

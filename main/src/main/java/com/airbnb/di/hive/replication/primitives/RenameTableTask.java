@@ -72,7 +72,7 @@ public class RenameTableTask implements ReplicationTask {
     @Override
     public RunInfo runTask() throws DistCpException, HiveMetastoreException,
             IOException {
-        LOG.info("Renaming " + renameFromSpec + " to " + renameToSpec);
+        LOG.debug("Renaming " + renameFromSpec + " to " + renameToSpec);
 
         HiveMetastoreClient destMs = destCluster.getMetastoreClient();
         HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
@@ -91,12 +91,12 @@ public class RenameTableTask implements ReplicationTask {
         if (ReplicationUtils.transientLastDdlTimesMatch(
                 freshSrcRenameToTable,
                 freshDestRenameToTable)) {
-            LOG.info("Rename to table exists on destination and has a " +
+            LOG.debug("Rename to table exists on destination and has a " +
                     "matching TLDT. Not doing anything");
             renameAction = HandleRenameAction.NO_OP;
 
         } else if (freshDestRenameToTable != null) {
-            LOG.info("Rename to table already exists on destination, but " +
+            LOG.debug("Rename to table already exists on destination, but " +
                     "doesn't have a matching TLDT. Copying instead...");
             renameAction = HandleRenameAction.COPY_TABLE;
         } else if (freshDestTable == null) {
@@ -111,14 +111,14 @@ public class RenameTableTask implements ReplicationTask {
                 freshDestTable)) {
             LOG.warn(StringUtils.format("Destination table %s doesn't have " +
                     "the expected modified time", renameFromSpec));
-            LOG.info("Renamed from source table with a TLDT: " +
+            LOG.debug("Renamed from source table with a TLDT: " +
                     renameFromTableTdlt);
-            LOG.info("Table on destination: " + freshDestTable);
-            LOG.info(String.format("Copying %s to destination instead",
+            LOG.debug("Table on destination: " + freshDestTable);
+            LOG.debug(String.format("Copying %s to destination instead",
                     renameToSpec));
             renameAction = HandleRenameAction.COPY_TABLE;
         } else {
-            LOG.info(String.format("Destination table (%s) matches " +
+            LOG.debug(String.format("Destination table (%s) matches " +
                     "expected TLDT(%s) - will rename", renameFromSpec,
                     ReplicationUtils.getTldt(freshDestTable)));
             renameAction = HandleRenameAction.RENAME_TABLE;
@@ -129,14 +129,14 @@ public class RenameTableTask implements ReplicationTask {
                 return new RunInfo(RunInfo.RunStatus.SUCCESSFUL, 0);
 
             case RENAME_TABLE:
-                LOG.info(StringUtils.format("Renaming %s to %s",
+                LOG.debug(StringUtils.format("Renaming %s to %s",
                         renameFromSpec, renameToSpec));
                 Table newTableOnDestination = new Table(freshDestTable);
                 newTableOnDestination.setDbName(renameToSpec.getDbName());
                 newTableOnDestination.setTableName(renameToSpec.getTableName());
                 destMs.alterTable(renameFromSpec.getDbName(),
                         renameFromSpec.getTableName(), newTableOnDestination);
-                LOG.info(StringUtils.format("Renamed %s to %s", renameFromSpec,
+                LOG.debug(StringUtils.format("Renamed %s to %s", renameFromSpec,
                         renameToSpec));
                 // After a rename, the table should be re-copied to get the
                 // correct modified time changes. With a proper rename, this

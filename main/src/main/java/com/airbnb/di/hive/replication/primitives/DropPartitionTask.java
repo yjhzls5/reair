@@ -58,15 +58,15 @@ public class DropPartitionTask implements ReplicationTask {
                 HiveParameterKeys.TLDT);
 
         if (srcTldt.equals(destTldt)) {
-            LOG.info(String.format("Destination partition %s matches expected" +
+            LOG.debug(String.format("Destination partition %s matches expected" +
                             " TLDT (%s)", spec, destTldt));
-            LOG.info("Dropping " + spec);
+            LOG.debug("Dropping " + spec);
             ms.dropPartition(spec.getDbName(), spec.getTableName(),
                     spec.getPartitionName(), true);
-            LOG.info("Dropped " + spec);
+            LOG.debug("Dropped " + spec);
             return new RunInfo(RunInfo.RunStatus.SUCCESSFUL, 0);
         } else {
-            LOG.info(String.format("Not dropping %s as source(%s) and " +
+            LOG.debug(String.format("Not dropping %s as source(%s) and " +
                             "destination(%s) TLDT's don't match",
                     spec.toString(), srcTldt, destTldt));
             return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);

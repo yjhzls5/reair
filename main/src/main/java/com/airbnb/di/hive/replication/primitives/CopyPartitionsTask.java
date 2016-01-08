@@ -101,7 +101,7 @@ public class CopyPartitionsTask implements ReplicationTask {
         // TODO: This may copy more data than necessary. Revisit later.
         Path commonDirectory = ReplicationUtils.getCommonDirectory(
                 partitionLocations);
-        LOG.info("Common directory of partitions is " + commonDirectory);
+        LOG.debug("Common directory of partitions is " + commonDirectory);
         // TODO: Resolve in a better way
         if (commonDirectory.toString().startsWith("s3")) {
             LOG.error("Since common directory starts with S3, it will be set " +
@@ -113,7 +113,7 @@ public class CopyPartitionsTask implements ReplicationTask {
 
     public RunInfo runTask() throws HiveMetastoreException, DistCpException,
             IOException, HiveMetastoreException {
-        LOG.info("Copying partitions from " + srcTableSpec);
+        LOG.debug("Copying partitions from " + srcTableSpec);
         HiveMetastoreClient destMs = destCluster.getMetastoreClient();
         HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
 
@@ -138,7 +138,7 @@ public class CopyPartitionsTask implements ReplicationTask {
         // TODO: Handle view case
 
         Path tableLocation = new Path(freshSrcTable.getSd().getLocation());
-        LOG.info("Location of table " + srcTableSpec + " is " + tableLocation);
+        LOG.debug("Location of table " + srcTableSpec + " is " + tableLocation);
 
         // If possible, copy the common directory in a single distcp job.
         // We call this the optimistic copy as this should result in no
@@ -192,18 +192,18 @@ public class CopyPartitionsTask implements ReplicationTask {
             Path destinationLocationPath = new Path(destinationLocation);
 
             if (!objectModifier.shouldCopyData(destinationLocation)) {
-                LOG.info("Skipping copy of destination location " +
+                LOG.debug("Skipping copy of destination location " +
                         commonDirectory + " due to destination " +
                         "object factory");
             } else if (!FsUtils.dirExists(conf, commonDirectory)) {
-                LOG.info("Skipping copy of destination location " +
+                LOG.debug("Skipping copy of destination location " +
                         commonDirectory + " since it does not exist");
             } else if (FsUtils.equalDirs(conf, commonDirectory,
                     destinationLocationPath)) {
-                LOG.info("Skipping copying common directory " + commonDirectory +
+                LOG.debug("Skipping copying common directory " + commonDirectory +
                         " since it matches " + destinationLocationPath);
             } else {
-                LOG.info("Optimistically copying common directory " +
+                LOG.debug("Optimistically copying common directory " +
                         commonDirectory);
                 Random random = new Random();
                 long randomLong = random.nextLong();
@@ -268,12 +268,12 @@ public class CopyPartitionsTask implements ReplicationTask {
             }
             bytesCopied += status.getBytesCopied();
             partitionCopyCount++;
-            LOG.info(String.format("Copied %s out of %s partitions",
+            LOG.debug(String.format("Copied %s out of %s partitions",
                     partitionCopyCount, partitionNames.size()));*/
         }
 
         while (true) {
-            LOG.info(String.format("Copied %s out of %s partitions",
+            LOG.debug(String.format("Copied %s out of %s partitions",
                     copyPartitionsCounter.getCompletionCount(), expectedCopyCount));
 
             if (copyPartitionsCounter.getCompletionCount() == expectedCopyCount) {

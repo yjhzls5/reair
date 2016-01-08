@@ -45,7 +45,7 @@ public class StaticDbConnectionFactory implements DbConnectionFactory {
             public void run() throws Exception {
                 if (connection == null ||
                         !connection.isValid(5)) {
-                    LOG.info("Connecting to " + jdbcUrl);
+                    LOG.debug("Connecting to " + jdbcUrl);
                     connection =  DriverManager.getConnection(jdbcUrl,
                             username, password);
                 }

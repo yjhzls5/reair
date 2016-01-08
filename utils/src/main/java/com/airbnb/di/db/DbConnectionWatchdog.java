@@ -40,7 +40,7 @@ public class DbConnectionWatchdog extends Thread {
                 Connection connection = dbConnectionFactory.getConnection();
                 PreparedStatement ps = connection.prepareStatement("SELECT 1");
                 ps.execute();
-                LOG.info("Successfully executed " + TEST_QUERY);
+                LOG.debug("Successfully executed " + TEST_QUERY);
                 lastSuccessfulConnectionTime = System.currentTimeMillis();
             } catch (SQLException e) {
                 LOG.error("Got an exception when executing " + TEST_QUERY, e);

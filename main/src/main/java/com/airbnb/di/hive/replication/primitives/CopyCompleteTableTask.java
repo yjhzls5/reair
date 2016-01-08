@@ -65,7 +65,7 @@ public class CopyCompleteTableTask implements ReplicationTask {
 
     public RunInfo runTask() throws DistCpException, HiveMetastoreException,
             IOException {
-        LOG.info("Copying " + spec);
+        LOG.debug("Copying " + spec);
 
         HiveMetastoreClient destMs = destCluster.getMetastoreClient();
         HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
@@ -81,7 +81,7 @@ public class CopyCompleteTableTask implements ReplicationTask {
         }
 
         if (HiveUtils.isPartitioned(freshSrcTable)) {
-            LOG.info("Source table " + spec + " is a partitioned table");
+            LOG.debug("Source table " + spec + " is a partitioned table");
 
             // Create a collection containing all the partitions that should
             // be copied.
@@ -141,7 +141,7 @@ public class CopyCompleteTableTask implements ReplicationTask {
                     copyPartitionsRunInfo.getBytesCopied() +
                             copyTableRunInfo.getBytesCopied());
         } else {
-            LOG.info("Source table " + spec + " is an unpartitioned table");
+            LOG.debug("Source table " + spec + " is an unpartitioned table");
             CopyUnpartitionedTableTask copyJob = new CopyUnpartitionedTableTask(
                     conf,
                     objectModifier,

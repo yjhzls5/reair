@@ -76,7 +76,7 @@ public class DbKeyValueStore {
     }
 
     public void set(String key, String value) throws SQLException {
-        LOG.info("Setting " + key + " to " + value);
+        LOG.debug("Setting " + key + " to " + value);
         Connection connection = dbConnectionFactory.getConnection();
         String query = String.format(
                 "INSERT INTO %s (key_string, value_string) " +

@@ -319,7 +319,7 @@ public class ReplicationTestUtils {
             qb.append(whereClause);
         }
 
-        LOG.info("Running query " + qb.toString());
+        LOG.debug("Running query " + qb.toString());
 
         Class.forName("com.mysql.jdbc.Driver");
         Connection connection = DriverManager.getConnection(jdbcUrl, username,
@@ -365,7 +365,7 @@ public class ReplicationTestUtils {
             qb.append(whereClause);
         }
 
-        LOG.info("Running query " + qb.toString());
+        LOG.debug("Running query " + qb.toString());
 
         Class.forName("com.mysql.jdbc.Driver");
         Connection connection = dbConnectionFactory.getConnection();

@@ -29,7 +29,7 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
     /*
     @Test
     public void testExample() throws Exception {
-        LOG.info("This is a test");
+        LOG.debug("This is a test");
         YarnConfiguration conf = new YarnConfiguration();
         conf.setInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB, 64);
         conf.setClass(YarnConfiguration.RM_SCHEDULER,
@@ -47,7 +47,7 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
         Path distcpTmpDir = new Path("file:///tmp/deleteme_distcp_tmp");
         Path distcpLogDir = new Path("file:///tmp/deleteme_distcp_logdir");
 
-        LOG.info("Running sync");
+        LOG.debug("Running sync");
         FsUtils.oneWaySync(conf, srcPath, destPath, false, true,
                 distcpTmpDir, distcpLogDir, null, 0);
 

@@ -72,7 +72,7 @@ public class CopyPartitionTask implements ReplicationTask {
 
     public RunInfo runTask() throws HiveMetastoreException, DistCpException,
             IOException {
-        LOG.info("Copying " + spec);
+        LOG.debug("Copying " + spec);
 
         HiveMetastoreClient destMs = destCluster.getMetastoreClient();
         HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
@@ -128,7 +128,7 @@ public class CopyPartitionTask implements ReplicationTask {
                 existingPartition);
 
         if (existingPartition != null) {
-            LOG.info("Partition " + spec + " already exists!");
+            LOG.debug("Partition " + spec + " already exists!");
             objectConflictHandler.handleCopyConflict(srcCluster, destCluster,
                     freshSrcPartition, existingPartition);
         }
@@ -235,21 +235,21 @@ public class CopyPartitionTask implements ReplicationTask {
                 ReplicationUtils.createDbIfNecessary(srcMs, destMs,
                         destPartition.getDbName());
 
-                LOG.info("Creating " + spec + " since it does not exist on " +
+                LOG.debug("Creating " + spec + " since it does not exist on " +
                         "the destination");
                 destMs.addPartition(destPartition);
-                LOG.info("Successfully created " + spec);
+                LOG.debug("Successfully created " + spec);
                 break;
 
             case ALTER:
-                LOG.info("Altering partition " + spec + " on destination");
+                LOG.debug("Altering partition " + spec + " on destination");
                 destMs.alterPartition(destPartition.getDbName(),
                         destPartition.getTableName(),
                         destPartition);
                 break;
 
             case NOOP:
-                LOG.info("Not doing anything for " + spec);
+                LOG.debug("Not doing anything for " + spec);
                 break;
 
             default:

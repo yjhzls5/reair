@@ -493,7 +493,7 @@ public class ReplicationJobFactory {
         List<ReplicationJob> replicationJobs = new ArrayList<ReplicationJob>();
 
         if (!replicationFilter.accept(auditLogEntry)) {
-            LOG.info(String.format("Audit log entry id: %s filtered out by %s",
+            LOG.debug(String.format("Audit log entry id: %s filtered out by %s",
                     auditLogEntry,
                     replicationFilter.getClass().getSimpleName()));
             return replicationJobs;
@@ -509,7 +509,7 @@ public class ReplicationJobFactory {
             ExchangePartitionParser parser = new ExchangePartitionParser();
             boolean parsed = parser.parse(auditLogEntry.getCommand());
             if (parsed) {
-                LOG.info(String.format("Parsed audit log id: %s " +
+                LOG.debug(String.format("Parsed audit log id: %s " +
                                 "query: %s as an exchange partition query",
                         auditLogEntry.getId(),
                         auditLogEntry.getCommand()));
@@ -533,7 +533,7 @@ public class ReplicationJobFactory {
                         exchangeToTable,
                         new NamedPartition(exchangeToSpec.getPartitionName(),
                                 exchangeToPartition))) {
-                    LOG.info(String.format("Exchange partition from audit log" +
+                    LOG.debug(String.format("Exchange partition from audit log" +
                                     " id: %s filtered out by %s",
                             auditLogEntry.getId(),
                             replicationFilter.getClass().getSimpleName()));
@@ -556,7 +556,7 @@ public class ReplicationJobFactory {
 
         if (auditLogEntry.getOutputTables().size() == 0 &&
                 auditLogEntry.getOutputPartitions().size() == 0) {
-            LOG.info(String.format("Audit log entry id: %s filtered out " +
+            LOG.debug(String.format("Audit log entry id: %s filtered out " +
                             "since it has no output tables or partitions",
                     auditLogEntry.getId()));
             return replicationJobs;
@@ -675,7 +675,7 @@ public class ReplicationJobFactory {
                         operationType);
         }
 
-        LOG.info("Converted audit log entry " + auditLogEntry + " to " +
+        LOG.debug("Converted audit log entry " + auditLogEntry + " to " +
                 replicationJobs);
 
         return replicationJobs;
@@ -714,7 +714,7 @@ public class ReplicationJobFactory {
             Table table = tableLookupMap.get(new HiveObjectSpec(
                     partition.getDbName(), partition.getTableName()));
             if (!filter.accept(table, pwn)) {
-                LOG.info(String.format("%s filtering out: %s",
+                LOG.debug(String.format("%s filtering out: %s",
                         filter.getClass().getName(),
                         partitionSpec));
                 partitionIterator.remove();
@@ -728,7 +728,7 @@ public class ReplicationJobFactory {
             Table table = tableIterator.next();
             HiveObjectSpec tableSpec = new HiveObjectSpec(table);
             if (!filter.accept(table)) {
-                LOG.info(String.format("%s filtering out: %s",
+                LOG.debug(String.format("%s filtering out: %s",
                         filter.getClass().getName(),
                         tableSpec));
                 tableIterator.remove();

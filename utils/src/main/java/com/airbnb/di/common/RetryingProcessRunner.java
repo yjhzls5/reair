@@ -27,7 +27,7 @@ public class RetryingProcessRunner {
 
         for (int i=0; i < retries; i++) {
 
-            LOG.info("Running: " + args);
+            LOG.debug("Running: " + args);
             ProcessRunner runner = new ProcessRunner(args);
             RunResult result = runner.run();
             if (result.getReturnCode() == 0) {
@@ -42,7 +42,7 @@ public class RetryingProcessRunner {
             }
 
             try {
-                LOG.info("Sleeping for " + RETRY_SLEEP_TIME/1000 + "s");
+                LOG.debug("Sleeping for " + RETRY_SLEEP_TIME/1000 + "s");
                 Thread.sleep(RETRY_SLEEP_TIME);
             } catch (InterruptedException e) {
                 throw new RuntimeException("Shouldn't happen!");

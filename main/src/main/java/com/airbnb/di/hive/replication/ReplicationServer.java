@@ -90,7 +90,7 @@ public class ReplicationServer implements TReplicationService.Iface {
         @Override
         public void onStart(ReplicationJob replicationJob) {
             // TODO: This is not yet used
-            LOG.info("Job id: " + replicationJob.getId() + " started");
+            LOG.debug("Job id: " + replicationJob.getId() + " started");
             jobInfoStore.changeStautsAndPersist(
                     ReplicationStatus.RUNNING,
                     replicationJob.getPersistedJobInfo());
@@ -99,7 +99,7 @@ public class ReplicationServer implements TReplicationService.Iface {
         @Override
         public void onComplete(RunInfo runInfo,
                                ReplicationJob replicationJob) {
-            LOG.info("Job id: " + replicationJob.getId() + " finished " +
+            LOG.debug("Job id: " + replicationJob.getId() + " finished " +
                     "with state " + runInfo.getRunStatus() + " and " +
                     runInfo.getBytesCopied() + " bytes copied");
 
@@ -108,7 +108,7 @@ public class ReplicationServer implements TReplicationService.Iface {
                     Long.toString(runInfo.getBytesCopied()));
 
 
-            LOG.info("Persisting job id: " +
+            LOG.debug("Persisting job id: " +
                     replicationJob.getPersistedJobInfo().getId());
 
             switch (runInfo.getRunStatus()) {
@@ -138,7 +138,7 @@ public class ReplicationServer implements TReplicationService.Iface {
                             runInfo.getRunStatus());
 
             }
-            LOG.info("Persisted job: " + replicationJob);
+            LOG.debug("Persisted job: " + replicationJob);
             jobRegistry.retireJob(replicationJob);
         }
     }
@@ -326,7 +326,7 @@ public class ReplicationServer implements TReplicationService.Iface {
             lastPersistedAuditLogId = startAfterAuditLogId;
         } else {
             // Otherwise, start from the previous stop point
-            LOG.info("Fetching last persisted audit log ID");
+            LOG.debug("Fetching last persisted audit log ID");
             String lastPersistedIdString = keyValueStore.get(
                     LAST_PERSISTED_AUDIT_LOG_ID_KEY);
 
@@ -343,12 +343,12 @@ public class ReplicationServer implements TReplicationService.Iface {
             }
         }
 
-        LOG.info("Using last persisted ID of " + lastPersistedAuditLogId);
+        LOG.debug("Using last persisted ID of " + lastPersistedAuditLogId);
         auditLogReader.setReadAfterId(lastPersistedAuditLogId);
 
         // Resume jobs that were persisted, but were not run.
         for(PersistedJobInfo jobInfo : jobInfoStore.getRunnableFromDb()) {
-            LOG.info(String.format("Restoring %s to (re)run", jobInfo));
+            LOG.debug(String.format("Restoring %s to (re)run", jobInfo));
             ReplicationJob job = restoreReplicationJob(jobInfo);
             jobRegistry.registerJob(job);
             queueJobForExecution(job);
@@ -366,7 +366,7 @@ public class ReplicationServer implements TReplicationService.Iface {
 
         while (true) {
             if (pauseRequested) {
-                LOG.info("Pause requested. Sleeping...");
+                LOG.debug("Pause requested. Sleeping...");
                 ReplicationUtils.sleep(pollWaitTimeMs);
                 continue;
             }
@@ -380,14 +380,14 @@ public class ReplicationServer implements TReplicationService.Iface {
                             ReplicationCounters.Type.NOT_COMPLETABLE_TASKS);
 
             if (jobsToComplete > 0 && completedJobs >= jobsToComplete) {
-                LOG.info(String.format("Hit the limit for the number of " +
+                LOG.debug(String.format("Hit the limit for the number of " +
                 "successful jobs (%d) - returning.", jobsToComplete));
                 return;
             }
 
             //  Wait if there are too many jobs
             if (jobExecutor.getNotDoneJobCount() > maxJobsInMemory) {
-                LOG.info(String.format("There are too many jobs in memory. " +
+                LOG.debug(String.format("There are too many jobs in memory. " +
                         "Waiting until more complete. (limit: %d)",
                         maxJobsInMemory));
                 ReplicationUtils.sleep(pollWaitTimeMs);
@@ -395,19 +395,19 @@ public class ReplicationServer implements TReplicationService.Iface {
             }
 
             // Get an entry from the audit log
-            LOG.info("Fetching the next entry from the audit log");
+            LOG.debug("Fetching the next entry from the audit log");
             AuditLogEntry auditLogEntry = auditLogReader.resilientNext();
 
             // If there's nothing from the audit log, then wait for a little bit
             // and then try again.
             if (auditLogEntry == null) {
-                LOG.info(String.format("No more entries from the audit log. " +
+                LOG.debug(String.format("No more entries from the audit log. " +
                         "Sleeping for %s ms", pollWaitTimeMs));
                 ReplicationUtils.sleep(pollWaitTimeMs);
                 continue;
             }
 
-            LOG.info("Got audit log entry: " + auditLogEntry);
+            LOG.debug("Got audit log entry: " + auditLogEntry);
 
             // Convert the audit log entry into a replication job, which has
             // elements persisted to the DB
@@ -415,7 +415,7 @@ public class ReplicationServer implements TReplicationService.Iface {
                     jobFactory.createReplicationJobs(auditLogEntry,
                             replicationFilter);
 
-            LOG.info(String.format("Audit log entry id: %s converted to %s",
+            LOG.debug(String.format("Audit log entry id: %s converted to %s",
                     auditLogEntry.getId(),
                     replicationJobs));
 
@@ -435,7 +435,7 @@ public class ReplicationServer implements TReplicationService.Iface {
             }
 
             for (ReplicationJob replicationJob : replicationJobs) {
-                LOG.info("Scheduling: " + replicationJob);
+                LOG.debug("Scheduling: " + replicationJob);
                 prettyLogStart(replicationJob);
                 long tasksSubmittedForExecution = counters.getCounter(
                         ReplicationCounters.Type.EXECUTION_SUBMITTED_TASKS);
@@ -481,7 +481,7 @@ public class ReplicationServer implements TReplicationService.Iface {
 
     @Override
     synchronized public void pause() throws TException {
-        LOG.info("Paused requested");
+        LOG.debug("Paused requested");
         if (pauseRequested) {
             LOG.warn("Server is already paused!");
         } else {
@@ -498,7 +498,7 @@ public class ReplicationServer implements TReplicationService.Iface {
 
     @Override
     synchronized public void resume() throws TException {
-        LOG.info("Resume requested");
+        LOG.debug("Resume requested");
         if (!pauseRequested) {
             LOG.warn("Server is already resumed!");
         } else {

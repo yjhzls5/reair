@@ -73,7 +73,7 @@ public class RenamePartitionTask implements ReplicationTask {
 
     @Override
     public RunInfo runTask() throws HiveMetastoreException, DistCpException, IOException {
-        LOG.info("Renaming " + renameFromSpec + " to " + renameToSpec);
+        LOG.debug("Renaming " + renameFromSpec + " to " + renameToSpec);
 
         HiveMetastoreClient destMs = destCluster.getMetastoreClient();
         HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
@@ -112,12 +112,12 @@ public class RenamePartitionTask implements ReplicationTask {
         if (ReplicationUtils.transientLastDdlTimesMatch(
                 freshSrcRenameToPart,
                 freshDestRenameToPart)) {
-            LOG.info("Rename to partition exists on destination and has a " +
+            LOG.debug("Rename to partition exists on destination and has a " +
                     "matching TLDT. Not doing anything");
             renameAction = HandleRenameAction.NO_OP;
 
         } else if (freshDestRenameToPart != null) {
-            LOG.info("Rename to partition already exists on destination, but " +
+            LOG.debug("Rename to partition already exists on destination, but " +
                     "doesn't have a matching TLDT. Copying instead...");
             renameAction = HandleRenameAction.COPY_PARTITION;
         } else if (freshDestRenameFromPart == null) {
@@ -132,14 +132,14 @@ public class RenamePartitionTask implements ReplicationTask {
                 freshDestRenameFromPart)) {
             LOG.warn(StringUtils.format("Destination partition %s doesn't " +
                     "have the expected modified time", renameFromSpec));
-            LOG.info("Renamed from source table with a TLDT: " +
+            LOG.debug("Renamed from source table with a TLDT: " +
                     renameFromPartitionTdlt);
-            LOG.info("Partition on destination: " + freshDestRenameFromPart);
-            LOG.info(String.format("Copying %s to destination instead",
+            LOG.debug("Partition on destination: " + freshDestRenameFromPart);
+            LOG.debug(String.format("Copying %s to destination instead",
                     renameToSpec));
             renameAction = HandleRenameAction.COPY_PARTITION;
         } else {
-            LOG.info(String.format("Destination table (%s) matches " +
+            LOG.debug(String.format("Destination table (%s) matches " +
                             "expected TLDT(%s) - will rename", renameFromSpec,
                     ReplicationUtils.getTldt(freshDestRenameFromPart)));
             // Action set in the beginning
@@ -150,7 +150,7 @@ public class RenamePartitionTask implements ReplicationTask {
                 return new RunInfo(RunInfo.RunStatus.SUCCESSFUL, 0);
 
             case RENAME_PARTITION:
-                LOG.info(StringUtils.format("Renaming %s to %s",
+                LOG.debug(StringUtils.format("Renaming %s to %s",
                         renameFromSpec, renameToSpec));
                 Partition newPartitionOnDestination = new Partition(
                         freshDestRenameFromPart);
@@ -172,7 +172,7 @@ public class RenamePartitionTask implements ReplicationTask {
                         renameFromSpec.getTableName(),
                         renameFromPartitionValues,
                         newPartitionOnDestination);
-                LOG.info(StringUtils.format("Renamed %s to %s", renameFromSpec,
+                LOG.debug(StringUtils.format("Renamed %s to %s", renameFromSpec,
                         renameToSpec));
 
                 // After a rename, the partition should be re-copied to get the

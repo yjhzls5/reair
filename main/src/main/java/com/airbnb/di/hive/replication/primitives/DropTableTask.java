@@ -57,14 +57,14 @@ public class DropTableTask implements ReplicationTask {
                 HiveParameterKeys.TLDT);
 
         if (sourceTldt.equals(destTldt)) {
-            LOG.info(String.format("Destination table %s matches expected" +
+            LOG.debug(String.format("Destination table %s matches expected" +
                             " TLDT (%s)", spec, destTldt));
-            LOG.info("Dropping " + spec);
+            LOG.debug("Dropping " + spec);
             ms.dropTable(spec.getDbName(), spec.getTableName(), true);
-            LOG.info("Dropped " + spec);
+            LOG.debug("Dropped " + spec);
             return new RunInfo(RunInfo.RunStatus.SUCCESSFUL, 0);
         } else {
-            LOG.info(String.format("Not dropping %s as source(%s) and " +
+            LOG.debug(String.format("Not dropping %s as source(%s) and " +
                             "destination(%s) TLDT's dont match", spec.toString(),
                     sourceTldt, destTldt));
             return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);

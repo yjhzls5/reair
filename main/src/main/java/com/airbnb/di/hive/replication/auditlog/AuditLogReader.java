@@ -83,7 +83,7 @@ public class AuditLogReader {
             return auditLogEntries.remove();
         }
 
-        LOG.info("Executing queries to try to get more audit log entries " +
+        LOG.debug("Executing queries to try to get more audit log entries " +
                 "from the DB");
 
         fetchMoreEntries();
@@ -139,7 +139,7 @@ public class AuditLogReader {
         Connection connection = dbConnectionFactory.getConnection();
 
         PreparedStatement ps = connection.prepareStatement(query);
-        LOG.info("Executing: " + query);
+        LOG.debug("Executing: " + query);
         ResultSet rs = ps.executeQuery();
         if (rs.next()) {
             long minId = rs.getLong("min_id");
@@ -305,7 +305,7 @@ public class AuditLogReader {
                 // objects. This can be removed a long with the OUTER aspect
                 // of the join above once the bug with exchange partitions is
                 // fixed.
-                LOG.info("No output objects");
+                LOG.debug("No output objects");
             } else {
                 throw new RuntimeException("Unhandled output type: " +
                         objectType);
