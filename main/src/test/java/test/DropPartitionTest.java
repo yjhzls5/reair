@@ -57,7 +57,8 @@ public class DropPartitionTest extends MockClusterTest {
                 partitionSpec,
                 ReplicationUtils.getLocation(srcPartition),
                 null,
-                directoryCopier);
+                directoryCopier,
+                true);
         RunInfo status = copyPartitionTask.runTask();
 
         // Verify that the table exists on the destination

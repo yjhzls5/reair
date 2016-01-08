@@ -76,7 +76,8 @@ public class RenamePartitionTaskTest extends MockClusterTest {
                 oldPartitionSpec,
                 ReplicationUtils.getLocation(oldPartition),
                 null,
-                directoryCopier);
+                directoryCopier,
+                true);
 
         RunInfo status = copyJob.runTask();
 

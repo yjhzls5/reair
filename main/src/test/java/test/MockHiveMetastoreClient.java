@@ -1,5 +1,7 @@
 package test;
 
+import com.airbnb.di.common.FsUtils;
+import com.airbnb.di.hive.batchreplication.ReplicationUtils;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
@@ -203,7 +205,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
                     tableSpec);
         }
         // Remove the table
-        specToTable.remove(new HiveObjectSpec(dbName, tableName));
+        Table t = specToTable.remove(new HiveObjectSpec(dbName, tableName));
 
         // Remove associated partitions
         Iterator<Map.Entry<HiveObjectSpec, Partition>> mapIterator =
@@ -215,6 +217,8 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
                 mapIterator.remove();
             }
         }
+
+        // For safety, don't delete data.
     }
 
     @Override

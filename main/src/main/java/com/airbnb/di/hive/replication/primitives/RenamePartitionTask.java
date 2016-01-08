@@ -203,7 +203,8 @@ public class RenamePartitionTask implements ReplicationTask {
                 spec,
                 partitionLocation,
                 null,
-                directoryCopier);
+                directoryCopier,
+                true);
         return task.runTask();
     }
 

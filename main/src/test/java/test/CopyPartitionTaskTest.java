@@ -47,9 +47,7 @@ public class CopyPartitionTaskTest extends MockClusterTest {
                 srcMetastore, partitionSpec);
 
         // Copy the partition
-        Configuration testConf = new Configuration(conf);
-        testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
-        CopyPartitionTask copyPartitionTask = new CopyPartitionTask(testConf,
+        CopyPartitionTask copyPartitionTask = new CopyPartitionTask(conf,
                 new DestinationObjectFactory(),
                 new ObjectConflictHandler(),
                 srcCluster,
@@ -57,12 +55,32 @@ public class CopyPartitionTaskTest extends MockClusterTest {
                 partitionSpec,
                 ReplicationUtils.getLocation(srcPartition),
                 null,
-                directoryCopier);
+                directoryCopier,
+                true);
         RunInfo status = copyPartitionTask.runTask();
 
         // Verify that the partition got copied
         assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
         assertEquals(9, status.getBytesCopied());
+
+        // Copying a new partition without a data copy should not succeed.
+        partitionSpec = new HiveObjectSpec("test_db",
+                "test_table", "ds=1/hr=2");
+        ReplicationTestUtils.createPartition(conf,
+                srcMetastore, partitionSpec);
+        copyPartitionTask = new CopyPartitionTask(conf,
+                new DestinationObjectFactory(),
+                new ObjectConflictHandler(),
+                srcCluster,
+                destCluster,
+                partitionSpec,
+                ReplicationUtils.getLocation(srcPartition),
+                null,
+                directoryCopier,
+                false);
+        status = copyPartitionTask.runTask();
+        assertEquals(RunInfo.RunStatus.NOT_COMPLETABLE, status.getRunStatus());
+        assertEquals(0, status.getBytesCopied());
     }
 
     @Test
@@ -94,7 +112,8 @@ public class CopyPartitionTaskTest extends MockClusterTest {
                 partitionSpec,
                 ReplicationUtils.getLocation(srcPartition),
                 null,
-                directoryCopier);
+                directoryCopier,
+                true);
         RunInfo status = copyPartitionTask.runTask();
 
         // Verify that the partition got copied

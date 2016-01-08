@@ -45,6 +45,7 @@ public class CopyPartitionTask implements ReplicationTask {
     private Path partitionLocation;
     private Path optimisticCopyRoot;
     private DirectoryCopier directoryCopier;
+    private boolean allowDataCopy;
 
 
     public CopyPartitionTask(Configuration conf,
@@ -55,7 +56,8 @@ public class CopyPartitionTask implements ReplicationTask {
                              HiveObjectSpec spec,
                              Path partitionLocation,
                              Path optimisticCopyRoot,
-                             DirectoryCopier directoryCopier) {
+                             DirectoryCopier directoryCopier,
+                             boolean allowDataCopy) {
         this.conf = conf;
         this.destObjectFactory = destObjectFactory;
         this.objectConflictHandler = objectConflictHandler;
@@ -65,6 +67,7 @@ public class CopyPartitionTask implements ReplicationTask {
         this.partitionLocation = partitionLocation;
         this.optimisticCopyRoot = optimisticCopyRoot;
         this.directoryCopier = directoryCopier;
+        this.allowDataCopy = allowDataCopy;
     }
 
     public RunInfo runTask() throws HiveMetastoreException, DistCpException,
@@ -132,8 +135,15 @@ public class CopyPartitionTask implements ReplicationTask {
 
         // Copy HDFS data
         long bytesCopied = 0;
-        boolean locationDefined =
+        boolean srcLocationDefined =
                 ReplicationUtils.getLocation(freshSrcPartition) != null;
+        boolean destLocationDefined =
+                ReplicationUtils.getLocation(destPartition) != null;
+
+        Path srcPath = !srcLocationDefined ? null :
+                new Path(freshSrcPartition.getSd().getLocation());
+        Path destPath = !destLocationDefined ? null :
+                new Path(destPartition.getSd().getLocation());
 
         // Try to copy data only if the location is defined and the location
         // for the destination object is different. Usually, the location will
@@ -142,7 +152,7 @@ public class CopyPartitionTask implements ReplicationTask {
         boolean needToCopy = false;
         // TODO: An optimization can be made here to check for directories that
         // already match and no longer need to be copied.
-        if (locationDefined &&
+        if (srcLocationDefined &&
                 !ReplicationUtils.getLocation(freshSrcPartition).equals(
                         ReplicationUtils.getLocation(destPartition))) {
             // If a directory was copied optimistically, check if the data is
@@ -175,16 +185,21 @@ public class CopyPartitionTask implements ReplicationTask {
                     FsUtils.replaceDirectory(conf, copiedPartitionDataLocation,
                             destinationPath);
                 } else {
-                    needToCopy = true;
+                    needToCopy = !directoryCopier.equalDirs(srcPath, destPath);
                 }
             } else {
-                needToCopy = true;
+                needToCopy = !directoryCopier.equalDirs(srcPath, destPath);;
             }
         }
 
         if (needToCopy) {
-            Path srcPath = new Path(freshSrcPartition.getSd().getLocation());
-            Path destPath = new Path(destPartition.getSd().getLocation());
+            if (!allowDataCopy) {
+                LOG.debug(String.format("Need to copy %s to %s, but data " +
+                        "copy is not allowed",
+                        srcPath,
+                        destPath));
+                return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
+            }
 
             if (!FsUtils.dirExists(conf, srcPath)) {
                 LOG.error("Source path " + srcPath + " does not exist!");

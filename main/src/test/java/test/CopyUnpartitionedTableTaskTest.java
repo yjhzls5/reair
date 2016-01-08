@@ -80,7 +80,8 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
                 destCluster,
                 spec,
                 ReplicationUtils.getLocation(srcTable),
-                directoryCopier);
+                directoryCopier,
+                true);
         RunInfo status = copyJob.runTask();
 
         // Verify that the table exists on the destination, the location is
@@ -103,6 +104,29 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
                 rerunStatus.getRunStatus());
         assertEquals(0, rerunStatus.getBytesCopied());
 
+        // Trying to copy a new table without a data copy should not succeed.
+        HiveObjectSpec spec2 = new HiveObjectSpec("test_db", "test_table_2");
+        ReplicationTestUtils.createUnpartitionedTable(conf,
+                srcMetastore,
+                spec2,
+                TableType.MANAGED_TABLE,
+                srcWarehouseRoot);
+        CopyUnpartitionedTableTask copyJob2 = new CopyUnpartitionedTableTask(
+                testConf,
+                new DestinationObjectFactory(),
+                new ObjectConflictHandler(),
+                srcCluster,
+                destCluster,
+                spec2,
+                ReplicationUtils.getLocation(srcTable),
+                directoryCopier,
+                false);
+        RunInfo status2 = copyJob2.runTask();
+
+        // Verify that the table exists on the destination, the location is
+        // within the destination filesystem, the data is the same,
+        // and the right number of bytes were copied.
+        assertEquals(RunInfo.RunStatus.NOT_COMPLETABLE, status2.getRunStatus());
     }
 
     @Test
@@ -126,7 +150,8 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
                 destCluster,
                 spec,
                 ReplicationUtils.getLocation(srcTable),
-                directoryCopier);
+                directoryCopier,
+                true);
         RunInfo status = copyJob.runTask();
 
         // Verify that the table exists on the destination, the location is

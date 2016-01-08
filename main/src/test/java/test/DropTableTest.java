@@ -56,7 +56,8 @@ public class DropTableTest extends MockClusterTest {
                 destCluster,
                 spec,
                 ReplicationUtils.getLocation(srcTable),
-                directoryCopier);
+                directoryCopier,
+                true);
         RunInfo status = copyJob.runTask();
 
         // Verify that the table exists on the destination

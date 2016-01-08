@@ -65,7 +65,8 @@ public class RenameTableTaskTest extends MockClusterTest {
                 destCluster,
                 originalTableSpec,
                 ReplicationUtils.getLocation(srcTable),
-                directoryCopier);
+                directoryCopier,
+                true);
         RunInfo status = copyJob.runTask();
 
         // Rename the source table

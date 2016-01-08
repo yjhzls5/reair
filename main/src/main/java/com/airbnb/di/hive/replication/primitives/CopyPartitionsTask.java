@@ -250,7 +250,8 @@ public class CopyPartitionsTask implements ReplicationTask {
                     partitionSpec,
                     ReplicationUtils.getLocation(srcPartition),
                     optimisticCopyDir,
-                    directoryCopier);
+                    directoryCopier,
+                    true);
 
             CopyPartitionJob copyPartitionJob = new CopyPartitionJob(
                     copyPartitionTask,

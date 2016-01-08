@@ -222,7 +222,8 @@ public class ReplicationServer implements TReplicationService.Iface {
                         destCluster,
                         tableSpec,
                         persistedJobInfo.getSrcPath(),
-                        directoryCopier);
+                        directoryCopier,
+                        true);
                 break;
             case COPY_PARTITIONED_TABLE:
                 replicationTask = new CopyPartitionedTableTask(
@@ -244,7 +245,8 @@ public class ReplicationServer implements TReplicationService.Iface {
                         partitionSpec,
                         persistedJobInfo.getSrcPath(),
                         null,
-                        directoryCopier);
+                        directoryCopier,
+                        true);
                 break;
             case COPY_PARTITIONS:
                 List<String> partitionNames =

@@ -185,7 +185,8 @@ public class HiveCopy {
                     destCluster,
                     spec,
                     new Path(srcTable.getSd().getLocation()),
-                    directoryCopier);
+                    directoryCopier,
+                    true);
             if (job.runTask().getRunStatus() == RunInfo.RunStatus.SUCCESSFUL) {
                 return 0;
             } else {
@@ -222,7 +223,8 @@ public class HiveCopy {
                     spec,
                     ReplicationUtils.getLocation(srcPartition),
                     null,
-                    new DirectoryCopier(conf, srcCluster.getTmpDir(), true));
+                    new DirectoryCopier(conf, srcCluster.getTmpDir(), true),
+                    true);
             if (job.runTask().getRunStatus() == RunInfo.RunStatus.SUCCESSFUL) {
                 return 0;
             } else {

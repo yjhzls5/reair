@@ -38,6 +38,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
     private HiveObjectSpec spec;
     private Path tableLocation;
     private DirectoryCopier directoryCopier;
+    private boolean allowDataCopy;
 
     public CopyUnpartitionedTableTask(Configuration conf,
                                       DestinationObjectFactory destObjectFactory,
@@ -46,7 +47,8 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
                                       Cluster destCluster,
                                       HiveObjectSpec spec,
                                       Path tableLocation,
-                                      DirectoryCopier directoryCopier) {
+                                      DirectoryCopier directoryCopier,
+                                      boolean allowDataCopy) {
         this.conf = conf;
         this.objectModifier = destObjectFactory;
         this.objectConflictHandler = objectConflictHandler;
@@ -55,6 +57,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
         this.tableLocation = tableLocation;
         this.spec = spec;
         this.directoryCopier = directoryCopier;
+        this.allowDataCopy = allowDataCopy;
     }
 
     public RunInfo runTask() throws HiveMetastoreException, DistCpException,
@@ -103,31 +106,30 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
         // Copy HDFS data if the location has changed in the destination object.
         // Usually, this is the case, but for S3 backed tables, the location
         // doesn't change.
+        boolean locationDefined =
+                ReplicationUtils.getLocation(freshSrcTable) != null;
+
+        Path srcPath = new Path(
+                freshSrcTable.getSd().getLocation());
+        Path destPath = new Path(destTable.getSd().getLocation());
+
+        boolean needToCopy = locationDefined &&
+                !ReplicationUtils.getLocation(freshSrcTable).equals(
+                        ReplicationUtils.getLocation(destTable)) &&
+                !directoryCopier.equalDirs(srcPath, destPath);
+
         long bytesCopied = 0;
 
-        if (freshSrcTable.getSd() != null &&
-                freshSrcTable.getSd().getLocation() != null &&
-                !freshSrcTable.getSd().getLocation().equals(
-                        destTable.getSd().getLocation())) {
+        if (needToCopy) {
+            if (!allowDataCopy) {
+                LOG.debug(String.format("Need to copy %s to %s, but data " +
+                        "copy is not allowed",
+                        srcPath,
+                        destPath));
+                return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
+            }
             Random random = new Random();
             long randomLong = random.nextLong();
-
-            Path srcPath = new Path(
-                    freshSrcTable.getSd().getLocation());
-            Path destPath = new Path(destTable.getSd().getLocation());
-            Path distCpTmp = new PathBuilder(destCluster.getTmpDir())
-                    .add("distcp_tmp")
-                    .add(srcCluster.getName())
-                    .add(spec.getDbName())
-                    .add(spec.getTableName())
-                    .add(Long.toString(randomLong)).toPath();
-            Path distCpLog = new PathBuilder(destCluster.getTmpDir())
-                    .add("distcp_logs")
-                    .add(srcCluster.getName())
-                    .add(spec.getDbName())
-                    .add(spec.getTableName())
-                    .add(Long.toString(randomLong)).toPath();
-
 
             // Copy directory
             bytesCopied = directoryCopier.copy(srcPath, destPath,

@@ -111,7 +111,8 @@ public class ReplicationJobFactory {
                         destCluster,
                         spec,
                         tableLocation,
-                        directoryCopier),
+                        directoryCopier,
+                        true),
                         onStateChangeHandler,
                         persistedJobInfo);
             case COPY_PARTITIONED_TABLE:
@@ -166,7 +167,8 @@ public class ReplicationJobFactory {
                 spec,
                 null,
                 null,
-                directoryCopier);
+                directoryCopier,
+                true);
 
         return new ReplicationJob(replicationTask,
                 onStateChangeHandler,
@@ -213,7 +215,8 @@ public class ReplicationJobFactory {
                 spec,
                 ReplicationUtils.getLocation(partition),
                 null,
-                directoryCopier);
+                directoryCopier,
+                true);
 
         return new ReplicationJob(replicationTask,
                 onStateChangeHandler,

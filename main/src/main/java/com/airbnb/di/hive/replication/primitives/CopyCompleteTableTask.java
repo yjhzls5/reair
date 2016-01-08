@@ -150,7 +150,8 @@ public class CopyCompleteTableTask implements ReplicationTask {
                     destCluster,
                     spec,
                     tableLocation,
-                    directoryCopier);
+                    directoryCopier,
+                    true);
             return copyJob.runTask();
         }
     }
