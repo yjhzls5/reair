@@ -37,6 +37,7 @@ public class AuditLogHookTest {
     private static String OUTPUT_OBJECTS_TABLE_NAME = "audit_objects";
 
     private static final String DEFAULT_QUERY_STRING = "Example query string";
+
     @BeforeClass
     public static void setupClass() {
         embeddedMySqlDb = new EmbeddedMySqlDb();
@@ -72,8 +73,8 @@ public class AuditLogHookTest {
         // Set up the source
         org.apache.hadoop.hive.ql.metadata.Table inputTable =
                 new org.apache.hadoop.hive.ql.metadata.Table(
-                "test_db",
-                "test_source_table");
+                        "test_db",
+                        "test_source_table");
         List<org.apache.hadoop.hive.ql.metadata.Table> inputTables =
                 new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
         inputTables.add(inputTable);
@@ -247,21 +248,21 @@ public class AuditLogHookTest {
         expectedDbRow.add("test_db.test_output_table/ds=1");
         expectedDbRow.add("PARTITION");
         expectedDbRow.add("{\"1\":{\"lst\":[\"str\",1,\"1\"]},\"2\":{\"str" +
-                        "\":\"test_db\"},\"3\":{\"str\":\"test_output_table" +
-                        "\"},\"4\":{\"i32\":0},\"5\":{\"i32\":0},\"6\":{\"rec" +
-                        "\":{\"1\":{\"lst\":[\"rec\",0]},\"2\":{\"str\":\"" +
-                        "file://a/b/c\"},\"3\":{\"str\":\"org.apache.hadoop." +
-                        "mapred.SequenceFileInputFormat\"},\"4\":{\"str\":\"" +
-                        "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutput" +
-                        "Format\"},\"5\":{\"tf\":0},\"6\":{\"i32\":-1},\"7\"" +
-                        ":{\"rec\":{\"2\":{\"str\":\"org.apache.hadoop.hive." +
-                        "serde2.MetadataTypedColumnsetSerDe\"},\"3\":{\"map\"" +
-                        ":[\"str\",\"str\",1,{\"serialization.format\":\"1\"" +
-                        "}]}}},\"8\":{\"lst\":[\"str\",0]},\"9\":{\"lst\":[\"" +
-                        "rec\",0]},\"10\":{\"map\":[\"str\",\"str\",0,{}]},\"" +
-                        "11\":{\"rec\":{\"1\":{\"lst\":[\"str\",0]},\"2\":{\"" +
-                        "lst\":[\"lst\",0]},\"3\":{\"map\":[\"lst\",\"str\",0" +
-                        ",{}]}}}}}}");
+                "\":\"test_db\"},\"3\":{\"str\":\"test_output_table" +
+                "\"},\"4\":{\"i32\":0},\"5\":{\"i32\":0},\"6\":{\"rec" +
+                "\":{\"1\":{\"lst\":[\"rec\",0]},\"2\":{\"str\":\"" +
+                "file://a/b/c\"},\"3\":{\"str\":\"org.apache.hadoop." +
+                "mapred.SequenceFileInputFormat\"},\"4\":{\"str\":\"" +
+                "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutput" +
+                "Format\"},\"5\":{\"tf\":0},\"6\":{\"i32\":-1},\"7\"" +
+                ":{\"rec\":{\"2\":{\"str\":\"org.apache.hadoop.hive." +
+                "serde2.MetadataTypedColumnsetSerDe\"},\"3\":{\"map\"" +
+                ":[\"str\",\"str\",1,{\"serialization.format\":\"1\"" +
+                "}]}}},\"8\":{\"lst\":[\"str\",0]},\"9\":{\"lst\":[\"" +
+                "rec\",0]},\"10\":{\"map\":[\"str\",\"str\",0,{}]},\"" +
+                "11\":{\"rec\":{\"1\":{\"lst\":[\"str\",0]},\"2\":{\"" +
+                "lst\":[\"lst\",0]},\"3\":{\"map\":[\"lst\",\"str\",0" +
+                ",{}]}}}}}}");
 
         assertEquals(expectedDbRow, outputObjectsRow);
 
@@ -296,165 +297,5 @@ public class AuditLogHookTest {
                         ",0,{}]},\"12\":{\"str\":\"MANAGED_TABLE\"}}");
 
         assertEquals(expectedDbRow, outputObjectsRow);
-    }
-    /*
-    @Test
-    public void testAuditLogTable() throws Exception {
-        // Create the audit log DB
-        String DB_NAME = "audit_log_db";
-        String AUDIT_LOG_TABLE_NAME = "audit_log";
-        String OUTPUT_OBJECTS_TABLE_NAME = "output_objects";
-
-        Class.forName("com.mysql.jdbc.Driver");
-        String username = embeddedMySqlDb.getUsername();
-        String password = embeddedMySqlDb.getPassword();
-        Connection connection = DriverManager.getConnection(
-                ReplicationTestUtils.getJdbcUrl(embeddedMySqlDb),
-                username, password);
-        Statement statement = connection.createStatement();
-        String sql = "CREATE DATABASE audit_log_db";
-        statement.executeUpdate(sql);
-        connection.close();
-
-        // Recreate the connection using the DB
-        String jdbcUrl = ReplicationTestUtils.getJdbcUrl(
-                embeddedMySqlDb,
-                DB_NAME);
-        connection = DriverManager.getConnection(jdbcUrl,
-                embeddedMySqlDb.getUsername(),
-                embeddedMySqlDb.getPassword());
-        statement = connection.createStatement();
-
-        // Create the audit log tables
-        String createAuditLogTableSql =  "CREATE TABLE `audit_log` (" +
-                "`id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                "`ts` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                "`query_id` varchar(256) DEFAULT NULL," +
-                "`command_type` varchar(64) DEFAULT NULL," +
-                "`command` mediumtext," +
-                "`inputs` mediumtext," +
-                "`outputs` mediumtext," +
-                "`username` varchar(64) DEFAULT NULL," +
-                "`chronos_job_name` varchar(256) DEFAULT NULL," +
-                "`chronos_job_owner` varchar(256) DEFAULT NULL," +
-                "`mesos_task_id` varchar(256) DEFAULT NULL," +
-                "`ip` varchar(64) DEFAULT NULL," +
-                "`extras` mediumtext," +
-                "PRIMARY KEY (`id`)," +
-                "KEY `ts_index` (`ts`)" +
-                ") ENGINE=InnoDB";
-
-        statement.execute(createAuditLogTableSql);
-
-        // Create the output table
-        String outputTableCreate = "CREATE TABLE `output_objects` (" +
-                "  `id` bigint(20) NOT NULL AUTO_INCREMENT, " +
-                "  `ts` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
-                "  `audit_log_id` bigint(20) NOT NULL, " +
-                "  `output_type` varchar(64) DEFAULT NULL, " +
-                "  `output` varchar(4000) DEFAULT NULL, " +
-                "  `output_serialized` mediumtext, " +
-                "  PRIMARY KEY (`id`), " +
-                "  KEY `ts_index` (`ts`) " +
-                "  ) ENGINE=InnoDB";
-
-        statement.execute(outputTableCreate);
-
-
-        AuditLogHook auditLogHook = new AuditLogHook(new TestDbCredentials());
-
-        // Set up the source
-        org.apache.hadoop.hive.ql.metadata.Table srcTable =
-                new org.apache.hadoop.hive.ql.metadata.Table(
-                        "test_db",
-                        "test_source_table");
-
-        Set<ReadEntity> readEntities = new HashSet<ReadEntity>();
-        readEntities.add(new ReadEntity(srcTable));
-
-        org.apache.hadoop.hive.ql.metadata.Table insertTable =
-                new org.apache.hadoop.hive.ql.metadata.Table(
-                        "test_db",
-                        "test_output_table");
-
-        Set<WriteEntity> writeEntities = new HashSet<WriteEntity>();
-        writeEntities.add(new WriteEntity(insertTable));
-
-        UserGroupInformation ugi = mock(UserGroupInformation.class);
-        when(ugi.getUserName()).thenReturn("test_user");
-
-        HiveConf hiveConf = new HiveConf();
-        SessionState sessionState = new SessionState(hiveConf);
-        sessionState.setCmd("INSERT OVEWRITE TABLE test_output_table " +
-                "SELECT * FROM test_source_table");
-        sessionState.setCommandType(HiveOperation.QUERY);
-
-        hiveConf.set(AuditLogHook.JDBC_URL_KEY,
-                ReplicationTestUtils.getJdbcUrl(embeddedMySqlDb, DB_NAME));
-        hiveConf.set(AuditLogHook.TABLE_NAME_KEY, AUDIT_LOG_TABLE_NAME);
-        hiveConf.set(AuditLogHook.OBJECT_TABLE_NAME_KEY,
-                OUTPUT_OBJECTS_TABLE_NAME);
-
-        // Run the log
-        auditLogHook.run(sessionState, readEntities, writeEntities, null, ugi);
-
-        // Check the query audit log
-        List<String> auditLogColumnsToCheck = new ArrayList<String>();
-        auditLogColumnsToCheck.add("command_type");
-        auditLogColumnsToCheck.add("command");
-        auditLogColumnsToCheck.add("inputs");
-        auditLogColumnsToCheck.add("outputs");
-
-        List<String> auditLogRow = ReplicationTestUtils.getRow(jdbcUrl, username,
-                password,
-                AUDIT_LOG_TABLE_NAME, auditLogColumnsToCheck);
-
-        List<String> expectedDbRow = new ArrayList<String>();
-        expectedDbRow.add("QUERY");
-        expectedDbRow.add("INSERT OVEWRITE TABLE test_output_table " +
-                "SELECT * FROM test_source_table");
-        expectedDbRow.add("{\"tables\":[\"test_db.test_source_table\"]}");
-        expectedDbRow.add("{\"tables\":[\"test_db.test_output_table\"]}");
-        assertEquals(expectedDbRow, auditLogRow);
-
-        // Check the output objects audit log
-        List<String> outputObjectsColumnsToCheck = new ArrayList<String>();
-        outputObjectsColumnsToCheck.add("output");
-        outputObjectsColumnsToCheck.add("output_type");
-        outputObjectsColumnsToCheck.add("output_serialized");
-
-        List<String> outputObjectsRow = ReplicationTestUtils.getRow(jdbcUrl,
-                username, password, OUTPUT_OBJECTS_TABLE_NAME,
-                outputObjectsColumnsToCheck);
-
-        expectedDbRow.clear();
-        expectedDbRow.add("test_db.test_output_table");
-                expectedDbRow.add("TABLE");
-        expectedDbRow.add(
-                "{\"1\":{\"str\":\"test_output_table\"},\"2\":{\"str\"" +
-                        ":\"test_db\"},\"4\":{\"i32\":0},\"5\":{\"i32\":0}" +
-                        ",\"6\":{\"i32\":0},\"7\":{\"rec\":{\"1\":{\"lst\":" +
-                        "[\"rec\",0]},\"3\":{\"str\":\"" +
-                        "org.apache.hadoop.mapred.SequenceFileInputFormat\"}," +
-                        "\"4\":{\"str\":\"org.apache.hadoop.hive.ql.io." +
-                        "HiveSequenceFileOutputFormat\"},\"5\":{\"tf\":0},\"" +
-                        "6\":{\"i32\":-1},\"7\":{\"rec\":{\"2\":{\"str\":\"" +
-                        "org.apache.hadoop.hive.serde2." +
-                        "MetadataTypedColumnsetSerDe\"},\"3\":{\"map\"" +
-                        ":[\"str\",\"str\",1,{\"serialization.format\"" +
-                        ":\"1\"}]}}},\"8\":{\"lst\":[\"str\",0]},\"9\":" +
-                        "{\"lst\":[\"rec\",0]},\"10\":{\"map\":[\"str\",\"" +
-                        "str\",0,{}]},\"11\":{\"rec\":{\"1\":{\"lst\":[\"" +
-                        "str\",0]},\"2\":{\"lst\":[\"lst\",0]},\"3\":{\"" +
-                        "map\":[\"lst\",\"str\",0,{}]}}}}},\"8\":{\"lst\"" +
-                        ":[\"rec\",0]},\"9\":{\"map\":[\"str\",\"str\",0," +
-                        "{}]},\"12\":{\"str\":\"MANAGED_TABLE\"}}");
-        assertEquals(expectedDbRow, outputObjectsRow);
-    }
-    */
-
-    @AfterClass
-    public static void tearDownClass() {
-        embeddedMySqlDb.stopDb();
     }
 }
