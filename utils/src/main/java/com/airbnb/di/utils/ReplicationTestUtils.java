@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by paul_yang on 7/14/15.
+ * Utilities for running replication tests.
  */
 public class ReplicationTestUtils {
 
@@ -55,17 +55,26 @@ public class ReplicationTestUtils {
 
     private static void createSomeTextFiles(Configuration conf, Path directory)
             throws IOException {
-        Path file1Path = new Path(directory, "file1.txt");
-        Path file2Path = new Path(directory, "file2.txt");
-        FileSystem fs = FileSystem.get(file1Path.toUri(), conf);
+        createTextFile(conf, directory, "file1.txt", "foobar");
+        createTextFile(conf, directory, "file2.txt", "123");
+    }
 
-        FSDataOutputStream file1OutputStream = fs.create(file1Path);
-        file1OutputStream.writeBytes("foobar");
+    /**
+     * Creates the specified text file using Hadoop API's.
+     *
+     * @throws IOException
+     */
+    public static void createTextFile(Configuration conf,
+                                      Path directory,
+                                      String filename,
+                                      String contents)
+            throws IOException {
+        Path filePath = new Path(directory, filename);
+        FileSystem fs = FileSystem.get(filePath.toUri(), conf);
+
+        FSDataOutputStream file1OutputStream = fs.create(filePath);
+        file1OutputStream.writeBytes(contents);
         file1OutputStream.close();
-
-        FSDataOutputStream file2OutputStream = fs.create(file2Path);
-        file2OutputStream.writeBytes("123");
-        file2OutputStream.close();
     }
 
 
@@ -397,6 +406,17 @@ public class ReplicationTestUtils {
         } finally {
             statement.close();
             connection.close();
+        }
+    }
+
+    /**
+     * Drops all tables from the given Hive DB
+     * @throws HiveMetastoreException
+     */
+    public static void dropTables(HiveMetastoreClient ms, String dbName)
+            throws HiveMetastoreException {
+        for (String tableName : ms.getTables(dbName, "*")) {
+            ms.dropTable(dbName, tableName, true);
         }
     }
 }

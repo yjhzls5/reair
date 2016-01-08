@@ -59,8 +59,6 @@ public class ReplicationUtils {
         Table newTable = new Table(table);
         newTable.setCreateTime(0);
         newTable.setLastAccessTime(0);
-        //newTable.getSd().setLocation(null);
-        //newTable.getParameters().remove(HiveParamKeys.SRC_CLUSTER);
         return newTable;
     }
 
@@ -68,8 +66,6 @@ public class ReplicationUtils {
         Partition newPartition = new Partition(partition);
         newPartition.setCreateTime(0);
         newPartition.setLastAccessTime(0);
-        //newPartition.getSd().setLocation(null);
-        //newPartition.getParameters().remove(HiveParamKeys.SRC_CLUSTER);
         return newPartition;
     }
 
@@ -362,5 +358,15 @@ public class ReplicationUtils {
         LOG.info(String.format("Attempt %d: sleeping for %d seconds",
                 attempt, sleepSeconds));
         Thread.sleep(1000 * sleepSeconds);
+    }
+
+    public static boolean equalLocations(Table a, Table b) {
+        return StringUtils.equals(getLocation(a).toString(),
+                getLocation(b).toString());
+    }
+
+    public static boolean equalLocations(Partition a, Partition b) {
+        return StringUtils.equals(getLocation(a).toString(),
+                getLocation(b).toString());
     }
 }

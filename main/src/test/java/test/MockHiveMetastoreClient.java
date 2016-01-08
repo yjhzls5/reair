@@ -113,8 +113,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
         String partitionName = getPartitionName(t, p);
 
         HiveObjectSpec partitionSpec = new HiveObjectSpec(tableSpec.getDbName(),
-                tableSpec.getPartitionName(), partitionName);
-
+                tableSpec.getTableName(), partitionName);
         if (!specToPartition.containsKey(partitionSpec)) {
             throw new HiveMetastoreException("Partition does not exist: " +
                     partitionSpec);
