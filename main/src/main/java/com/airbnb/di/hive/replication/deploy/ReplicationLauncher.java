@@ -38,7 +38,7 @@ public class ReplicationLauncher {
     private static final Log LOG = LogFactory.getLog(
             ReplicationLauncher.class);
 
-    private static URI makeURI(String thriftUri) throws ConfigurationException {
+    public static URI makeURI(String thriftUri) throws ConfigurationException {
         try {
             URI uri = new URI(thriftUri);
 

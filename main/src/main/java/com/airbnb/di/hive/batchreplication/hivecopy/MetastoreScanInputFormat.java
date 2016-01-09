@@ -36,7 +36,6 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
     private static final int NUMBER_OF_MAPPERS = 100;
 
     public static final String SRC_METASTORE_HOST_CONF = "replication.metastore.src.host";
-    public static final String DST_METASTORE_HOST_CONF = "replication.metastore.dst.host";
 
     @Override
     public RecordReader<Text, Text> createRecordReader(InputSplit inputSplit, TaskAttemptContext taskAttemptContext)

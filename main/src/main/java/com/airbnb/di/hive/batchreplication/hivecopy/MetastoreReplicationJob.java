@@ -2,16 +2,12 @@ package com.airbnb.di.hive.batchreplication.hivecopy;
 
 import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
 import com.airbnb.di.hive.batchreplication.ReplicationUtils;
-import com.airbnb.di.hive.batchreplication.hivecopy.MetastoreCompareUtils.UpdateAction;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.ThriftHiveMetastoreClient;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -21,10 +17,8 @@ import com.google.common.hash.Hashing;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
@@ -69,8 +63,8 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     public static final String REPLICATION_METASTORE_BLACKLIST = "replication.metastore.blacklist";
     public static final String REPLICATION_METASTORE_COPYFROM = "replication.metastore.copyfrom";
     public static final String REPLICATION_METASTORE_COPYTO = "replication.metastore.copyto";
-    private static final String REPLICATION_METASTORE_SRC_HOST = "replication.metastore.src.host";
-    private static final String REPLICATION_METASTORE_DST_HOST = "replication.metastore.dst.host";
+    public static final String REPLICATION_METASTORE_SRC_HOST = "replication.metastore.src.host";
+    public static final String REPLICATION_METASTORE_DST_HOST = "replication.metastore.dst.host";
     public static final String REPLICATION_ALLOW_S3 = "replication.metastore.s3tablesync";
 
     private static final ImmutableMap<String, String> HDFSPATH_CHECK_MAP =
@@ -237,16 +231,18 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     public static Options constructGnuOptions() {
         Options gnuOptions = new Options();
-        gnuOptions.addOption("s", "source", true, "source metastore url").
-                addOption("d", "destination", true, "destination metastore url").
-                addOption("o", "output", true, "logging output folder").
-                addOption("ms", "metastore", true, "source metastore name").
-                addOption("dms", "dest-metastore", true, "destination metastore name").
-                addOption("b", "blacklist", true, "folder blacklist regex").
-                addOption("st", "step", true, "run individual step").
-                addOption("s3", "s3", false, "allow s3 backed table sync").
-                addOption("oi", "input", true, "override input for a step").
-                addOption("tl", "inputtablelist", true, "take pre-generated list of table instead of scan metastore");
+        gnuOptions.addOption("conf", "config-files", true, "Comma separated list of paths to configuration files");
+//
+//                addOption("s", "source", true, "source metastore url").
+//                addOption("d", "destination", true, "destination metastore url").
+//                addOption("o", "output", true, "logging output folder").
+//                addOption("ms", "metastore", true, "source metastore name").
+//                addOption("dms", "dest-metastore", true, "destination metastore name").
+//                addOption("b", "blacklist", true, "folder blacklist regex").
+//                addOption("st", "step", true, "run individual step").
+//                addOption("s3", "s3", false, "allow s3 backed table sync").
+//                addOption("oi", "input", true, "override input for a step").
+//                addOption("tl", "inputtablelist", true, "take pre-generated list of table instead of scan metastore");
         return gnuOptions;
     }
 
@@ -263,6 +259,27 @@ public class MetastoreReplicationJob extends Configured implements Tool {
             System.out.println();
             ToolRunner.printGenericCommandUsage(System.err);
             return 1;
+        }
+
+        String configPaths = null;
+
+        if (commandLine.hasOption("conf")) {
+            configPaths = commandLine.getOptionValue("conf");
+            LOG.info("configPaths=" + configPaths);
+        } else {
+            System.err.println("-conf option is required.");
+            printUsage(USAGE_COMMAND_STR, constructGnuOptions(), System.out);
+            System.out.println();
+            ToolRunner.printGenericCommandUsage(System.err);
+            return 1;
+        }
+
+        Configuration conf = new Configuration();
+
+        if (configPaths != null) {
+            for (String configPath : configPaths.split(",")) {
+                conf.addResource(new Path(configPath));
+            }
         }
 
         if (!commandLine.hasOption("s") || !commandLine.hasOption("d") ||
@@ -1120,154 +1137,8 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         }
     }
 
-    public static class ProcessTableMapperBase {
-        public static final String TMP_REGEX = "tmp.*"; // hard code tmp db and table blacklist
-        private HiveMetastoreClient srcClient;
-        private HiveMetastoreClient dstClient;
-        // list of db and table blacklist.
-        private List<String> metastoreBlackList;
-        private String metastore;
-        private boolean allowS3TableSync;
-
-        protected void setup(Mapper.Context context) throws IOException, InterruptedException {
-            try {
-                String[] srcHostPart = context.getConfiguration().get(REPLICATION_METASTORE_SRC_HOST).split(":");
-                this.srcClient = new ThriftHiveMetastoreClient(srcHostPart[0], Integer.valueOf(srcHostPart[1]).intValue());
-                String[] dstHostPart = context.getConfiguration().get(REPLICATION_METASTORE_DST_HOST).split(":");
-                this.dstClient = new ThriftHiveMetastoreClient(dstHostPart[0], Integer.valueOf(dstHostPart[1]).intValue());
-                this.metastoreBlackList = Arrays.asList(context.getConfiguration().get(REPLICATION_METASTORE_BLACKLIST).split(","));
-                this.metastore = context.getConfiguration().get(REPLICATION_METASTORE_COPYFROM, "brain");
-                this.allowS3TableSync = context.getConfiguration().getBoolean(REPLICATION_ALLOW_S3, false);
-            } catch (HiveMetastoreException e) {
-                throw new IOException(e);
-            }
-        }
-
-        protected List<String> processTable(final String db, final String table)
-                throws HiveMetastoreException {
-            // If table and db matches black list, we will skip it.
-            if (Iterables.any(metastoreBlackList,
-                    new Predicate<String>() {
-                        @Override
-                        public boolean apply(@Nullable String s) {
-                            String[] parts = s.split(":");
-                            // If db.table match blacklist or db, table match tmp table and db regex we will blacklist it.
-                            if ((db.matches(parts[0]) && table.matches(parts[1])) || db.matches(TMP_REGEX) || table.matches(
-                                    TMP_REGEX)) {
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        }
-                    })) {
-                return ImmutableList.of(genValue(MetastoreAction.SKIP_TABLE.name(), db, table, "source blacklisted"));
-            }
-
-            Table tab = srcClient.getTable(db, table);
-            Table dstTab = dstClient.getTable(db, table);
-            if (tab == null) {
-                return ImmutableList.of(genValue(MetastoreAction.SKIP_TABLE.name(), db, table, "source deleted"));
-            } else {
-                String srcLocation = tab.getSd().getLocation();
-                if (!tab.getTableType().contains("VIEW")) {
-                    HdfsPath ret = new HdfsPath(srcLocation);
-                    if (!allowS3TableSync && ret.getProto().contains("s3")) {
-                        return ImmutableList.of(
-                                genValue(MetastoreAction.SKIP_TABLE.name(), db, table,
-                                        "s3 backed table skipped"));
-                    } else {
-                        if (!ret.getHost().matches(MetastoreReplicationJob.HDFSPATH_CHECK_MAP.get(this.metastore)) &&
-                                !ret.getProto().contains("s3")) {
-                            return ImmutableList.of(
-                                    genValue(MetastoreAction.SKIP_TABLE.name(), db, table,
-                                            "table is from different cluster"));
-                        }
-                    }
-                }
-
-                ArrayList<String> ret = new ArrayList<>();
-                if (dstTab == null) {
-                    if (tab.getPartitionKeys().size() > 0) {
-                        ret.add(genValue(MetastoreAction.CREATE_TABLE.name(), db, table, tab.getSd().getLocation()));
-
-                        ret.addAll(
-                                Lists.transform(srcClient.getPartitionNames(db, table), new Function<String, String>() {
-                                    public String apply(String s) {
-                                        return genValue(MetastoreAction.CREATE_PARTITION.name(), db, table, s);
-                                    }
-                                }));
-                    } else {
-                        if (tab.getTableType().contains("VIEW")) {
-                            ret.add(genValue(MetastoreAction.CREATE_TABLE.name(), db, table, ""));
-                        } else {
-                            ret.add(genValue(MetastoreAction.CREATE_TABLE_NONPART.name(), db, table,
-                                    tab.getSd().getLocation()));
-                        }
-                    }
-                } else {
-                    UpdateAction action = MetastoreCompareUtils.CompareTableForReplication(tab, dstTab);
-                    switch (action) {
-                    case UPDATE:
-                        ret.add(genValue(MetastoreAction.UPDATE_TABLE.name(), db, table, "table def changed"));
-                        break;
-                    case RECREATE:
-                        // work around for hive bug that can not drop view
-                        if (tab.getTableType().contains("VIEW")) {
-                            ret.add(genValue(MetastoreAction.UPDATE_TABLE.name(), db, table, "view def changed"));
-                        } else {
-                            ret.add(genValue(MetastoreAction.RECREATE_TABLE.name(), db, table, "table def changed"));
-                        }
-                        break;
-                    case NO_CHANGE:
-                        if (!dstTab.getParameters().containsKey(REPLICATED_FROM_PINKY_BRAIN)) {
-                            ret.add(genValue(MetastoreAction.UPDATE_TABLE.name(), db, table, "mark table replicated from pinky/brain"));
-                        } else {
-                            ret.add(genValue(MetastoreAction.SAME_META_TABLE.name(), db, table,
-                                    "table def not changed"));
-                        }
-                        break;
-                    default:
-                        throw new HiveMetastoreException(new InterruptedException("invalid table compare result"));
-                    }
-
-                    if (tab.getPartitionKeys().size() > 0) {
-                        HashSet<String> partNames = Sets.newHashSet(srcClient.getPartitionNames(db, table));
-                        HashSet<String> dstPartNames = Sets.newHashSet(dstClient.getPartitionNames(db, table));
-                        ret.addAll(Lists.transform(Lists.newArrayList(Sets.difference(partNames, dstPartNames)),
-                                new Function<String, String>() {
-                                    public String apply(String s) {
-                                        return genValue(MetastoreAction.CREATE_PARTITION.name(), db, table, s);
-                                    }
-                                }));
-                        ret.addAll(Lists.transform(Lists.newArrayList(Sets.difference(dstPartNames, partNames)),
-                                new Function<String, String>() {
-                                    public String apply(String s) {
-                                        return genValue(MetastoreAction.DROP_PARTITION.name(), db, table, s);
-                                    }
-                                }));
-                        ret.addAll(Lists.transform(Lists.newArrayList(Sets.intersection(partNames, dstPartNames)),
-                                new Function<String, String>() {
-                                    public String apply(String s) {
-                                        return genValue(MetastoreAction.UPDATE_PARTITION.name(), db, table, s);
-                                    }
-                                }));
-                    } else if (!tab.getTableType().contains("VIEW")) {
-                        ret.add(genValue(MetastoreAction.CHECK_DIRECTORY_TABLE.name(), db, table,
-                                "check directory for non-partition table"));
-                    }
-                }
-                return ret;
-            }
-        }
-
-        protected void cleanup() throws IOException, InterruptedException {
-            this.srcClient.close();
-            this.dstClient.close();
-        }
-    }
-
     public static class ProcessTableMapper extends Mapper<Text, Text, LongWritable, Text> {
-        private ProcessTableMapperBase worker = new ProcessTableMapperBase();
+        private TableCompareWorker worker = new TableCompareWorker();
 
         protected void setup(Context context) throws IOException, InterruptedException {
             worker.setup(context);
@@ -1293,7 +1164,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     }
 
     public static class ProcessTableMapperWithTextInput extends Mapper<LongWritable, Text, LongWritable, Text> {
-        private ProcessTableMapperBase worker = new ProcessTableMapperBase();
+        private TableCompareWorker worker = new TableCompareWorker();
 
         protected void setup(Context context) throws IOException, InterruptedException {
             worker.setup(context);
