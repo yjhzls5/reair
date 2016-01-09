@@ -174,7 +174,7 @@ public class CopyPartitionsTask implements ReplicationTask {
                     sizeOfPartitionsInCommonDirectory * 2)) {
                 doOptimisticCopy = true;
             } else {
-                LOG.warn(String.format("Size of common directory %s is much " +
+                LOG.debug(String.format("Size of common directory %s is much " +
                                 "bigger than the size of the partitions in " +
                                 "the common directory (%s). Hence, not " +
                                 "copying the common directory", commonDirectory,

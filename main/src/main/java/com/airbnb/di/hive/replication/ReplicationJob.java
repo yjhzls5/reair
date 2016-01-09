@@ -44,7 +44,7 @@ public class ReplicationJob extends Job {
             try {
                 onStateChangeHandler.onStart(this);
                 RunInfo runInfo = replicationTask.runTask();
-                LOG.info(String.format("Replication task id: %s finished " +
+                LOG.info(String.format("Replication job id: %s finished " +
                         "with status %s",
                         persistedJobInfo.getId(),
                         runInfo.getRunStatus()));

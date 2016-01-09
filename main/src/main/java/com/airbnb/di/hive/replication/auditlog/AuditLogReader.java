@@ -172,9 +172,6 @@ public class AuditLogReader {
                 auditLogTableName, outputObjectsTableName,
                 idsToRead.getMinimumLong(), idsToRead.getMaximumLong());
 
-
-
-        LOG.error("Executing " + query);
         Connection connection = dbConnectionFactory.getConnection();
         PreparedStatement ps = connection.prepareStatement(query);
 

@@ -340,7 +340,7 @@ public class FsUtils {
         LOG.debug("Size of " + dest + " is " + destSize);
 
         if (srcSize != destSize) {
-            LOG.warn(String.format("Size of %s and %s do not match!",
+            LOG.debug(String.format("Size of %s and %s do not match!",
                     src, dest));
             return false;
         }

@@ -187,13 +187,19 @@ public class ReplicationUtils {
     }
 
     public static String convertToJson(List<String> list) throws IOException {
-        ObjectWriter ow = new ObjectMapper().writerWithDefaultPrettyPrinter();
+        // writerWithDefaultPrettyPrinter() bundled in with CDH is not present,
+        // so using this deprecated method.
+        @SuppressWarnings("deprecation")
+        ObjectWriter ow = new ObjectMapper().defaultPrettyPrintingWriter();
         return ow.writeValueAsString(list);
     }
 
     public static String convertToJson(Map<String, String> map)
             throws IOException {
-        ObjectWriter ow = new ObjectMapper().writerWithDefaultPrettyPrinter();
+        // writerWithDefaultPrettyPrinter() bundled in with CDH is not present,
+        // so using this deprecated method.
+        @SuppressWarnings("deprecation")
+        ObjectWriter ow = new ObjectMapper().defaultPrettyPrintingWriter();
         return ow.writeValueAsString(map);
     }
 

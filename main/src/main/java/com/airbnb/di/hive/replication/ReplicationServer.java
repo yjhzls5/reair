@@ -343,13 +343,14 @@ public class ReplicationServer implements TReplicationService.Iface {
             }
         }
 
-        LOG.debug("Using last persisted ID of " + lastPersistedAuditLogId);
+        LOG.info("Using last persisted ID of " + lastPersistedAuditLogId);
         auditLogReader.setReadAfterId(lastPersistedAuditLogId);
 
         // Resume jobs that were persisted, but were not run.
         for(PersistedJobInfo jobInfo : jobInfoStore.getRunnableFromDb()) {
             LOG.debug(String.format("Restoring %s to (re)run", jobInfo));
             ReplicationJob job = restoreReplicationJob(jobInfo);
+            prettyLogStart(job);
             jobRegistry.registerJob(job);
             queueJobForExecution(job);
         }
