@@ -9,8 +9,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.fs.Trash;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
 import org.datanucleus.util.StringUtils;
 
 import java.io.FileNotFoundException;
@@ -467,30 +469,24 @@ public class FsUtils {
     }
 
     /**
-     * Delete the specified directory. Use FsShell by default, but use s3cmd
-     * to delete directories on S3 when possible. s3cmd use can be controlled
-     * by ConfigurationKeys.S3CMD_DELETES_ENABLED
+     * Delete the specified directory.
      *
-     * @param conf
-     * @param p
      * @throws IOException
      */
     public static void deleteDirectory(Configuration conf, Path p)
             throws IOException {
-        boolean canUseS3cmd = Boolean.parseBoolean(conf.get(
-                ConfigurationKeys.S3CMD_DELETES_ENABLED, "false"));
+
+        Trash trash = new Trash(conf);
         try {
-            String[] deleteArgs = {"-rm", "-r",
-                    p.toString()};
-            // The delete can be done through the native API as well.
-            FsShell shell = new FsShell();
-            try {
-                ToolRunner.run(shell, deleteArgs);
-            } finally {
-                shell.close();
+            boolean removed = trash.moveToTrash(p);
+            if (removed) {
+                LOG.debug("Moved to trash: " + p);
+            } else {
+                LOG.error("Error moving to trash: " + p);
             }
-        } catch (Exception e) {
-            throw new IOException(e);
+        } catch (FileNotFoundException e) {
+            LOG.debug("Attempting to delete non-existent directory " + p);
+            return;
         }
     }
 
