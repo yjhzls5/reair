@@ -91,7 +91,8 @@ public class TaskEstimatorTest extends MockClusterTest {
                 destCluster,
                 spec,
                 ReplicationUtils.getLocation(srcTable),
-                directoryCopier);
+                directoryCopier,
+                true);
         RunInfo status = copyJob.runTask();
         assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
 
@@ -247,7 +248,8 @@ public class TaskEstimatorTest extends MockClusterTest {
                 spec,
                 ReplicationUtils.getLocation(srcTable),
                 null,
-                directoryCopier);
+                directoryCopier,
+                true);
         RunInfo status = copyJob.runTask();
         assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
 

@@ -109,9 +109,15 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
         boolean locationDefined =
                 ReplicationUtils.getLocation(freshSrcTable) != null;
 
-        Path srcPath = new Path(
-                freshSrcTable.getSd().getLocation());
-        Path destPath = new Path(destTable.getSd().getLocation());
+        boolean srcLocationDefined =
+                ReplicationUtils.getLocation(freshSrcTable) != null;
+        boolean destLocationDefined =
+                ReplicationUtils.getLocation(destTable) != null;
+
+        Path srcPath = !srcLocationDefined ? null :
+                new Path(freshSrcTable.getSd().getLocation());
+        Path destPath = !destLocationDefined ? null :
+                new Path(destTable.getSd().getLocation());
 
         boolean needToCopy = locationDefined &&
                 !ReplicationUtils.getLocation(freshSrcTable).equals(
