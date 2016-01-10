@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -247,7 +248,7 @@ public class TaskEstimatorTest extends MockClusterTest {
                 destCluster,
                 spec,
                 ReplicationUtils.getLocation(srcTable),
-                null,
+                Optional.<Path>empty(),
                 directoryCopier,
                 true);
         RunInfo status = copyJob.runTask();

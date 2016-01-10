@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 public class DbKeyValueStore {
 
@@ -36,8 +37,9 @@ public class DbKeyValueStore {
                 ") ENGINE=InnoDB", tableName);
     }
 
-    public String resilientGet(final String value) throws SQLException {
-        final Container<String> ret = new Container<String>();
+    public Optional<String> resilientGet(final String value)
+            throws SQLException {
+        final Container<Optional<String>> ret = new Container<>();
         retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
             @Override
             public void run() throws Exception {
@@ -47,7 +49,7 @@ public class DbKeyValueStore {
         return ret.get();
     }
 
-    public String get(String value) throws SQLException {
+    public Optional<String> get(String value) throws SQLException {
         Connection connection = dbConnectionFactory.getConnection();
         String query = String.format("SELECT value_string FROM %s " +
                 "WHERE key_string = ? LIMIT 1", dbTableName);
@@ -56,9 +58,9 @@ public class DbKeyValueStore {
             ps.setString(1, value);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                return rs.getString(1);
+                return Optional.ofNullable(rs.getString(1));
             } else {
-                return null;
+                return Optional.empty();
             }
         } finally {
             ps.close();

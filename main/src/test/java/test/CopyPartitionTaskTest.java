@@ -13,12 +13,14 @@ import com.airbnb.di.utils.ReplicationTestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -54,7 +56,7 @@ public class CopyPartitionTaskTest extends MockClusterTest {
                 destCluster,
                 partitionSpec,
                 ReplicationUtils.getLocation(srcPartition),
-                null,
+                Optional.empty(),
                 directoryCopier,
                 true);
         RunInfo status = copyPartitionTask.runTask();
@@ -75,7 +77,7 @@ public class CopyPartitionTaskTest extends MockClusterTest {
                 destCluster,
                 partitionSpec,
                 ReplicationUtils.getLocation(srcPartition),
-                null,
+                Optional.<Path>empty(),
                 directoryCopier,
                 false);
         status = copyPartitionTask.runTask();
@@ -111,7 +113,7 @@ public class CopyPartitionTaskTest extends MockClusterTest {
                 destCluster,
                 partitionSpec,
                 ReplicationUtils.getLocation(srcPartition),
-                null,
+                Optional.<Path>empty(),
                 directoryCopier,
                 true);
         RunInfo status = copyPartitionTask.runTask();

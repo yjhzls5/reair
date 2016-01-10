@@ -18,6 +18,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -56,7 +57,7 @@ public class DropPartitionTest extends MockClusterTest {
                 destCluster,
                 partitionSpec,
                 ReplicationUtils.getLocation(srcPartition),
-                null,
+                Optional.empty(),
                 directoryCopier,
                 true);
         RunInfo status = copyPartitionTask.runTask();

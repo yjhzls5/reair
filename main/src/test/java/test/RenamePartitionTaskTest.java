@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -75,7 +76,7 @@ public class RenamePartitionTaskTest extends MockClusterTest {
                 destCluster,
                 oldPartitionSpec,
                 ReplicationUtils.getLocation(oldPartition),
-                null,
+                Optional.empty(),
                 directoryCopier,
                 true);
 

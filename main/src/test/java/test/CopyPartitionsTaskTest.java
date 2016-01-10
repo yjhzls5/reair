@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -81,7 +82,7 @@ public class CopyPartitionsTaskTest extends MockClusterTest {
         partitionNames.add("ds=1/hr=3");
 
         // Find the common path for these partitions
-        Path commonDirectory =
+        Optional<Path> commonDirectory =
                 CopyPartitionsTask.findCommonDirectory(tableSpec,
                         specToPartition);
 
@@ -166,7 +167,7 @@ public class CopyPartitionsTaskTest extends MockClusterTest {
         partitionNames.add("ds=1/hr=2");
 
         // Find the common path for these partitions
-        Path commonDirectory =
+        Optional<Path> commonDirectory =
                 CopyPartitionsTask.findCommonDirectory(tableSpec,
                         specToPartition);
 

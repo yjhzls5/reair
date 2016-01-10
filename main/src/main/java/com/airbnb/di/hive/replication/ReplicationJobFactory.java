@@ -25,15 +25,18 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class ReplicationJobFactory {
@@ -92,14 +95,14 @@ public class ReplicationJobFactory {
                 ReplicationUtils.getLocation(t),
                 srcCluster.getName(),
                 new HiveObjectSpec(t),
-                null,
+                Collections.emptyList(),
                 ReplicationUtils.getTldt(t),
-                null,
-                null,
+                Optional.empty(),
+                Optional.empty(),
                 extras);
 
         HiveObjectSpec spec = new HiveObjectSpec(t);
-        Path tableLocation = ReplicationUtils.getLocation(t);
+        Optional<Path> tableLocation = ReplicationUtils.getLocation(t);
 
         switch (replicationOperation) {
             case COPY_UNPARTITIONED_TABLE:
@@ -149,13 +152,13 @@ public class ReplicationJobFactory {
         PersistedJobInfo persistedJobInfo = jobInfoStore.resilientCreate(
                 replicationOperation,
                 ReplicationStatus.PENDING,
-                null,
+                Optional.empty(),
                 srcCluster.getName(),
                 spec,
                 partitionNames,
-                null,
-                null,
-                null,
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
                 extras);
 
         ReplicationTask replicationTask = new CopyPartitionTask(
@@ -165,8 +168,8 @@ public class ReplicationJobFactory {
                 srcCluster,
                 destCluster,
                 spec,
-                null,
-                null,
+                Optional.<Path>empty(),
+                Optional.<Path>empty(),
                 directoryCopier,
                 true);
 
@@ -202,8 +205,8 @@ public class ReplicationJobFactory {
                 spec,
                 partitionNames,
                 ReplicationUtils.getTldt(partition),
-                null,
-                null,
+                Optional.empty(),
+                Optional.empty(),
                 extras);
 
         ReplicationTask replicationTask = new CopyPartitionTask(
@@ -214,7 +217,7 @@ public class ReplicationJobFactory {
                 destCluster,
                 spec,
                 ReplicationUtils.getLocation(partition),
-                null,
+                Optional.<Path>empty(),
                 directoryCopier,
                 true);
 
@@ -238,7 +241,7 @@ public class ReplicationJobFactory {
                 namedPartition);
 
         // The common location is the common path that all the partitions share.
-        Path commonLocation = ReplicationUtils.getCommonDirectory(
+        Optional<Path> commonLocation = ReplicationUtils.getCommonDirectory(
                 ReplicationUtils.getLocations(partitions));
 
         Partition samplePartition = namedPartition.get(0).getPartition();
@@ -259,9 +262,9 @@ public class ReplicationJobFactory {
                 srcCluster.getName(),
                 tableSpec,
                 partitionNames,
-                null,
-                null,
-                null,
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
                 extras);
 
         ReplicationTask replicationTask = new CopyPartitionsTask(
@@ -315,10 +318,10 @@ public class ReplicationJobFactory {
                 ReplicationUtils.getLocation(table),
                 srcCluster.getName(),
                 tableSpec,
-                new ArrayList<String>(),
+                Collections.emptyList(),
                 ReplicationUtils.getTldt(table),
-                null,
-                null,
+                Optional.empty(),
+                Optional.empty(),
                 extras);
 
         return new ReplicationJob(
@@ -348,7 +351,7 @@ public class ReplicationJobFactory {
                 new HiveObjectSpec(namedPartition);
         List<String> partitionNames = new ArrayList<String>();
         partitionNames.add(namedPartition.getName());
-        String partitionTldt =
+        Optional<String> partitionTldt =
                 ReplicationUtils.getTldt(namedPartition.getPartition());
         PersistedJobInfo persistedJobInfo = jobInfoStore.resilientCreate(
                 replicationOperation,
@@ -358,8 +361,8 @@ public class ReplicationJobFactory {
                 partitionSpec.getTableSpec(),
                 partitionNames,
                 partitionTldt,
-                null,
-                null,
+                Optional.empty(),
+                Optional.empty(),
                 extras);
 
         return new ReplicationJob(
@@ -390,8 +393,10 @@ public class ReplicationJobFactory {
                 new HiveObjectSpec(renameFromTable);
         HiveObjectSpec renameToTableSpec =
                 new HiveObjectSpec(renameToTable);
-        Path renameFromPath = ReplicationUtils.getLocation(renameFromTable);
-        Path renameToPath = ReplicationUtils.getLocation(renameToTable);
+        Optional<Path> renameFromPath =
+                ReplicationUtils.getLocation(renameFromTable);
+        Optional<Path> renameToPath =
+                ReplicationUtils.getLocation(renameToTable);
 
         PersistedJobInfo persistedJobInfo = jobInfoStore.resilientCreate(
                 replicationOperation,
@@ -399,9 +404,9 @@ public class ReplicationJobFactory {
                 renameFromPath,
                 srcCluster.getName(),
                 renameFromTableSpec,
-                new ArrayList<String>(),
+                new ArrayList<>(),
                 ReplicationUtils.getTldt(renameFromTable),
-                renameToTableSpec,
+                Optional.of(renameToTableSpec),
                 renameToPath,
                 extras);
 
@@ -442,9 +447,9 @@ public class ReplicationJobFactory {
                 new HiveObjectSpec(renameFromPartition);
         HiveObjectSpec renameToPartitionSpec =
                 new HiveObjectSpec(renameToPartition);
-        Path renameFromPath = ReplicationUtils.getLocation(
+        Optional renameFromPath = ReplicationUtils.getLocation(
                 renameFromPartition.getPartition());
-        Path renameToPath = ReplicationUtils.getLocation(
+        Optional renameToPath = ReplicationUtils.getLocation(
                 renameToPartition.getPartition());
 
         PersistedJobInfo persistedJobInfo = jobInfoStore.resilientCreate(
@@ -455,7 +460,7 @@ public class ReplicationJobFactory {
                 renameFromPartitionSpec,
                 new ArrayList<String>(),
                 ReplicationUtils.getTldt(renameFromPartition.getPartition()),
-                renameToPartitionSpec,
+                Optional.of(renameToPartitionSpec),
                 renameToPath,
                 extras);
 
@@ -567,7 +572,6 @@ public class ReplicationJobFactory {
             case DROPTABLE:
             case DROPVIEW:
             case ALTERTABLE_DROPPARTS:
-            case TRUNCATETABLE:
                 operationType = OperationType.DROP;
                 break;
             case ALTERTABLE_RENAME:

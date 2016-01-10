@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public class ReplicationJob extends Job {
@@ -100,11 +101,11 @@ public class ReplicationJob extends Job {
     // TODO: Does this belong in this class?
 
     public long getCreateTime() {
-        String createTime = getPersistedJobInfo()
+        Optional<String> createTime = Optional.ofNullable(getPersistedJobInfo()
                 .getExtras()
-                .get(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY);
+                .get(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY));
 
-        return createTime == null ? 0 : Long.parseLong(createTime);
+        return createTime.map(Long::parseLong).orElse(Long.valueOf(0));
     }
 
     public Collection<Long> getParentJobIds() {

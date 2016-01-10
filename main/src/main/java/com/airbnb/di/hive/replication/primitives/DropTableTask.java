@@ -12,6 +12,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.metastore.api.Table;
 
+import java.util.Optional;
+
 public class DropTableTask implements ReplicationTask {
 
     private static final Log LOG = LogFactory.getLog(DropTableTask.class);
@@ -19,12 +21,12 @@ public class DropTableTask implements ReplicationTask {
     private Cluster srcCluster;
     private Cluster destCluster;
     private HiveObjectSpec spec;
-    private String sourceTldt;
+    private Optional<String> sourceTldt;
 
     public DropTableTask(Cluster srcCluster,
                          Cluster destCluster,
                          HiveObjectSpec spec,
-                         String sourceTldt) {
+                         Optional<String> sourceTldt) {
         this.srcCluster = srcCluster;
         this.destCluster = destCluster;
         this.spec = spec;
@@ -37,11 +39,12 @@ public class DropTableTask implements ReplicationTask {
         LOG.debug("Looking to drop: " + spec);
         LOG.debug("Source TLDT is : " + sourceTldt);
 
-        if (sourceTldt == null) {
+        if (!sourceTldt.isPresent()) {
             LOG.error("For safety, not completing drop task since source " +
                     " object TLDT is missing!");
             return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
         }
+        String expectedTldt = sourceTldt.get();
 
         Table destTable = ms.getTable(spec.getDbName(),
                 spec.getTableName());
@@ -56,7 +59,7 @@ public class DropTableTask implements ReplicationTask {
         String destTldt = destTable.getParameters().get(
                 HiveParameterKeys.TLDT);
 
-        if (sourceTldt.equals(destTldt)) {
+        if (expectedTldt.equals(destTldt)) {
             LOG.debug(String.format("Destination table %s matches expected" +
                             " TLDT (%s)", spec, destTldt));
             LOG.debug("Dropping " + spec);
@@ -65,8 +68,9 @@ public class DropTableTask implements ReplicationTask {
             return new RunInfo(RunInfo.RunStatus.SUCCESSFUL, 0);
         } else {
             LOG.debug(String.format("Not dropping %s as source(%s) and " +
-                            "destination(%s) TLDT's dont match", spec.toString(),
-                    sourceTldt, destTldt));
+                            "destination(%s) TLDT's dont match",
+                    spec.toString(),
+                    expectedTldt, destTldt));
             return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
         }
     }

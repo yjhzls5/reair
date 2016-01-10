@@ -1,6 +1,7 @@
 package com.airbnb.di.hive.replication;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 public class LagTracker {
@@ -18,15 +19,12 @@ public class LagTracker {
                     job.getId()));
         }
 
-        String createTime = job.getPersistedJobInfo()
+        Optional<String> createTime = Optional.ofNullable(job.getPersistedJobInfo()
                 .getExtras()
-                .get(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY);
+                .get(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY));
 
-        if (createTime == null) {
-            createTime = Long.toString(System.currentTimeMillis());
-        }
-
-        idToCreateTime.put(job.getId(), Long.parseLong(createTime));
+        idToCreateTime.put(job.getId(),
+                createTime.map(Long::parseLong).orElse(Long.valueOf(0)));
     }
 
     synchronized public void remove(ReplicationJob job) {

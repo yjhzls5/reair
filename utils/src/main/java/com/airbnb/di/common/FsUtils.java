@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 
@@ -53,7 +54,7 @@ public class FsUtils {
 
     public static long getSize(Configuration conf, Path p)
             throws IOException {
-        return getSize(conf, p, null);
+        return getSize(conf, p, Optional.empty());
     }
     /**
      * @param conf
@@ -63,7 +64,9 @@ public class FsUtils {
      * any subdirectories.
      * @throws java.io.IOException
      */
-    public static long getSize(Configuration conf, Path p, PathFilter filter)
+    public static long getSize(Configuration conf,
+                               Path p,
+                               Optional<PathFilter> filter)
             throws IOException {
         long totalSize = 0;
         /*
@@ -83,8 +86,8 @@ public class FsUtils {
         // related to block locations when using with s3n
         while (pathsToCheck.size() > 0) {
             Path pathToCheck = pathsToCheck.remove();
-            if (filter != null &&
-                    !filter.accept(pathToCheck)) {
+            if (filter.isPresent() &&
+                    !filter.get().accept(pathToCheck)) {
                 LOG.warn("Skipping check of directory: " +
                         pathToCheck);
                 continue;
@@ -139,7 +142,7 @@ public class FsUtils {
      */
     public static Set<FileStatus> getFileStatusesRecursive(Configuration conf,
                                                            Path p,
-                                                           PathFilter filter)
+                                                           Optional<PathFilter> filter)
             throws IOException {
         FileSystem fs = FileSystem.get(p.toUri(), conf);
         Set<FileStatus> fileStatuses = new HashSet<FileStatus>();
@@ -152,8 +155,8 @@ public class FsUtils {
         // related to block locations when using with s3n
         while (pathsToCheck.size() > 0) {
             Path pathToCheck = pathsToCheck.remove();
-            if (filter != null &&
-                    !filter.accept(pathToCheck)) {
+            if (filter.isPresent() &&
+                    !filter.get().accept(pathToCheck)) {
                 LOG.warn("Skipping check of directory: " +
                         pathToCheck);
                 continue;
@@ -254,9 +257,9 @@ public class FsUtils {
      * @throws IOException
      */
     public static boolean filesExistOnDestButNotSrc(Configuration conf,
-                                                     Path src,
-                                                     Path dest,
-                                                     PathFilter filter)
+                                                    Path src,
+                                                    Path dest,
+                                                    Optional<PathFilter> filter)
             throws IOException {
         Set<FileStatus> srcFileStatuses = getFileStatusesRecursive(conf, src,
                 filter);
@@ -285,7 +288,7 @@ public class FsUtils {
 
     public static boolean equalDirs(Configuration conf, Path src, Path dest)
             throws IOException {
-        return equalDirs(conf, src, dest, null);
+        return equalDirs(conf, src, dest, Optional.empty());
     }
 
     /**
@@ -300,14 +303,18 @@ public class FsUtils {
      * sizes.
      * @throws IOException
      */
-    public static boolean equalDirs(Configuration conf, Path src, Path dest,
-                                    PathFilter filter)
+    public static boolean equalDirs(Configuration conf,
+                                    Path src,
+                                    Path dest,
+                                    Optional<PathFilter> filter)
             throws IOException {
         return equalDirs(conf, src, dest, filter, false);
     }
 
-    public static boolean equalDirs(Configuration conf, Path src, Path dest,
-                                    PathFilter filter,
+    public static boolean equalDirs(Configuration conf,
+                                    Path src,
+                                    Path dest,
+                                    Optional<PathFilter> filter,
                                     boolean compareModificationTimes)
             throws IOException {
         boolean srcExists = src.getFileSystem(conf).exists(src);
@@ -396,7 +403,7 @@ public class FsUtils {
 
     public static void syncModificationTimes(Configuration conf,
                                              Path src, Path dest,
-                                             PathFilter filter)
+                                             Optional<PathFilter> filter)
             throws IOException {
         Set<FileStatus> srcFileStatuses = getFileStatusesRecursive(conf, src,
                 filter);

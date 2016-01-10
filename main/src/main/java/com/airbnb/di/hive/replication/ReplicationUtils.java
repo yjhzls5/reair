@@ -4,6 +4,8 @@ import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveParameterKeys;
+
+import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,6 +27,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class ReplicationUtils {
@@ -203,33 +206,36 @@ public class ReplicationUtils {
         return ow.writeValueAsString(map);
     }
 
-    public static Path getLocation(Table table) {
-        if (table.getSd().getLocation() == null) {
-            return null;
+    public static Optional<Path> getLocation(Table table) {
+        if (table == null || table.getSd() == null ||
+                table.getSd().getLocation() == null) {
+            return Optional.empty();
         } else {
-            return new Path(table.getSd().getLocation());
+            return Optional.ofNullable(new Path(table.getSd().getLocation()));
         }
     }
 
-    public static Path getLocation(Partition p) {
-        if (p.getSd().getLocation() == null) {
-            return null;
+    public static Optional<Path> getLocation(Partition p) {
+        if (p == null || p.getSd() == null || p.getSd().getLocation() == null) {
+            return Optional.empty();
         }
-        return new Path(p.getSd().getLocation());
+        return Optional.ofNullable(new Path(p.getSd().getLocation()));
     }
 
-    public static String getTldt(Table t) {
-        if (t.getParameters() == null) {
-            return null;
+    public static Optional<String> getTldt(Table t) {
+        if (t == null || t.getParameters() == null) {
+            return Optional.empty();
         }
-        return t.getParameters().get(HiveParameterKeys.TLDT);
+        return Optional.ofNullable(t.getParameters()
+                .get(HiveParameterKeys.TLDT));
     }
 
-    public static String getTldt(Partition p) {
-        if (p.getParameters() == null) {
-            return null;
+    public static Optional<String> getTldt(Partition p) {
+        if (p == null || p.getParameters() == null) {
+            return Optional.empty();
         }
-        return p.getParameters().get(HiveParameterKeys.TLDT);
+        return Optional.ofNullable(p.getParameters()
+                .get(HiveParameterKeys.TLDT));
     }
 
     public static ReplicationStatus toReplicationStatus(
@@ -277,9 +283,9 @@ public class ReplicationUtils {
         return true;
     }
 
-    public static Path getCommonDirectory(Set<Path> dirs) {
+    public static Optional<Path> getCommonDirectory(Set<Path> dirs) {
         if (dirs.size() == 0) {
-            return null;
+            return Optional.empty();
         }
         // First verify that all the schemes and authorities are the same
         String scheme = null;
@@ -294,13 +300,13 @@ public class ReplicationUtils {
             }
 
             if (!scheme.equals(dir.toUri().getScheme())) {
-                return null;
+                return Optional.empty();
             }
 
             // Authority can be null - for example: file:///abc/
             if (authority != null &&
                     !authority.equals(dir.toUri().getAuthority())) {
-                return null;
+                return Optional.empty();
             }
         }
 
@@ -314,7 +320,7 @@ public class ReplicationUtils {
             }
         }
 
-        return new Path(scheme, authority, commonDir);
+        return Optional.of(new Path(scheme, authority, commonDir));
     }
 
     /**

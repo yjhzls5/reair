@@ -10,6 +10,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Creates the Hive thrift object that should be created on the destination cluster
@@ -74,11 +75,11 @@ public class DestinationObjectFactory {
         Table destTable = new Table(srcTable);
 
         // If applicable, update the location for the table
-        Path srcLocation = ReplicationUtils.getLocation(srcTable);
-        if (srcLocation != null &&
-                !srcLocation.toString().startsWith("s3")) {
+        Optional<Path> srcLocation = ReplicationUtils.getLocation(srcTable);
+        if (srcLocation.isPresent() &&
+                !srcLocation.get().toString().startsWith("s3")) {
             String destLocation = modifyLocation(srcCluster,
-                    destCluster, srcLocation.toString());
+                    destCluster, srcLocation.get().toString());
 
             destTable.getSd().setLocation(destLocation);
         }
@@ -113,12 +114,12 @@ public class DestinationObjectFactory {
                                          Partition existingDestPartition) {
         Partition destPartition = new Partition(srcPartition);
 
-        Path srcLocation = ReplicationUtils.getLocation(srcPartition);
+        Optional<Path> srcLocation = ReplicationUtils.getLocation(srcPartition);
         // If applicable, update the location for the partition
-        if (srcLocation != null &&
-                !srcLocation.toString().startsWith("s3")) {
+        if (srcLocation.isPresent() &&
+                !srcLocation.get().toString().startsWith("s3")) {
             String destLocation = modifyLocation(srcCluster,
-                    destCluster, srcLocation.toString());
+                    destCluster, srcLocation.get().toString());
             destPartition.getSd().setLocation(destLocation);
         }
         destPartition.putToParameters(HiveParameterKeys.SRC_CLUSTER,

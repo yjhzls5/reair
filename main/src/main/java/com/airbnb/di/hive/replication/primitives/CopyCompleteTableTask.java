@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by paul_yang on 7/10/15.
@@ -39,7 +40,7 @@ public class CopyCompleteTableTask implements ReplicationTask {
     private Cluster srcCluster;
     private Cluster destCluster;
     private HiveObjectSpec spec;
-    private Path tableLocation;
+    private Optional<Path> tableLocation;
     private ParallelJobExecutor copyPartitionsExecutor;
     private DirectoryCopier directoryCopier;
 
@@ -49,7 +50,7 @@ public class CopyCompleteTableTask implements ReplicationTask {
                                  Cluster srcCluster,
                                  Cluster destCluster,
                                  HiveObjectSpec spec,
-                                 Path tableLocation,
+                                 Optional<Path> tableLocation,
                                  ParallelJobExecutor copyPartitionsExecutor,
                                  DirectoryCopier directoryCopier) {
         this.conf = conf;
@@ -99,7 +100,7 @@ public class CopyCompleteTableTask implements ReplicationTask {
                 specToPartition.put(partitionSpec, partition);
             }
 
-            Path commonDirectory = null;
+            Optional<Path> commonDirectory = Optional.empty();
 
             if (specToPartition.size() > 0) {
                 commonDirectory = CopyPartitionsTask.findCommonDirectory(

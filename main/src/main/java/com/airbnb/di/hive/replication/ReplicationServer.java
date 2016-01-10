@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TimeZone;
 
 public class ReplicationServer implements TReplicationService.Iface {
@@ -82,7 +83,7 @@ public class ReplicationServer implements TReplicationService.Iface {
 
     private DirectoryCopier directoryCopier;
 
-    private Long startAfterAuditLogId = null;
+    private Optional<Long> startAfterAuditLogId = Optional.empty();
 
     // Responsible for persisting changes to the state of the replication job
     // once it finishes
@@ -153,7 +154,7 @@ public class ReplicationServer implements TReplicationService.Iface {
                              DirectoryCopier directoryCopier,
                              int numWorkers,
                              int maxJobsInMemory,
-                             Long startAfterAuditLogId) {
+                             Optional<Long> startAfterAuditLogId) {
         this.conf = conf;
         this.srcCluster = srcCluster;
         this.destCluster = destCluster;
@@ -205,8 +206,7 @@ public class ReplicationServer implements TReplicationService.Iface {
                 persistedJobInfo.getSrcTableName());
         HiveObjectSpec partitionSpec = null;
 
-        if (persistedJobInfo.getSrcPartitionNames() != null &&
-                persistedJobInfo.getSrcPartitionNames().size() > 0) {
+        if (persistedJobInfo.getSrcPartitionNames().size() > 0) {
             partitionSpec = new HiveObjectSpec(
                     persistedJobInfo.getSrcDbName(),
                     persistedJobInfo.getSrcTableName(),
@@ -244,7 +244,7 @@ public class ReplicationServer implements TReplicationService.Iface {
                         destCluster,
                         partitionSpec,
                         persistedJobInfo.getSrcPath(),
-                        null,
+                        Optional.empty(),
                         directoryCopier,
                         true);
                 break;
@@ -278,6 +278,17 @@ public class ReplicationServer implements TReplicationService.Iface {
                          persistedJobInfo.getSrcObjectTldt());
                 break;
             case RENAME_TABLE:
+                if (!persistedJobInfo.getRenameToDb().isPresent() ||
+                    !persistedJobInfo.getRenameToTable().isPresent()) {
+                    throw new RuntimeException(String.format(
+                            "Rename to table is invalid: %s.%s",
+                            persistedJobInfo.getRenameToDb(),
+                            persistedJobInfo.getRenameToTable()));
+                }
+                HiveObjectSpec renameToTableSpec = new HiveObjectSpec(
+                        persistedJobInfo.getRenameToDb().get(),
+                        persistedJobInfo.getRenameToTable().get());
+
                 replicationTask = new RenameTableTask(
                         conf,
                         srcCluster,
@@ -285,9 +296,7 @@ public class ReplicationServer implements TReplicationService.Iface {
                         destinationObjectFactory,
                         objectConflictHandler,
                         tableSpec,
-                        new HiveObjectSpec(
-                                persistedJobInfo.getRenameToDb(),
-                                persistedJobInfo.getRenameToTable()),
+                        renameToTableSpec,
                         persistedJobInfo.getSrcPath(),
                         persistedJobInfo.getRenameToPath(),
                         persistedJobInfo.getSrcObjectTldt(),
@@ -321,25 +330,25 @@ public class ReplicationServer implements TReplicationService.Iface {
         // last persisted.
         long lastPersistedAuditLogId = 0;
 
-        if (startAfterAuditLogId != null) {
+        if (startAfterAuditLogId.isPresent()) {
             // The starting ID was specified
-            lastPersistedAuditLogId = startAfterAuditLogId;
+            lastPersistedAuditLogId = startAfterAuditLogId.get();
         } else {
             // Otherwise, start from the previous stop point
             LOG.debug("Fetching last persisted audit log ID");
-            String lastPersistedIdString = keyValueStore.get(
+            Optional<String> lastPersistedIdString = keyValueStore.get(
                     LAST_PERSISTED_AUDIT_LOG_ID_KEY);
 
-            if (lastPersistedIdString == null) {
-                Long maxId = auditLogReader.getMaxId();
-                if (maxId == null) {
-                    maxId = Long.valueOf(0);
-                }
-                LOG.warn(String.format("Since the last persisted ID was not previously set, " +
-                        "using max ID in the audit log: %s", maxId));
-                lastPersistedAuditLogId = maxId;
+            if (!lastPersistedIdString.isPresent()) {
+                Optional<Long> maxId = auditLogReader.getMaxId();
+                lastPersistedAuditLogId = maxId.orElse(Long.valueOf(0));
+                LOG.warn(String.format("Since the last persisted ID was not " +
+                        "previously set, using max ID in the audit log: %s",
+                        lastPersistedAuditLogId));
+
             } else {
-                lastPersistedAuditLogId = Long.parseLong(lastPersistedIdString);
+                lastPersistedAuditLogId = Long.parseLong(
+                        lastPersistedIdString.get());
             }
         }
 
@@ -397,27 +406,30 @@ public class ReplicationServer implements TReplicationService.Iface {
 
             // Get an entry from the audit log
             LOG.debug("Fetching the next entry from the audit log");
-            AuditLogEntry auditLogEntry = auditLogReader.resilientNext();
+            Optional<AuditLogEntry> auditLogEntry =
+                    auditLogReader.resilientNext();
 
             // If there's nothing from the audit log, then wait for a little bit
             // and then try again.
-            if (auditLogEntry == null) {
+            if (!auditLogEntry.isPresent()) {
                 LOG.debug(String.format("No more entries from the audit log. " +
                         "Sleeping for %s ms", pollWaitTimeMs));
                 ReplicationUtils.sleep(pollWaitTimeMs);
                 continue;
             }
 
-            LOG.debug("Got audit log entry: " + auditLogEntry);
+            AuditLogEntry entry = auditLogEntry.get();
+
+            LOG.debug("Got audit log entry: " + entry);
 
             // Convert the audit log entry into a replication job, which has
             // elements persisted to the DB
             List<ReplicationJob> replicationJobs =
-                    jobFactory.createReplicationJobs(auditLogEntry,
+                    jobFactory.createReplicationJobs(auditLogEntry.get(),
                             replicationFilter);
 
             LOG.debug(String.format("Audit log entry id: %s converted to %s",
-                    auditLogEntry.getId(),
+                    entry.getId(),
                     replicationJobs));
 
             // Add these jobs to the registry
@@ -431,7 +443,7 @@ public class ReplicationServer implements TReplicationService.Iface {
                     10000) {
                 keyValueStore.resilientSet(
                         LAST_PERSISTED_AUDIT_LOG_ID_KEY,
-                        Long.toString(auditLogEntry.getId()));
+                        Long.toString(entry.getId()));
                 updateTimeForLastPersistedId = System.currentTimeMillis();
             }
 
@@ -542,8 +554,7 @@ public class ReplicationServer implements TReplicationService.Iface {
     private void prettyLogStart(ReplicationJob job) {
         List<HiveObjectSpec> srcSpecs = new ArrayList<HiveObjectSpec>();
 
-        if (job.getPersistedJobInfo().getSrcPartitionNames() != null &&
-                job.getPersistedJobInfo().getSrcPartitionNames().size() > 0) {
+        if (job.getPersistedJobInfo().getSrcPartitionNames().size() > 0) {
             for (String partitionName :
                     job.getPersistedJobInfo().getSrcPartitionNames()) {
                 HiveObjectSpec spec = new HiveObjectSpec(
@@ -559,11 +570,22 @@ public class ReplicationServer implements TReplicationService.Iface {
             srcSpecs.add(spec);
         }
 
-        HiveObjectSpec renameToSpec = new HiveObjectSpec(
-                job.getPersistedJobInfo().getRenameToDb(),
-                job.getPersistedJobInfo().getRenameToTable(),
-                job.getPersistedJobInfo().getRenameToPartition());
-
+        Optional<HiveObjectSpec> renameToSpec = Optional.empty();
+        PersistedJobInfo jobInfo = job.getPersistedJobInfo();
+        if (jobInfo.getRenameToDb().isPresent() &&
+                jobInfo.getRenameToTable().isPresent()) {
+            if (!jobInfo.getRenameToPartition().isPresent()) {
+                renameToSpec = Optional.of(
+                        new HiveObjectSpec(jobInfo.getRenameToDb().get(),
+                                jobInfo.getRenameToTable().get()));
+            } else {
+                renameToSpec = Optional.of(
+                        new HiveObjectSpec(
+                                jobInfo.getRenameToDb().get(),
+                                jobInfo.getRenameToTable().get(),
+                                jobInfo.getRenameToPartition().get()));
+            }
+        }
         ReplicationOperation operation =
                 job.getPersistedJobInfo().getOperation();
         boolean renameOperation =
@@ -600,7 +622,7 @@ public class ReplicationServer implements TReplicationService.Iface {
      * called before run() is called.
      */
     public void setStartAfterAuditLogId(long auditLogId) {
-        this.startAfterAuditLogId = auditLogId;
+        this.startAfterAuditLogId = Optional.of(auditLogId);
     }
 
     /**

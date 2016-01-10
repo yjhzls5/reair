@@ -17,6 +17,7 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * Given a Hive object spec, this class tries to figure out what operations
@@ -103,25 +104,22 @@ public class TaskEstimator {
         // See if we need to update the data
         // Locations are not defined for views
         boolean updateData = false;
-        Path srcPath = null;
-        Path destPath = null;
-        boolean locationDefined =
-                ReplicationUtils.getLocation(tableOnSrc) != null;
+        Optional<Path> srcPath = ReplicationUtils.getLocation(tableOnSrc);
+
         Table expectedDestTable = destObjectFactory.createDestTable(
                 srcCluster,
                 destCluster,
                 tableOnSrc,
                 tableOnDest);
 
+        Optional<Path> destPath = ReplicationUtils.getLocation(
+                expectedDestTable);
+
         if (!isPartitionedTable &&
-                locationDefined &&
-                !ReplicationUtils.equalLocations(tableOnSrc,
-                        expectedDestTable)) {
-            srcPath = new Path(tableOnSrc.getSd().getLocation());
-            destPath = new Path(expectedDestTable.getSd().getLocation());
-            if (!directoryCopier.equalDirs(srcPath, destPath)) {
-                updateData = true;
-            }
+                srcPath.isPresent() &&
+                !srcPath.equals(destPath)) {
+            updateData = !directoryCopier.equalDirs(srcPath.get(),
+                    destPath.get());
         }
 
         // See if we need to update the metadata
@@ -141,8 +139,8 @@ public class TaskEstimator {
                     TaskEstimate.TaskType.COPY_UNPARTITIONED_TABLE,
                     updateMetadata,
                     updateData,
-                    srcPath,
-                    destPath);
+                    srcPath.get(),
+                    destPath.get());
         } else {
             return new TaskEstimate(
                     TaskEstimate.TaskType.COPY_PARTITIONED_TABLE,
@@ -161,8 +159,6 @@ public class TaskEstimator {
                     spec);
         }
         boolean updateData = false;
-        Path srcPath = null;
-        Path destPath = null;
 
         HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
         Partition partitionOnSrc = srcMs.getPartition(spec.getDbName(),
@@ -196,18 +192,15 @@ public class TaskEstimator {
                 partitionOnSrc,
                 partitionOnDest);
 
-        boolean locationDefined =
-                ReplicationUtils.getLocation(partitionOnSrc) != null;
+        Optional<Path> srcPath = ReplicationUtils.getLocation(partitionOnSrc);
+        Optional<Path> destPath =
+                ReplicationUtils.getLocation(expectedDestPartition);
 
         // See if we need to update the data
-        if (locationDefined &&
-                !ReplicationUtils.equalLocations(partitionOnSrc,
-                        expectedDestPartition)) {
-            srcPath = new Path(partitionOnSrc.getSd().getLocation());
-            destPath = new Path(expectedDestPartition.getSd().getLocation());
-            if (!directoryCopier.equalDirs(srcPath, destPath)) {
-                updateData = true;
-            }
+        if (srcPath.isPresent() &&
+                !srcPath.equals(destPath)) {
+                updateData = !directoryCopier.equalDirs(srcPath.get(),
+                        destPath.get());
         }
 
         // A metadata update is required if the destination partition doesn't
@@ -227,8 +220,8 @@ public class TaskEstimator {
             return new TaskEstimate(TaskEstimate.TaskType.COPY_PARTITION,
                     updateMetadata,
                     updateData,
-                    srcPath,
-                    destPath);
+                    srcPath.get(),
+                    destPath.orElse(null));
         }
     }
 }

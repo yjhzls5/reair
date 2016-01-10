@@ -17,6 +17,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Table;
 
+import java.util.Optional;
+
 public class CopyPartitionedTableTask implements ReplicationTask {
 
     private static final Log LOG = LogFactory.getLog(
@@ -28,7 +30,7 @@ public class CopyPartitionedTableTask implements ReplicationTask {
     private Cluster srcCluster;
     private Cluster destCluster;
     private HiveObjectSpec spec;
-    private Path srcPath;
+    private Optional<Path> srcPath;
 
     public CopyPartitionedTableTask(Configuration conf,
                                     DestinationObjectFactory destObjectFactory,
@@ -36,7 +38,7 @@ public class CopyPartitionedTableTask implements ReplicationTask {
                                     Cluster srcCluster,
                                     Cluster destCluster,
                                     HiveObjectSpec spec,
-                                    Path srcPath) {
+                                    Optional<Path> srcPath) {
         this.conf = conf;
         this.objectModifier = destObjectFactory;
         this.objectConflictHandler = objectConflictHandler;

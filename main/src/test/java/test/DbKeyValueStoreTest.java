@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -70,14 +71,14 @@ public class DbKeyValueStoreTest {
 
         // Set a key, and make sure you get the same value back
         kvStore.set("foo", "bar");
-        assertEquals("bar", kvStore.get("foo"));
+        assertEquals(Optional.of("bar"), kvStore.get("foo"));
 
         // Change a key, make sure you get the new value
         kvStore.set("foo", "baz");
-        assertEquals("baz", kvStore.get("foo"));
+        assertEquals(Optional.of("baz"), kvStore.get("foo"));
 
-        // Make sure that you get null for invalid keys
-        assertNull(kvStore.get("baz"));
+        // Make sure that you get empty for invalid keys
+        assertEquals(Optional.empty(), kvStore.get("baz"));
 
     }
 

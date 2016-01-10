@@ -12,6 +12,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.metastore.api.Partition;
 
+import java.util.Optional;
+
 /**
  * Created by paul_yang on 6/9/15.
  */
@@ -21,12 +23,12 @@ public class DropPartitionTask implements ReplicationTask {
     private Cluster srcCluster;
     private Cluster destCluster;
     private HiveObjectSpec spec;
-    private String srcTldt;
+    private Optional<String> srcTldt;
 
     public DropPartitionTask(Cluster srcCluster,
                              Cluster destCluster,
                              HiveObjectSpec spec,
-                             String srcTldt) {
+                             Optional<String> srcTldt) {
         this.srcCluster = srcCluster;
         this.destCluster = destCluster;
         this.srcTldt = srcTldt;
@@ -39,11 +41,12 @@ public class DropPartitionTask implements ReplicationTask {
         LOG.debug("Looking to drop: " + spec);
         LOG.debug("Source object TLDT is: " + srcTldt);
 
-        if (srcTldt == null) {
+        if (!srcTldt.isPresent()) {
             LOG.error("For safety, failing drop job since source object " +
                     " TLDT is missing!");
             return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
         }
+        String expectedTldt = srcTldt.get();
 
         Partition destPartition = ms.getPartition(spec.getDbName(),
                 spec.getTableName(), spec.getPartitionName());
@@ -57,7 +60,7 @@ public class DropPartitionTask implements ReplicationTask {
         String destTldt = destPartition.getParameters().get(
                 HiveParameterKeys.TLDT);
 
-        if (srcTldt.equals(destTldt)) {
+        if (expectedTldt.equals(destTldt)) {
             LOG.debug(String.format("Destination partition %s matches expected" +
                             " TLDT (%s)", spec, destTldt));
             LOG.debug("Dropping " + spec);

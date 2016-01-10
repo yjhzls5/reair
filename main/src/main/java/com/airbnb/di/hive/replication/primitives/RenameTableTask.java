@@ -21,6 +21,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.util.StringUtils;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class RenameTableTask implements ReplicationTask {
     private static final Log LOG = LogFactory.getLog(
@@ -33,9 +34,9 @@ public class RenameTableTask implements ReplicationTask {
     private Cluster destCluster;
     private HiveObjectSpec renameFromSpec;
     private HiveObjectSpec renameToSpec;
-    private Path renameFromPath;
-    private Path renameToPath;
-    private String renameFromTableTdlt;
+    private Optional<Path> renameFromPath;
+    private Optional<Path> renameToPath;
+    private Optional<String> renameFromTableTdlt;
 
     private ParallelJobExecutor copyPartitionsExecutor;
     private DirectoryCopier directoryCopier;
@@ -47,9 +48,9 @@ public class RenameTableTask implements ReplicationTask {
                            ObjectConflictHandler objectConflictHandler,
                            HiveObjectSpec renameFromSpec,
                            HiveObjectSpec renameToSpec,
-                           Path renameFromPath,
-                           Path renameToPath,
-                           String renameFromTableTldt,
+                           Optional<Path> renameFromPath,
+                           Optional<Path> renameToPath,
+                           Optional<String> renameFromTableTldt,
                            ParallelJobExecutor copyPartitionsExecutor,
                            DirectoryCopier directoryCopier) {
         this.conf = conf;
@@ -87,6 +88,14 @@ public class RenameTableTask implements ReplicationTask {
         Table freshDestTable = destMs.getTable(renameFromSpec.getDbName(),
                 renameFromSpec.getTableName());
 
+        if (!renameFromTableTdlt.isPresent()) {
+            LOG.error("For safety, not completing rename task since source " +
+                    " object TLDT is missing!");
+            return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
+        }
+
+        String expectedTldt = renameFromTableTdlt.get();
+
         HandleRenameAction renameAction = null;
         if (ReplicationUtils.transientLastDdlTimesMatch(
                 freshSrcRenameToTable,
@@ -107,12 +116,12 @@ public class RenameTableTask implements ReplicationTask {
                     renameToSpec));
             renameAction = HandleRenameAction.COPY_TABLE;
         } else if (!ReplicationUtils.transientLastDdlTimesMatch(
-                renameFromTableTdlt,
+                expectedTldt,
                 freshDestTable)) {
             LOG.warn(StringUtils.format("Destination table %s doesn't have " +
                     "the expected modified time", renameFromSpec));
             LOG.debug("Renamed from source table with a TLDT: " +
-                    renameFromTableTdlt);
+                    expectedTldt);
             LOG.debug("Table on destination: " + freshDestTable);
             LOG.debug(String.format("Copying %s to destination instead",
                     renameToSpec));

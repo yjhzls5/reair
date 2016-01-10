@@ -22,6 +22,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Random;
 
 /**
@@ -36,7 +37,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
     private Cluster srcCluster;
     private Cluster destCluster;
     private HiveObjectSpec spec;
-    private Path tableLocation;
+    private Optional<Path> tableLocation;
     private DirectoryCopier directoryCopier;
     private boolean allowDataCopy;
 
@@ -46,7 +47,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
                                       Cluster srcCluster,
                                       Cluster destCluster,
                                       HiveObjectSpec spec,
-                                      Path tableLocation,
+                                      Optional<Path> tableLocation,
                                       DirectoryCopier directoryCopier,
                                       boolean allowDataCopy) {
         this.conf = conf;
@@ -106,23 +107,13 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
         // Copy HDFS data if the location has changed in the destination object.
         // Usually, this is the case, but for S3 backed tables, the location
         // doesn't change.
-        boolean locationDefined =
-                ReplicationUtils.getLocation(freshSrcTable) != null;
 
-        boolean srcLocationDefined =
-                ReplicationUtils.getLocation(freshSrcTable) != null;
-        boolean destLocationDefined =
-                ReplicationUtils.getLocation(destTable) != null;
+        Optional<Path> srcPath = ReplicationUtils.getLocation(freshSrcTable);
+        Optional<Path> destPath = ReplicationUtils.getLocation(destTable);
 
-        Path srcPath = !srcLocationDefined ? null :
-                new Path(freshSrcTable.getSd().getLocation());
-        Path destPath = !destLocationDefined ? null :
-                new Path(destTable.getSd().getLocation());
-
-        boolean needToCopy = locationDefined &&
-                !ReplicationUtils.getLocation(freshSrcTable).equals(
-                        ReplicationUtils.getLocation(destTable)) &&
-                !directoryCopier.equalDirs(srcPath, destPath);
+        boolean needToCopy = srcPath.isPresent() &&
+                !srcPath.equals(destPath) &&
+                !directoryCopier.equalDirs(srcPath.get(), destPath.get());
 
         long bytesCopied = 0;
 
@@ -134,11 +125,9 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
                         destPath));
                 return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
             }
-            Random random = new Random();
-            long randomLong = random.nextLong();
 
             // Copy directory
-            bytesCopied = directoryCopier.copy(srcPath, destPath,
+            bytesCopied = directoryCopier.copy(srcPath.get(), destPath.get(),
                     Arrays.asList(
                             srcCluster.getName(),
                             spec.getDbName(),

@@ -15,6 +15,7 @@ import com.airbnb.di.hive.replication.thrift.TReplicationService;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
@@ -28,6 +29,7 @@ import org.apache.thrift.transport.TServerTransport;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 public class ReplicationLauncher {
     private static final Log LOG = LogFactory.getLog(
@@ -52,7 +54,9 @@ public class ReplicationLauncher {
         }
     }
 
-    public static void launch(Configuration conf, Long startAfterAuditLogId, boolean resetState)
+    public static void launch(Configuration conf,
+                              Optional<Long> startAfterAuditLogId,
+                              boolean resetState)
             throws Exception {
 
         // Create the audit log reader
@@ -256,7 +260,7 @@ public class ReplicationLauncher {
         CommandLine cl = parser.parse(options, argv);
 
         String configPaths = null;
-        Long startAfterId = null;
+        Optional<Long> startAfterId = Optional.empty();
         boolean resetState = false;
 
         if (cl.hasOption("config-files")) {
@@ -265,7 +269,8 @@ public class ReplicationLauncher {
         }
 
         if (cl.hasOption("start-after-id")) {
-            startAfterId = Long.parseLong(cl.getOptionValue("start-after-id"));
+            startAfterId = Optional.of(
+                    Long.parseLong(cl.getOptionValue("start-after-id")));
             LOG.info("startAfterId="  + startAfterId);
         }
 
@@ -291,7 +296,7 @@ public class ReplicationLauncher {
         try {
             launch(conf, startAfterId, resetState);
         } catch (Exception e) {
-            LOG.fatal(e);
+            LOG.fatal("Got an exception!", e);
             throw e;
         }
     }

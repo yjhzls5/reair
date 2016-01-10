@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * This is a wrapper around DistCp that adds a few options and makes it easier
@@ -52,7 +53,7 @@ public class DistCpWrapper {
                 FsUtils.equalDirs(conf,
                         srcDir,
                         destDir,
-                        null,
+                        Optional.empty(),
                         syncModificationTimes)) {
             LOG.debug("Source and destination paths are already equal!");
             return 0;
@@ -67,8 +68,10 @@ public class DistCpWrapper {
         // destination directory and does a fresh copy.
         if (!atomic) {
             useDistcpUpdate = destDirExists &&
-                    !FsUtils.filesExistOnDestButNotSrc(conf, srcDir, destDir,
-                            null);
+                    !FsUtils.filesExistOnDestButNotSrc(conf,
+                            srcDir,
+                            destDir,
+                            Optional.empty());
             if (useDistcpUpdate) {
                 LOG.debug("Doing a distcp update from " + srcDir +
                         " to " + destDir);
@@ -101,7 +104,7 @@ public class DistCpWrapper {
                 srcDir, distcpDestDir));
 
 
-        long srcSize = FsUtils.getSize(conf, srcDir, null);
+        long srcSize = FsUtils.getSize(conf, srcDir, Optional.empty());
         LOG.debug("Source size is: " + srcSize);
 
         // Use shell to copy for small files
@@ -129,7 +132,7 @@ public class DistCpWrapper {
 
             if (syncModificationTimes) {
                 FsUtils.syncModificationTimes(conf, srcDir, distcpDestDir,
-                        null);
+                        Optional.empty());
             }
         } else {
 
@@ -184,8 +187,7 @@ public class DistCpWrapper {
 
         if (!FsUtils.equalDirs(conf,
                 srcDir,
-                distcpDestDir,
-                null)) {
+                distcpDestDir)) {
             LOG.error("Source and destination sizes don't match!");
             if (atomic) {
                 LOG.debug("Since it's an atomic copy, deleting " +
@@ -199,7 +201,7 @@ public class DistCpWrapper {
 
         if (syncModificationTimes) {
             FsUtils.syncModificationTimes(conf, srcDir, distcpDestDir,
-                    null);
+                    Optional.empty());
         }
 
         if (atomic) {

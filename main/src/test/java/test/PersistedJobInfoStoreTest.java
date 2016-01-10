@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 
@@ -84,13 +85,15 @@ public class PersistedJobInfoStoreTest {
         PersistedJobInfo testJob = jobStore.resilientCreate(
                 ReplicationOperation.COPY_UNPARTITIONED_TABLE,
                 ReplicationStatus.PENDING,
-                new Path("file:///tmp/test_table"),
+                Optional.of(new Path("file:///tmp/test_table")),
                 "src_cluster",
                 new HiveObjectSpec("test_db", "test_table", "ds=1/hr=1"),
                 partitionNames,
-                "1",
-                new HiveObjectSpec("test_db", "renamed_table", "ds=1/hr=1"),
-                new Path("file://tmp/a/b/c"),
+                Optional.of("1"),
+                Optional.of(new HiveObjectSpec("test_db",
+                        "renamed_table",
+                        "ds=1/hr=1")),
+                Optional.of(new Path("file://tmp/a/b/c")),
                 extras);
 
         // Test out retrieval

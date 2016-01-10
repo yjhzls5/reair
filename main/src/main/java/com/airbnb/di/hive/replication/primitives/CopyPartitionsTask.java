@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
@@ -44,7 +45,7 @@ public class CopyPartitionsTask implements ReplicationTask {
     private Cluster destCluster;
     private HiveObjectSpec srcTableSpec;
     private List<String> partitionNames;
-    private Path commonDirectory;
+    private Optional<Path> commonDirectory;
     private ParallelJobExecutor copyPartitionsExecutor;
     private DirectoryCopier directoryCopier;
 
@@ -55,7 +56,7 @@ public class CopyPartitionsTask implements ReplicationTask {
                               Cluster destCluster,
                               HiveObjectSpec srcTableSpec,
                               List<String> partitionNames,
-                              Path commonDirectory,
+                              Optional<Path> commonDirectory,
                               ParallelJobExecutor copyPartitionsExecutor,
                               DirectoryCopier directoryCopier) {
         this.conf = conf;
@@ -70,7 +71,7 @@ public class CopyPartitionsTask implements ReplicationTask {
         this.directoryCopier = directoryCopier;
     }
 
-    public static Path findCommonDirectory(HiveObjectSpec srcTableSpec,
+    public static Optional<Path> findCommonDirectory(HiveObjectSpec srcTableSpec,
             Map<HiveObjectSpec, Partition> specToPartition) {
         // Sanity check - verify that all the specified objects are partitions
         // and that they are from the same table
@@ -84,7 +85,7 @@ public class CopyPartitionsTask implements ReplicationTask {
                         "match the source table spec " + srcTableSpec);
             }
 
-            if (spec.getPartitionName() == null) {
+            if (!spec.isPartition()) {
                 throw new RuntimeException("Partition not specified: " +
                         spec);
             }
@@ -99,7 +100,7 @@ public class CopyPartitionsTask implements ReplicationTask {
         }
         // Find the common subdirectory among all the partitions
         // TODO: This may copy more data than necessary. Revisit later.
-        Path commonDirectory = ReplicationUtils.getCommonDirectory(
+        Optional<Path> commonDirectory = ReplicationUtils.getCommonDirectory(
                 partitionLocations);
         LOG.debug("Common directory of partitions is " + commonDirectory);
         // TODO: Resolve in a better way
@@ -147,9 +148,11 @@ public class CopyPartitionsTask implements ReplicationTask {
         long bytesCopied = 0;
         boolean doOptimisticCopy = false;
 
-        if (commonDirectory != null &&
-                (tableLocation.equals(commonDirectory) ||
-                        FsUtils.isSubDirectory(tableLocation, commonDirectory))) {
+        if (commonDirectory.isPresent() &&
+                (tableLocation.equals(commonDirectory.get()) ||
+                        FsUtils.isSubDirectory(tableLocation,
+                                commonDirectory.get()))) {
+            Path commonDir = commonDirectory.get();
             // Get the size of all the partitions in the common directory and
             // check if the size of the common directory is approximately
             // the same size
@@ -161,67 +164,70 @@ public class CopyPartitionsTask implements ReplicationTask {
                 // TODO: Think about and handle view case
                 if (p != null && p.getSd().getLocation() != null) {
                     Path partitionLocation = new Path(p.getSd().getLocation());
-                    if (FsUtils.isSubDirectory(commonDirectory,
+                    if (FsUtils.isSubDirectory(commonDir,
                             partitionLocation) &&
                             FsUtils.dirExists(conf, partitionLocation)) {
                         sizeOfPartitionsInCommonDirectory +=
-                                FsUtils.getSize(conf, partitionLocation, null);
+                                FsUtils.getSize(conf,
+                                        partitionLocation,
+                                        Optional.empty());
                     }
                 }
             }
 
-            if (!FsUtils.exceedsSize(conf, commonDirectory,
+            if (!FsUtils.exceedsSize(conf, commonDir,
                     sizeOfPartitionsInCommonDirectory * 2)) {
                 doOptimisticCopy = true;
             } else {
                 LOG.debug(String.format("Size of common directory %s is much " +
                                 "bigger than the size of the partitions in " +
                                 "the common directory (%s). Hence, not " +
-                                "copying the common directory", commonDirectory,
+                                "copying the common directory", commonDir,
                         sizeOfPartitionsInCommonDirectory));
             }
         }
 
-        Path optimisticCopyDir = null;
-        if (doOptimisticCopy) {
+        Optional<Path> optimisticCopyDir = Optional.empty();
+        // isPresent() isn't necessary, as doOptimisticCopy implies it's set.
+        if (commonDirectory.isPresent() && doOptimisticCopy) {
+            Path commonDir = commonDirectory.get();
             // Check if the common directory is the same on the destination
             String destinationLocation = objectModifier.modifyLocation(
                     srcCluster,
                     destCluster,
-                    commonDirectory.toString());
+                    commonDir.toString());
             Path destinationLocationPath = new Path(destinationLocation);
 
             if (!objectModifier.shouldCopyData(destinationLocation)) {
                 LOG.debug("Skipping copy of destination location " +
                         commonDirectory + " due to destination " +
                         "object factory");
-            } else if (!FsUtils.dirExists(conf, commonDirectory)) {
+            } else if (!FsUtils.dirExists(conf, commonDir)) {
                 LOG.debug("Skipping copy of destination location " +
                         commonDirectory + " since it does not exist");
-            } else if (FsUtils.equalDirs(conf, commonDirectory,
+            } else if (FsUtils.equalDirs(conf, commonDir,
                     destinationLocationPath)) {
-                LOG.debug("Skipping copying common directory " + commonDirectory +
+                LOG.debug("Skipping copying common directory " + commonDir +
                         " since it matches " + destinationLocationPath);
             } else {
                 LOG.debug("Optimistically copying common directory " +
-                        commonDirectory);
+                        commonDir);
                 Random random = new Random();
                 long randomLong = random.nextLong();
 
-                optimisticCopyDir = new PathBuilder(destCluster.getTmpDir())
+                Path p = new PathBuilder(destCluster.getTmpDir())
                         .add("distcp_tmp")
                         .add(srcCluster.getName())
                         .add("optimistic_copy")
                         .add(Long.toString(randomLong)).toPath();
+                optimisticCopyDir = Optional.of(p);
 
-                bytesCopied += copyWithStructure(commonDirectory,
-                        optimisticCopyDir);
+                bytesCopied += copyWithStructure(commonDir,
+                        p);
             }
         }
 
         // Now copy all the partitions
-        // TODO: Clean up
-        // int partitionCopyCount = 0;
         CopyPartitionsCounter copyPartitionsCounter =
                 new CopyPartitionsCounter();
         long expectedCopyCount = 0;
@@ -259,17 +265,6 @@ public class CopyPartitionsTask implements ReplicationTask {
 
             copyPartitionsExecutor.add(copyPartitionJob);
             expectedCopyCount++;
-
-            /*
-            RunInfo status = copyPartitionTask.runTask();
-            if (status.getRunStatus() == RunInfo.RunStatus.FAILED) {
-                return new RunInfo(RunInfo.RunStatus.FAILED,
-                        bytesCopied);
-            }
-            bytesCopied += status.getBytesCopied();
-            partitionCopyCount++;
-            LOG.debug(String.format("Copied %s out of %s partitions",
-                    partitionCopyCount, partitionNames.size()));*/
         }
 
         while (true) {

@@ -22,6 +22,7 @@ import org.apache.hadoop.util.StringUtils;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 public class RenamePartitionTask implements ReplicationTask {
 
@@ -35,9 +36,9 @@ public class RenamePartitionTask implements ReplicationTask {
     private Cluster destCluster;
     private HiveObjectSpec renameFromSpec;
     private HiveObjectSpec renameToSpec;
-    private Path renameFromPath;
-    private Path renameToPath;
-    private String renameFromPartitionTdlt;
+    private Optional<Path> renameFromPath;
+    private Optional<Path> renameToPath;
+    private Optional<String> renameFromPartitionTdlt;
     private DirectoryCopier directoryCopier;
 
     public RenamePartitionTask(Configuration conf,
@@ -47,9 +48,9 @@ public class RenamePartitionTask implements ReplicationTask {
                                Cluster destCluster,
                                HiveObjectSpec renameFromSpec,
                                HiveObjectSpec renameToSpec,
-                               Path renameFromPath,
-                               Path renameToPath,
-                               String renameFromPartitionTdlt,
+                               Optional<Path> renameFromPath,
+                               Optional<Path> renameToPath,
+                               Optional<String> renameFromPartitionTdlt,
                                DirectoryCopier directoryCopier) {
         this.conf = conf;
         this.destObjectFactory = destObjectFactory;
@@ -74,6 +75,13 @@ public class RenamePartitionTask implements ReplicationTask {
     @Override
     public RunInfo runTask() throws HiveMetastoreException, DistCpException, IOException {
         LOG.debug("Renaming " + renameFromSpec + " to " + renameToSpec);
+
+        if (!renameFromPartitionTdlt.isPresent()) {
+            LOG.error("For safety, not completing rename since source " +
+                    " object TLDT is missing!");
+            return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
+        }
+        String expectedTldt = renameFromPartitionTdlt.get();
 
         HiveMetastoreClient destMs = destCluster.getMetastoreClient();
         HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
@@ -128,7 +136,7 @@ public class RenamePartitionTask implements ReplicationTask {
                     renameToSpec));
             renameAction = HandleRenameAction.COPY_PARTITION;
         } else if (!ReplicationUtils.transientLastDdlTimesMatch(
-                renameFromPartitionTdlt,
+                expectedTldt,
                 freshDestRenameFromPart)) {
             LOG.warn(StringUtils.format("Destination partition %s doesn't " +
                     "have the expected modified time", renameFromSpec));
@@ -192,7 +200,8 @@ public class RenamePartitionTask implements ReplicationTask {
         }
     }
 
-    private RunInfo copyPartition(HiveObjectSpec spec, Path partitionLocation)
+    private RunInfo copyPartition(HiveObjectSpec spec,
+                                  Optional<Path> partitionLocation)
             throws HiveMetastoreException, DistCpException, IOException {
         CopyPartitionTask task = new CopyPartitionTask(
                 conf,
@@ -202,7 +211,7 @@ public class RenamePartitionTask implements ReplicationTask {
                 destCluster,
                 spec,
                 partitionLocation,
-                null,
+                Optional.empty(),
                 directoryCopier,
                 true);
         return task.runTask();

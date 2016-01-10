@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 
 /**
@@ -64,9 +65,9 @@ public class AuditLogReader {
         auditLogEntries = new LinkedList<AuditLogEntry>();
     }
 
-    public synchronized AuditLogEntry resilientNext()
+    public synchronized Optional<AuditLogEntry> resilientNext()
             throws SQLException {
-        final Container<AuditLogEntry> ret = new Container<AuditLogEntry>();
+        final Container<Optional<AuditLogEntry>> ret = new Container<>();
         retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
             @Override
             public void run() throws Exception {
@@ -77,10 +78,10 @@ public class AuditLogReader {
         return ret.get();
     }
 
-    public synchronized AuditLogEntry next()
+    public synchronized Optional<AuditLogEntry> next()
             throws SQLException, AuditLogEntryException {
         if (auditLogEntries.size() > 0) {
-            return auditLogEntries.remove();
+            return Optional.of(auditLogEntries.remove());
         }
 
         LOG.debug("Executing queries to try to get more audit log entries " +
@@ -89,9 +90,9 @@ public class AuditLogReader {
         fetchMoreEntries();
 
         if (auditLogEntries.size() > 0) {
-            return auditLogEntries.remove();
+            return Optional.of(auditLogEntries.remove());
         } else {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -344,7 +345,7 @@ public class AuditLogReader {
         auditLogEntries.clear();
     }
 
-    public synchronized long getMaxId() throws SQLException {
+    public synchronized Optional<Long> getMaxId() throws SQLException {
         String query = String.format("SELECT MAX(id) FROM %s",
                 auditLogTableName);
         Connection connection = dbConnectionFactory.getConnection();
@@ -353,6 +354,6 @@ public class AuditLogReader {
         ResultSet rs = ps.executeQuery();
 
         rs.next();
-        return rs.getLong(1);
+        return Optional.ofNullable(rs.getLong(1));
     }
 }

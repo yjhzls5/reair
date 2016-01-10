@@ -10,7 +10,9 @@ import com.airbnb.di.utils.RetryableTask;
 import com.airbnb.di.utils.RetryingTaskRunner;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.net.ntp.TimeStamp;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.util.StringUtils;
 
 import java.io.IOException;
@@ -25,6 +27,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Note: to simplify programming, all methods are synchronized. This could be
@@ -136,14 +139,16 @@ public class PersistedJobInfoStore {
 
         while(rs.next()) {
             long id = rs.getLong("id");
-            Timestamp createTimestamp = rs.getTimestamp("create_time");
-            long createTime = createTimestamp == null ? 0 : createTimestamp.getTime();
+            Optional<Timestamp> createTimestamp = Optional
+                    .ofNullable(rs.getTimestamp("create_time"));
+            long createTime = createTimestamp.map(Timestamp::getTime)
+                    .orElse(Long.valueOf(0));
             ReplicationOperation operation =
                     ReplicationOperation.valueOf(rs.getString("operation"));
             ReplicationStatus status = ReplicationStatus.valueOf(
                     rs.getString("status"));
-            Path srcPath = rs.getString("src_path") == null ? null :
-                    new Path(rs.getString("src_path"));
+            Optional srcPath = Optional.ofNullable(rs.getString("src_path"))
+                    .map(Path::new);
             String srcClusterName = rs.getString("src_cluster");
             String srcDbName = rs.getString("src_db");
             String srcTableName = rs.getString("src_table");
@@ -153,18 +158,22 @@ public class PersistedJobInfoStore {
                 srcPartitionNames = ReplicationUtils.convertToList(
                         partitionNamesJson);
             }
-            String srcObjectTldt = rs.getString("src_tldt");
-            String renameToDbName = rs.getString("rename_to_db");
-            String renameToTableName = rs.getString("rename_to_table");
-            String renameToPartitionName = rs.getString("rename_to_partition");
-            Path renameToPath = rs.getString("rename_to_path") == null ?
-                    null : new Path(rs.getString("rename_to_path"));
-            String extrasJson = rs.getString("extras");
-            Map<String, String> extras = new HashMap<String, String>();
-            if (extrasJson != null) {
-                extras = ReplicationUtils.convertToMap(
-                        rs.getString("extras"));
-            }
+            Optional<String> srcObjectTldt =
+                    Optional.ofNullable(rs.getString("src_tldt"));
+            Optional<String> renameToDbName =
+                    Optional.ofNullable(rs.getString("rename_to_db"));
+            Optional<String> renameToTableName = Optional.ofNullable(
+                    rs.getString("rename_to_table"));
+            Optional<String> renameToPartitionName = Optional.ofNullable(
+                    rs.getString("rename_to_partition"));
+            Optional<Path> renameToPath = Optional
+                    .ofNullable(rs.getString("rename_to_path"))
+                    .map(Path::new);
+            Optional<String> extrasJson = Optional
+                    .ofNullable(rs.getString("extras"));
+            Map<String, String> extras = extrasJson
+                    .map(ReplicationUtils::convertToMap)
+                    .orElse(new HashMap<>());
 
             PersistedJobInfo persistedJobInfo = new PersistedJobInfo(id,
                     createTime,
@@ -189,13 +198,13 @@ public class PersistedJobInfoStore {
     synchronized public PersistedJobInfo resilientCreate(
             final ReplicationOperation operation,
             final ReplicationStatus status,
-            final Path srcPath,
+            final Optional<Path> srcPath,
             final String srcClusterName,
             final HiveObjectSpec srcTableSpec,
             final List<String> srcPartitionNames,
-            final String srcTldt,
-            final HiveObjectSpec renameToObject,
-            final Path renameToPath,
+            final Optional<String> srcTldt,
+            final Optional<HiveObjectSpec> renameToObject,
+            final Optional<Path> renameToPath,
             final Map<String, String> extras) {
         final PersistedJobInfo jobInfo = new PersistedJobInfo();
 
@@ -224,13 +233,13 @@ public class PersistedJobInfoStore {
     synchronized public PersistedJobInfo create(
             ReplicationOperation operation,
             ReplicationStatus status,
-            Path srcPath,
+            Optional<Path> srcPath,
             String srcClusterName,
             HiveObjectSpec srcTableSpec,
             List<String> srcPartitionNames,
-            String srcTldt,
-            HiveObjectSpec renameToObject,
-            Path renameToPath,
+            Optional<String> srcTldt,
+            Optional<HiveObjectSpec> renameToObject,
+            Optional<Path> renameToPath,
             Map<String, String> extras)
             throws IOException, SQLException {
         // Round to the nearest second to match MySQL timestamp resolution
@@ -261,22 +270,30 @@ public class PersistedJobInfoStore {
             ps.setTimestamp(i++, new Timestamp(currentTime));
             ps.setString(i++, operation.toString());
             ps.setString(i++, status.toString());
-            ps.setString(i++, srcPath == null ? null : srcPath.toString());
+            ps.setString(i++, srcPath.map(Path::toString).orElse(null));
             ps.setString(i++, srcClusterName);
             ps.setString(i++, srcTableSpec.getDbName());
             ps.setString(i++, srcTableSpec.getTableName());
             ps.setString(i++, ReplicationUtils.convertToJson(srcPartitionNames));
-            ps.setString(i++, srcTldt);
-            if (renameToObject == null) {
+            ps.setString(i++, srcTldt.orElse(null));
+            if (!renameToObject.isPresent()) {
                 ps.setString(i++, null);
                 ps.setString(i++, null);
                 ps.setString(i++, null);
                 ps.setString(i++, null);
             } else {
-                ps.setString(i++, renameToObject.getDbName());
-                ps.setString(i++, renameToObject.getTableName());
-                ps.setString(i++, renameToObject.getPartitionName());
-                ps.setString(i++, renameToPath.toString());
+                ps.setString(i++,
+                        renameToObject
+                                .map(HiveObjectSpec::getDbName)
+                                .orElse(null));
+                ps.setString(i++, renameToObject
+                        .map(HiveObjectSpec::getTableName)
+                        .orElse(null));
+                ps.setString(i++, renameToObject
+                        .map(HiveObjectSpec::getPartitionName)
+                        .orElse(null));
+                ps.setString(i++, renameToPath.map(Path::toString)
+                        .orElse(null));
             }
             ps.setString(i++, ReplicationUtils.convertToJson(extras));
 
@@ -298,9 +315,9 @@ public class PersistedJobInfoStore {
                     srcTableSpec.getTableName(),
                     srcPartitionNames,
                     srcTldt,
-                    renameToObject == null ? null : renameToObject.getDbName(),
-                    renameToObject == null ? null : renameToObject.getTableName(),
-                    renameToObject == null ? null : renameToObject.getPartitionName(),
+                    renameToObject.map(HiveObjectSpec::getDbName),
+                    renameToObject.map(HiveObjectSpec::getTableName),
+                    renameToObject.map(HiveObjectSpec::getPartitionName),
                     renameToPath,
                     extras);
         } finally {
@@ -378,41 +395,39 @@ public class PersistedJobInfoStore {
             ps.setTimestamp(i++, new Timestamp(job.getCreateTime()));
             ps.setString(i++, job.getOperation().toString());
             ps.setString(i++, job.getStatus().toString());
-            ps.setString(i++, job.getSrcPath() == null ? null :
-                    job.getSrcPath().toString());
+            ps.setString(i++, job.getSrcPath().map(Path::toString)
+                    .orElse(null));
             ps.setString(i++, job.getSrcClusterName());
             ps.setString(i++, job.getSrcDbName());
             ps.setString(i++, job.getSrcTableName());
             ps.setString(i++, ReplicationUtils.convertToJson(
                     job.getSrcPartitionNames()));
-            ps.setString(i++, job.getSrcObjectTldt());
-            ps.setString(i++, job.getRenameToDb());
-            ps.setString(i++, job.getRenameToTable());
-            ps.setString(i++, job.getRenameToPartition());
-            ps.setString(i++, job.getRenameToPath() == null ? null :
-                    job.getRenameToPath().toString());
-            ps.setString(i++, job.getExtras() == null ? null :
-                    ReplicationUtils.convertToJson(job.getExtras()));
+            ps.setString(i++, job.getSrcObjectTldt().orElse(null));
+            ps.setString(i++, job.getRenameToDb().orElse(null));
+            ps.setString(i++, job.getRenameToTable().orElse(null));
+            ps.setString(i++, job.getRenameToPartition().orElse(null));
+            ps.setString(i++, job.getRenameToPath().map(Path::toString)
+                    .orElse(null));
+            ps.setString(i++, ReplicationUtils.convertToJson(job.getExtras()));
 
             // Handle the update case
             ps.setTimestamp(i++, new Timestamp(job.getCreateTime()));
             ps.setString(i++, job.getOperation().toString());
             ps.setString(i++, job.getStatus().toString());
-            ps.setString(i++, job.getSrcPath() == null ? null :
-                    job.getSrcPath().toString());
+            ps.setString(i++, job.getSrcPath().map(Path::toString)
+                    .orElse(null));
             ps.setString(i++, job.getSrcClusterName());
             ps.setString(i++, job.getSrcDbName());
             ps.setString(i++, job.getSrcTableName());
             ps.setString(i++, ReplicationUtils.convertToJson(
                     job.getSrcPartitionNames()));
-            ps.setString(i++, job.getSrcObjectTldt());
-            ps.setString(i++, job.getRenameToDb());
-            ps.setString(i++, job.getRenameToTable());
-            ps.setString(i++, job.getRenameToPartition());
-            ps.setString(i++, job.getRenameToPath() == null ? null :
-                    job.getRenameToPath().toString());
-            ps.setString(i++, job.getExtras() == null ? null :
-                    ReplicationUtils.convertToJson(job.getExtras()));
+            ps.setString(i++, job.getSrcObjectTldt().orElse(null));
+            ps.setString(i++, job.getRenameToDb().orElse(null));
+            ps.setString(i++, job.getRenameToTable().orElse(null));
+            ps.setString(i++, job.getRenameToPartition().orElse(null));
+            ps.setString(i++, job.getRenameToPath().map(Path::toString)
+                    .orElse(null));
+            ps.setString(i++, ReplicationUtils.convertToJson(job.getExtras()));
 
             ps.execute();
         } finally {
@@ -421,6 +436,7 @@ public class PersistedJobInfoStore {
         }
     }
 
+    // TODO: Fix typo in name
     synchronized public void changeStautsAndPersist(ReplicationStatus status,
                                        PersistedJobInfo job) {
         job.setStatus(status);
@@ -457,8 +473,9 @@ public class PersistedJobInfoStore {
                     ReplicationOperation.valueOf(rs.getString("operation"));
             ReplicationStatus status = ReplicationStatus.valueOf(
                     rs.getString("status"));
-            Path srcPath = rs.getString("src_path") == null ? null :
-                    new Path(rs.getString("src_path"));
+            Optional<Path> srcPath = Optional
+                    .ofNullable(rs.getString("src_path"))
+                    .map(Path::new);
             String srcClusterName = rs.getString("src_cluster");
             String srcDbName = rs.getString("src_db");
             String srcTableName = rs.getString("src_table");
@@ -468,12 +485,17 @@ public class PersistedJobInfoStore {
                 srcPartitionNames = ReplicationUtils.convertToList(
                         partitionNamesJson);
             }
-            String srcObjectTldt = rs.getString("src_tldt");
-            String renameToDbName = rs.getString("rename_to_db");
-            String renameToTableName = rs.getString("rename_to_table");
-            String renameToPartitionName = rs.getString("rename_to_partition");
-            Path renameToPath = rs.getString("rename_to_path") == null ?
-                    null : new Path(rs.getString("rename_to_path"));
+            Optional<String> srcObjectTldt = Optional
+                    .of(rs.getString("src_tldt"));
+            Optional<String> renameToDbName = Optional
+                    .of(rs.getString("rename_to_db"));
+            Optional<String> renameToTableName = Optional
+                    .of(rs.getString("rename_to_table"));
+            Optional<String> renameToPartitionName = Optional
+                    .of(rs.getString("rename_to_partition"));
+            Optional<Path> renameToPath = Optional
+                    .of(rs.getString("rename_to_path"))
+                    .map(Path::new);
             String extrasJson = rs.getString("extras");
             Map<String, String> extras = new HashMap<String, String>();
             if (extrasJson != null) {

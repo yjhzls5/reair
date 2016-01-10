@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A replication job copies either: HDFS directory, Hive table, or a Hive
@@ -24,7 +25,8 @@ public class PersistedJobInfo {
     private ReplicationOperation operation;
     private ReplicationStatus status;
 
-    private Path srcPath;
+    // Path of the source may not exist for views
+    private Optional<Path> srcPath;
     private String srcClusterName;
     private String srcDbName;
     private String srcTableName;
@@ -35,13 +37,13 @@ public class PersistedJobInfo {
     // The modified time of the source object - from the field in parameters,
     // transientLast_ddlTime. This field is only applicable for rename and
     // drop operations.
-    private String srcObjectTldt;
+    private Optional<String> srcObjectTldt;
 
     // These fields are only applicable for the rename operation.
-    private String renameToDb;
-    private String renameToTable;
-    private String renameToPartition;
-    private Path renameToPath;
+    private Optional<String> renameToDb;
+    private Optional<String> renameToTable;
+    private Optional<String> renameToPartition;
+    private Optional<Path> renameToPath;
 
     // A flexible map to store some extra parameters
     private Map<String, String> extras;
@@ -61,16 +63,16 @@ public class PersistedJobInfo {
                             Long createTime,
                             ReplicationOperation operation,
                             ReplicationStatus status,
-                            Path srcPath,
+                            Optional<Path> srcPath,
                             String srcClusterName,
                             String srcDbName,
                             String srcTableName,
                             List<String> srcPartitionNames,
-                            String srcObjectTldt,
-                            String renameToDb,
-                            String renameToTable,
-                            String renameToPartition,
-                            Path renameToPath,
+                            Optional<String> srcObjectTldt,
+                            Optional<String> renameToDb,
+                            Optional<String> renameToTable,
+                            Optional<String> renameToPartition,
+                            Optional<Path> renameToPath,
                             Map<String, String> extras
     ) {
         this.id = id;
@@ -81,13 +83,25 @@ public class PersistedJobInfo {
         this.srcClusterName = srcClusterName;
         this.srcDbName = srcDbName;
         this.srcTableName = srcTableName;
-        this.srcPartitionNames = srcPartitionNames;
+        if (srcPartitionNames != null) {
+            this.srcPartitionNames = srcPartitionNames;
+        } else {
+            LOG.error("null srcPartitionNames passed in constructor",
+                    new Exception());
+            this.srcPartitionNames = new ArrayList<String>();
+        }
         this.srcObjectTldt = srcObjectTldt;
         this.renameToDb = renameToDb;
         this.renameToTable = renameToTable;
         this.renameToPartition = renameToPartition;
         this.renameToPath = renameToPath;
-        this.extras = extras;
+        if (extras == null) {
+            LOG.error("null extras passed in constructor",
+                    new Exception());
+            this.extras = new HashMap<>();
+        } else {
+            this.extras = extras;
+        }
     }
 
     public void copy(PersistedJobInfo o) {
@@ -130,7 +144,7 @@ public class PersistedJobInfo {
         return srcClusterName;
     }
 
-    public Path getSrcPath() {
+    public Optional<Path> getSrcPath() {
         return srcPath;
     }
 
@@ -146,7 +160,7 @@ public class PersistedJobInfo {
         return srcPartitionNames;
     }
 
-    public String getSrcObjectTldt() {
+    public Optional<String> getSrcObjectTldt() {
         return srcObjectTldt;
     }
 
@@ -154,19 +168,19 @@ public class PersistedJobInfo {
         this.status = status;
     }
 
-    public String getRenameToDb() {
+    public Optional<String> getRenameToDb() {
         return renameToDb;
     }
 
-    public String getRenameToTable() {
+    public Optional<String> getRenameToTable() {
         return renameToTable;
     }
 
-    public String getRenameToPartition() {
+    public Optional<String> getRenameToPartition() {
         return renameToPartition;
     }
 
-    public Path getRenameToPath() {
+    public Optional<Path> getRenameToPath() {
         return renameToPath;
     }
 

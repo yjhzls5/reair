@@ -26,6 +26,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 
+import java.util.Optional;
+
 public class HiveCopy {
 
     private static final Log LOG = LogFactory.getLog(HiveCopy.class);
@@ -183,7 +185,7 @@ public class HiveCopy {
                     srcCluster,
                     destCluster,
                     spec,
-                    new Path(srcTable.getSd().getLocation()),
+                    ReplicationUtils.getLocation(srcTable),
                     directoryCopier,
                     true);
             if (job.runTask().getRunStatus() == RunInfo.RunStatus.SUCCESSFUL) {
@@ -221,7 +223,7 @@ public class HiveCopy {
                     destCluster,
                     spec,
                     ReplicationUtils.getLocation(srcPartition),
-                    null,
+                    Optional.<Path>empty(),
                     new DirectoryCopier(conf, srcCluster.getTmpDir(), true),
                     true);
             if (job.runTask().getRunStatus() == RunInfo.RunStatus.SUCCESSFUL) {

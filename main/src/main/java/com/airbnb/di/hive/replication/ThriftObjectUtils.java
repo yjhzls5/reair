@@ -8,6 +8,8 @@ import com.airbnb.di.hive.replication.thrift.TReplicationJob;
 import com.airbnb.di.hive.replication.thrift.TReplicationOperation;
 import com.airbnb.di.hive.replication.thrift.TReplicationStatus;
 
+import org.apache.hadoop.fs.Path;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,11 +72,12 @@ public class ThriftObjectUtils {
                 jobInfo.getSrcTableName(),
                 jobInfo.getSrcPartitionNames() == null ?
                         new ArrayList<String>() : jobInfo.getSrcPartitionNames(),
-                jobInfo.getSrcObjectTldt(),
-                jobInfo.getRenameToDb(),
-                jobInfo.getRenameToTable(),
-                jobInfo.getRenameToPath() == null ? null :
-                        jobInfo.getRenameToPath().toString(),
+                jobInfo.getSrcObjectTldt().orElse(null),
+                jobInfo.getRenameToDb().orElse(null),
+                jobInfo.getRenameToTable().orElse(null),
+                jobInfo.getRenameToPath()
+                        .map(Path::toString)
+                        .orElse(null),
                 jobInfo.getExtras(),
                 parentJobIds
                 );

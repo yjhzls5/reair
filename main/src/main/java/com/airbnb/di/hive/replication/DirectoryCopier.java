@@ -10,6 +10,7 @@ import org.apache.hadoop.fs.Path;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 public class DirectoryCopier {
@@ -84,7 +85,7 @@ public class DirectoryCopier {
         return FsUtils.equalDirs(conf,
                 srcDir,
                 destDir,
-                null,
+                Optional.empty(),
                 checkFileModificationTimes);
     }
 }

@@ -33,7 +33,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -265,7 +267,7 @@ public class ReplicationServerTest extends MockClusterTest {
             List<org.apache.hadoop.hive.ql.metadata.Table> tables) {
         for (org.apache.hadoop.hive.ql.metadata.Table table : tables) {
             Table newTable = new Table(table.getTTable());
-            newTable.setParameters(null);
+            newTable.setParameters(Collections.emptyMap());
             table.setTTable(newTable);
         }
     }
@@ -581,7 +583,7 @@ public class ReplicationServerTest extends MockClusterTest {
                 new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
                 1,
                 1,
-                Long.valueOf(0));
+                Optional.of(Long.valueOf(0)));
         replicationServer.setPollWaitTimeMs(TEST_POLL_TIME);
         return replicationServer;
     }
