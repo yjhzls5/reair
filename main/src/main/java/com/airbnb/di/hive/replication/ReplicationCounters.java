@@ -20,7 +20,7 @@ public class ReplicationCounters {
     private Map<Type, Long> counters;
 
     public ReplicationCounters() {
-        counters = new HashMap<Type, Long>();
+        counters = new HashMap<>();
     }
 
     public synchronized void incrementCounter(Type type) {

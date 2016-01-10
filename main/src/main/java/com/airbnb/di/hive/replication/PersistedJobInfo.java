@@ -88,7 +88,7 @@ public class PersistedJobInfo {
         } else {
             LOG.error("null srcPartitionNames passed in constructor",
                     new Exception());
-            this.srcPartitionNames = new ArrayList<String>();
+            this.srcPartitionNames = new ArrayList<>();
         }
         this.srcObjectTldt = srcObjectTldt;
         this.renameToDb = renameToDb;
@@ -113,15 +113,13 @@ public class PersistedJobInfo {
         this.srcClusterName = o.srcClusterName;
         this.srcDbName = o.srcDbName;
         this.srcTableName = o.srcDbName;
-        this.srcPartitionNames = srcPartitionNames == null ? null :
-                new ArrayList<String>(srcPartitionNames);
+        this.srcPartitionNames = o.srcPartitionNames;
         this.srcObjectTldt = o.srcObjectTldt;
         this.renameToDb = o.renameToDb;
         this.renameToTable = o.renameToTable;
         this.renameToPartition = o.renameToPartition;
         this.renameToPath = o.renameToPath;
-        this.extras = extras == null ? null :
-                new HashMap<String, String>(extras);
+        this.extras = extras == null ? null : new HashMap<>(extras);
     }
 
     public void setId(Long id) {

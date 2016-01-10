@@ -12,9 +12,9 @@ public class LockSet {
     private Set<String> sharedLockNames;
 
     public LockSet() {
-        allLocks = new HashSet<Lock>();
-        exclusiveLockNames = new HashSet<String>();
-        sharedLockNames = new HashSet<String>();
+        allLocks = new HashSet<>();
+        exclusiveLockNames = new HashSet<>();
+        sharedLockNames = new HashSet<>();
     }
 
     public void add(Lock lock) {

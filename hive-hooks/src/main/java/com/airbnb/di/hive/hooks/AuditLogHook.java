@@ -193,8 +193,7 @@ public class AuditLogHook implements PostExecute {
                 // technically changed as well. Record this in the output
                 // objects table as a REFERENCE_TABLE
                 Set<org.apache.hadoop.hive.ql.metadata.Table>
-                        tableForPartition =
-                        new HashSet<org.apache.hadoop.hive.ql.metadata.Table>();
+                        tableForPartition = new HashSet<>();
 
                 String commandType = sessionState.getCommandType();
                 // TODO: ALTERTABLE_EXCHANGEPART is not yet implemented in Hive
@@ -389,15 +388,14 @@ public class AuditLogHook implements PostExecute {
             return new JSONObject().toString();
         }
 
-        List<Database> databases = new ArrayList<Database>();
-        List<Table> tables = new ArrayList<Table>();
-        List<Partition> partitions = new ArrayList<Partition>();
-        List<Partition> dummyPartitions = new ArrayList<Partition>();
-        List<String> localDirectories = new ArrayList<String>();
-        List<String> dfsDirectories = new ArrayList<String>();
+        List<Database> databases = new ArrayList<>();
+        List<Table> tables = new ArrayList<>();
+        List<Partition> partitions = new ArrayList<>();
+        List<Partition> dummyPartitions = new ArrayList<>();
+        List<String> localDirectories = new ArrayList<>();
+        List<String> dfsDirectories = new ArrayList<>();
 
-        Map<Partition, String> partitionNames =
-                new HashMap<Partition, String>();
+        Map<Partition, String> partitionNames = new HashMap<>();
 
         for (Entity e : entities) {
             switch (e.getType()) {

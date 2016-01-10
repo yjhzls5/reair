@@ -64,16 +64,16 @@ public class AuditLogEntry {
 
     public String toString() {
 
-        List<String> outputTableStrings = new ArrayList<String>();
+        List<String> outputTableStrings = new ArrayList<>();
         for (Table table : outputTables) {
             outputTableStrings.add(new HiveObjectSpec(table).toString());
         }
-        List<String> outputPartitionStrings = new ArrayList<String>();
+        List<String> outputPartitionStrings = new ArrayList<>();
         for (NamedPartition pwn : outputPartitions) {
             outputPartitionStrings.add(new HiveObjectSpec(pwn).toString());
         }
 
-        List<String> referenceTableStrings = new ArrayList<String>();
+        List<String> referenceTableStrings = new ArrayList<>();
         for (Table t : referenceTables) {
             referenceTableStrings.add(new HiveObjectSpec(t).toString());
         }

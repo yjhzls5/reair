@@ -25,18 +25,16 @@ public class JobDagManager {
     private static final Log LOG = LogFactory.getLog(JobDagManager.class);
 
     // Maps from a lock to the jobs holding the lock
-    Map<String, HashSet<Job>> sharedLocksHeld =
-            new HashMap<String, HashSet<Job>>();
+    Map<String, HashSet<Job>> sharedLocksHeld = new HashMap<>();
 
-    Map<String, Job> exclusiveLocksHeld =
-            new HashMap<String, Job>();
+    Map<String, Job> exclusiveLocksHeld = new HashMap<>();
 
     // A map of a lock to the jobs needing the resource, in the order that they
     // were submitted.
     Map<String, ArrayList<Job>> lockToJobsNeedingLock =
-            new HashMap<String, ArrayList<Job>>();
+            new HashMap<>();
 
-    Set<Job> jobsWithAllRequiredLocks = new HashSet<Job>();
+    Set<Job> jobsWithAllRequiredLocks = new HashSet<>();
 
     private boolean canGetAllLocks(Job job) {
         LockSet lockSet = job.getRequiredLocks();
@@ -77,7 +75,7 @@ public class JobDagManager {
     private void addLockToJobsNeedingLock(String lock, Job job) {
         ArrayList<Job> jobs = lockToJobsNeedingLock.get(lock);
         if (jobs == null) {
-            jobs = new ArrayList<Job>();
+            jobs = new ArrayList<>();
             lockToJobsNeedingLock.put(lock, jobs);
         }
         jobs.add(job);
@@ -115,7 +113,7 @@ public class JobDagManager {
 
         HashSet<Job> jobsHoldingSharedLock = sharedLocksHeld.get(lock);
         if (jobsHoldingSharedLock == null) {
-            jobsHoldingSharedLock = new HashSet<Job>();
+            jobsHoldingSharedLock = new HashSet<>();
             sharedLocksHeld.put(lock, jobsHoldingSharedLock);
         }
         jobsHoldingSharedLock.add(job);
@@ -150,7 +148,7 @@ public class JobDagManager {
         // Otherwise, it can't get all the locks. Find all the jobs that it
         // depends on. Parents is a set of jobs that need to complete before
         // this job can run.
-        Set<Job> parents = new HashSet<Job>();
+        Set<Job> parents = new HashSet<>();
         // If this job needs an exclusive lock, it needs to wait for the last
         // jobs to require the same shared lock, or the job that last required
         // the exclusive lock.
@@ -299,7 +297,7 @@ public class JobDagManager {
         }
 
         // Make a copy since we'll be removing from it
-        Set<Job> childJobs = new HashSet<Job>(job.getChildJobs());
+        Set<Job> childJobs = new HashSet<>(job.getChildJobs());
         // Remove self as a parent of the children
         for (Job child : childJobs) {
             child.removeParentJob(job);
@@ -311,7 +309,7 @@ public class JobDagManager {
 
         // If any of the child jobs have no parent jobs, that means they should
         // be run.
-        Set<Job> newJobsWithRequiredLocks = new HashSet<Job>();
+        Set<Job> newJobsWithRequiredLocks = new HashSet<>();
         for (Job child : childJobs) {
             LOG.debug("Job " + child + " has parents " + child.getParentJobs());
             if (child.getParentJobs().size() == 0) {

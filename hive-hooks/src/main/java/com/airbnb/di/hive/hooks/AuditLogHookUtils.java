@@ -103,8 +103,8 @@ public class AuditLogHookUtils {
             String outputObjectsTableName) throws Exception {
 
 
-        Set<ReadEntity> readEntities = new HashSet<ReadEntity>();
-        Set<WriteEntity> writeEntities = new HashSet<WriteEntity>();
+        Set<ReadEntity> readEntities = new HashSet<>();
+        Set<WriteEntity> writeEntities = new HashSet<>();
 
         for (Table t : inputTables) {
             readEntities.add(new ReadEntity(t));

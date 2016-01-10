@@ -50,7 +50,7 @@ public class AuditLogReader {
         this.auditLogTableName = auditLogTableName;
         this.outputObjectsTableName = outputObjectsTableName;
         this.lastReadId = getIdsAfter;
-        auditLogEntries = new LinkedList<AuditLogEntry>();
+        auditLogEntries = new LinkedList<>();
         this.retryingTaskRunner = new RetryingTaskRunner();
     }
 
@@ -62,7 +62,7 @@ public class AuditLogReader {
         this.auditLogTableName = auditLogTableName;
         this.outputObjectsTableName = outputObjectsTableName;
         this.lastReadId = -1;
-        auditLogEntries = new LinkedList<AuditLogEntry>();
+        auditLogEntries = new LinkedList<>();
     }
 
     public synchronized Optional<AuditLogEntry> resilientNext()
@@ -199,11 +199,11 @@ public class AuditLogReader {
 
         // For a given audit log ID, these accumulate the outputs from the
         // different rows.
-        List<String> outputDirectories = new LinkedList<String>();
-        List<Table> outputTables = new LinkedList<Table>();
+        List<String> outputDirectories = new LinkedList<>();
+        List<Table> outputTables = new LinkedList<>();
         List<NamedPartition> outputPartitions =
-                new LinkedList<NamedPartition>();
-        List<Table> referenceTables = new LinkedList<Table>();
+                new LinkedList<>();
+        List<Table> referenceTables = new LinkedList<>();
         Table renameFromTable = null;
         NamedPartition renameFromPartition = null;
 
@@ -240,10 +240,10 @@ public class AuditLogReader {
                         renameFromPartition);
                 auditLogEntries.add(entry);
                 // Reset these accumulated values
-                outputDirectories = new LinkedList<String>();
-                referenceTables = new LinkedList<Table>();
-                outputTables = new LinkedList<Table>();
-                outputPartitions = new LinkedList<NamedPartition>();
+                outputDirectories = new LinkedList<>();
+                referenceTables = new LinkedList<>();
+                outputTables = new LinkedList<>();
+                outputPartitions = new LinkedList<>();
                 renameFromPartition = null;
                 renameFromTable = null;
             }

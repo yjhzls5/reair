@@ -82,7 +82,7 @@ public class PersistedJobInfoStore {
 
     synchronized public List<PersistedJobInfo> getRunnableFromDbResilient()
             throws SQLException {
-        final List<PersistedJobInfo> ret = new ArrayList<PersistedJobInfo>();
+        final List<PersistedJobInfo> ret = new ArrayList<>();
         retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
             @Override
             public void run() throws Exception {
@@ -131,7 +131,7 @@ public class PersistedJobInfoStore {
                 dbTableName,
                 completedStateList);
 
-        List<PersistedJobInfo> persistedJobInfos = new ArrayList<PersistedJobInfo>();
+        List<PersistedJobInfo> persistedJobInfos = new ArrayList<>();
         Connection connection = dbConnectionFactory.getConnection();
 
         Statement statement = connection.createStatement();
@@ -152,7 +152,7 @@ public class PersistedJobInfoStore {
             String srcClusterName = rs.getString("src_cluster");
             String srcDbName = rs.getString("src_db");
             String srcTableName = rs.getString("src_table");
-            List<String> srcPartitionNames = new ArrayList<String>();
+            List<String> srcPartitionNames = new ArrayList<>();
             String partitionNamesJson = rs.getString("src_partitions");
             if (partitionNamesJson != null) {
                 srcPartitionNames = ReplicationUtils.convertToList(
@@ -479,7 +479,7 @@ public class PersistedJobInfoStore {
             String srcClusterName = rs.getString("src_cluster");
             String srcDbName = rs.getString("src_db");
             String srcTableName = rs.getString("src_table");
-            List<String> srcPartitionNames = new ArrayList<String>();
+            List<String> srcPartitionNames = new ArrayList<>();
             String partitionNamesJson = rs.getString("src_partitions");
             if (partitionNamesJson != null) {
                 srcPartitionNames = ReplicationUtils.convertToList(
@@ -497,7 +497,7 @@ public class PersistedJobInfoStore {
                     .of(rs.getString("rename_to_path"))
                     .map(Path::new);
             String extrasJson = rs.getString("extras");
-            Map<String, String> extras = new HashMap<String, String>();
+            Map<String, String> extras = new HashMap<>();
             if (extrasJson != null) {
                 extras = ReplicationUtils.convertToMap(
                         rs.getString("extras"));

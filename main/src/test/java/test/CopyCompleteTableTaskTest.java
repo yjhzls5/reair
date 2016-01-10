@@ -118,8 +118,7 @@ public class CopyCompleteTableTaskTest extends MockClusterTest {
         Partition srcPartition3 = ReplicationTestUtils.createPartition(conf,
                 srcMetastore, partitionSpec3);
 
-        Map<HiveObjectSpec, Partition> specToPartition =
-                new HashMap<HiveObjectSpec, Partition>();
+        Map<HiveObjectSpec, Partition> specToPartition = new HashMap<>();
 
         specToPartition.put(partitionSpec1, srcPartition1);
         specToPartition.put(partitionSpec2, srcPartition2);

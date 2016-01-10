@@ -18,9 +18,9 @@ public abstract class Job {
     public enum LockType {SHARED, EXCLUSIVE};
 
     // A list of jobs in progress that need to finish before this job can run.
-    private Set<Job> parentJobs = new HashSet<Job>();
+    private Set<Job> parentJobs = new HashSet<>();
     // A set of jobs that are waiting for this job to finish before running
-    private Set<Job> childJobs = new HashSet<Job>();
+    private Set<Job> childJobs = new HashSet<>();
 
     // Method that gets called when this job should run
     abstract public int run();

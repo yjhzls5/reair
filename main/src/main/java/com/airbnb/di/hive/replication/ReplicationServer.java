@@ -476,7 +476,7 @@ public class ReplicationServer implements TReplicationService.Iface {
     public List<TReplicationJob> getActiveJobs(long afterId, int maxJobs)
             throws TException {
         int count = 0;
-        List<TReplicationJob> jobsToReturn = new ArrayList<TReplicationJob>();
+        List<TReplicationJob> jobsToReturn = new ArrayList<>();
 
         for (ReplicationJob job : jobRegistry.getActiveJobs()) {
             if (count == maxJobs) {
@@ -535,7 +535,7 @@ public class ReplicationServer implements TReplicationService.Iface {
     public List<TReplicationJob> getRetiredJobs(long afterId, int maxJobs)
             throws TException {
         int count = 0;
-        List<TReplicationJob> jobsToReturn = new ArrayList<TReplicationJob>();
+        List<TReplicationJob> jobsToReturn = new ArrayList<>();
 
         for (ReplicationJob job : jobRegistry.getRetiredJobs()) {
             if (count == maxJobs) {
@@ -552,7 +552,7 @@ public class ReplicationServer implements TReplicationService.Iface {
     }
 
     private void prettyLogStart(ReplicationJob job) {
-        List<HiveObjectSpec> srcSpecs = new ArrayList<HiveObjectSpec>();
+        List<HiveObjectSpec> srcSpecs = new ArrayList<>();
 
         if (job.getPersistedJobInfo().getSrcPartitionNames().size() > 0) {
             for (String partitionName :

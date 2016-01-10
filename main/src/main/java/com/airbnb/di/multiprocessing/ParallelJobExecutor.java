@@ -21,7 +21,7 @@ public class ParallelJobExecutor {
     private BlockingQueue<Job> jobsToRun;
     private JobDagManager dagManager;
     private int numWorkers = 0;
-    private Set<Worker> workers = new HashSet<Worker>();
+    private Set<Worker> workers = new HashSet<>();
 
     // Vars for counting the number of jobs
     // Lock to hold when incrementing either count

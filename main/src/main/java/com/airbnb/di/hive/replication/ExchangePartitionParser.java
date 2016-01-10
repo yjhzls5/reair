@@ -99,7 +99,7 @@ public class ExchangePartitionParser {
         // TODO: This is not correct for values that are escaped or with commas
         // There also may be corner cases
         String[] partitionSpecSplit = partitionSpec.split(",");
-        List<String> partitionValues = new ArrayList<String>();
+        List<String> partitionValues = new ArrayList<>();
 
         for(String columnSpec : partitionSpecSplit) {
             columnSpec = StringUtils.stripEnd(columnSpec, " \t\n");

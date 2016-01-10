@@ -37,7 +37,7 @@ public class EmbeddedMySqlDb {
     }
 
     public void startDb() {
-        Map<String, String> databaseOptions = new HashMap<String, String>();
+        Map<String, String> databaseOptions = new HashMap<>();
         databaseOptions.put(MysqldResourceI.PORT, Integer.toString(port));
 
         mysqldResource = new MysqldResource(new File(databaseDir,

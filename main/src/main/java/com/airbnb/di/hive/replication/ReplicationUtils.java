@@ -332,7 +332,7 @@ public class ReplicationUtils {
     public static String commonDir(String dir1, String dir2) {
         String [] path1Elements = dir1.split("/");
         String [] path2Elements = dir2.split("/");
-        List<String> commonPath = new ArrayList<String>();
+        List<String> commonPath = new ArrayList<>();
 
         int i = 0;
         while (i < path1Elements.length && i < path2Elements.length) {
@@ -347,7 +347,7 @@ public class ReplicationUtils {
     }
 
     public static Set<Path> getLocations(Collection<Partition> partitions) {
-        Set<Path> paths = new HashSet<Path>();
+        Set<Path> paths = new HashSet<>();
         for (Partition p : partitions) {
             String location = p.getSd().getLocation();
             if (location != null) {

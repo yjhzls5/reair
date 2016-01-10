@@ -34,7 +34,7 @@ public class NamedPartition {
 
     public static List<Partition> toPartitions(
             Collection<NamedPartition> collection) {
-        List<Partition> partitions = new ArrayList<Partition>();
+        List<Partition> partitions = new ArrayList<>();
         for (NamedPartition pwn : collection) {
             partitions.add(pwn.getPartition());
         }
@@ -43,7 +43,7 @@ public class NamedPartition {
 
     public static List<String> toNames(
             Collection<NamedPartition> collection) {
-        List<String> partitionNames = new ArrayList<String>();
+        List<String> partitionNames = new ArrayList<>();
         for (NamedPartition pwn : collection) {
             partitionNames.add(pwn.getName());
         }

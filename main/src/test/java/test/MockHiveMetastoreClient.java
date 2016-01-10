@@ -33,9 +33,9 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
     private Map<HiveObjectSpec, Partition> specToPartition;
 
     public MockHiveMetastoreClient() {
-        dbNameToDatabase = new HashMap<String, Database>();
-        specToTable = new HashMap<HiveObjectSpec, Table>();
-        specToPartition = new HashMap<HiveObjectSpec, Partition>();
+        dbNameToDatabase = new HashMap<>();
+        specToTable = new HashMap<>();
+        specToPartition = new HashMap<>();
     }
 
     /**
@@ -56,7 +56,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
 
         StringBuilder sb = new StringBuilder();
         // TODO: This doesn't handle escaping of special chars in values
-        List<String> keyValues = new ArrayList<String>();
+        List<String> keyValues = new ArrayList<>();
         int i = 0;
         for (FieldSchema field : t.getPartitionKeys()) {
             keyValues.add(field.getName() + "=" + p.getValues().get(i));
@@ -239,7 +239,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
     @Override
     public List<String> getPartitionNames(String dbName, String tableName)
             throws HiveMetastoreException {
-        List<String> partitionNames = new ArrayList<String>();
+        List<String> partitionNames = new ArrayList<>();
         HiveObjectSpec tableSpec = new HiveObjectSpec(dbName, tableName);
         for (Map.Entry<HiveObjectSpec, Partition> entry :
                 specToPartition.entrySet()) {
@@ -272,7 +272,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
             throw new RuntimeException("Only * (wildcard) is supported in " +
                     "the mock client");
         }
-        List<String> tableNames = new ArrayList<String>();
+        List<String> tableNames = new ArrayList<>();
 
         for (HiveObjectSpec spec : specToTable.keySet()) {
             if (spec.getDbName().equals(dbName)) {
@@ -372,7 +372,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
         }
 
         Partition removed = specToPartition.remove(renameFromSpec);
-        removed.setValues(new ArrayList<String>(p.getValues()));
+        removed.setValues(new ArrayList<>(p.getValues()));
         specToPartition.put(renameToSpec, removed);
     }
 

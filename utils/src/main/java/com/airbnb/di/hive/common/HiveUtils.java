@@ -49,7 +49,7 @@ public class HiveUtils {
     public static String partitionNameToDdlSpec(String partitionName) {
 
         String[] partitionNameSplit = partitionName.split("/");
-        List<String> columnExpressions = new ArrayList<String>();
+        List<String> columnExpressions = new ArrayList<>();
 
         for (String columnValue : partitionNameSplit) {
             // TODO: Handle escaping of partition values
@@ -69,7 +69,7 @@ public class HiveUtils {
             throws HiveMetastoreException {
         // Convert the name to a key-value map
         Map<String, String> kv = ms.partitionNameToMap(partitionName);
-        List<String> values = new ArrayList<String>();
+        List<String> values = new ArrayList<>();
 
         for (String equalsExpression : partitionName.split("/")) {
             String[] equalsExpressionSplit = equalsExpression.split("=");

@@ -87,7 +87,7 @@ public class WebServer {
                 LOG.error("Error while fetching data!", e);
             }
 
-            Map<String, Object> model = new HashMap<String, Object>();
+            Map<String, Object> model = new HashMap<>();
             model.put("host", finalThriftHost);
             model.put("port", finalThriftPort);
             model.put("data_fetch_successful", dataFetchSuccessful);

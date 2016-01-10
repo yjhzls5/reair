@@ -78,9 +78,9 @@ public class PersistedJobInfoStoreTest {
 
 
         // Test out creation
-        List<String> partitionNames = new ArrayList<String>();
+        List<String> partitionNames = new ArrayList<>();
         partitionNames.add("ds=1/hr=1");
-        Map<String, String> extras = new HashMap<String, String>();
+        Map<String, String> extras = new HashMap<>();
         extras.put("foo", "bar");
         PersistedJobInfo testJob = jobStore.resilientCreate(
                 ReplicationOperation.COPY_UNPARTITIONED_TABLE,
@@ -97,7 +97,7 @@ public class PersistedJobInfoStoreTest {
                 extras);
 
         // Test out retrieval
-        Map<Long, PersistedJobInfo> idToJob = new HashMap<Long, PersistedJobInfo>();
+        Map<Long, PersistedJobInfo> idToJob = new HashMap<>();
         List<PersistedJobInfo> persistedJobInfos = jobStore.getRunnableFromDb();
         for (PersistedJobInfo persistedJobInfo : persistedJobInfos) {
             idToJob.put(Long.valueOf(persistedJobInfo.getId()), persistedJobInfo);

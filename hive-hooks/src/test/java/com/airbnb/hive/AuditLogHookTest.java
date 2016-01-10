@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -76,7 +77,7 @@ public class AuditLogHookTest {
                         "test_db",
                         "test_source_table");
         List<org.apache.hadoop.hive.ql.metadata.Table> inputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         inputTables.add(inputTable);
 
         org.apache.hadoop.hive.ql.metadata.Table outputTable =
@@ -86,7 +87,7 @@ public class AuditLogHookTest {
         outputTable.setCreateTime(0);
 
         List<org.apache.hadoop.hive.ql.metadata.Table> outputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         outputTables.add(outputTable);
 
         AuditLogHookUtils.insertAuditLogEntry(embeddedMySqlDb,
@@ -94,15 +95,15 @@ public class AuditLogHookTest {
                 HiveOperation.QUERY,
                 DEFAULT_QUERY_STRING,
                 inputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
                 outputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
                 DB_NAME,
                 AUDIT_LOG_TABLE_NAME,
                 OUTPUT_OBJECTS_TABLE_NAME);
 
         // Check the query audit log
-        List<String> auditLogColumnsToCheck = new ArrayList<String>();
+        List<String> auditLogColumnsToCheck = new ArrayList<>();
         auditLogColumnsToCheck.add("command_type");
         auditLogColumnsToCheck.add("command");
         auditLogColumnsToCheck.add("inputs");
@@ -115,7 +116,7 @@ public class AuditLogHookTest {
                 auditLogColumnsToCheck,
                 null);
 
-        List<String> expectedDbRow = new ArrayList<String>();
+        List<String> expectedDbRow = new ArrayList<>();
         expectedDbRow.add("QUERY");
         expectedDbRow.add(DEFAULT_QUERY_STRING);
         expectedDbRow.add("{\"tables\":[\"test_db.test_source_table\"]}");
@@ -123,7 +124,7 @@ public class AuditLogHookTest {
         assertEquals(expectedDbRow, auditLogRow);
 
         // Check the output objects audit log
-        List<String> outputObjectsColumnsToCheck = new ArrayList<String>();
+        List<String> outputObjectsColumnsToCheck = new ArrayList<>();
         outputObjectsColumnsToCheck.add("name");
         outputObjectsColumnsToCheck.add("type");
         outputObjectsColumnsToCheck.add("serialized_object");
@@ -179,37 +180,37 @@ public class AuditLogHookTest {
                 new org.apache.hadoop.hive.ql.metadata.Table(
                         "test_db",
                         "test_output_table");
-        List<FieldSchema> partitionCols = new ArrayList<FieldSchema>();
+        List<FieldSchema> partitionCols = new ArrayList<>();
         partitionCols.add(new FieldSchema("ds", null, null));
         qlTable.setPartCols(partitionCols);
         qlTable.setDataLocation(new Path("file://a/b/c"));
         qlTable.setCreateTime(0);
 
         // Make the actual partition
-        Map<String, String> partitionKeyValue = new HashMap<String, String>();
+        Map<String, String> partitionKeyValue = new HashMap<>();
         partitionKeyValue.put("ds", "1");
         org.apache.hadoop.hive.ql.metadata.Partition outputPartition =
                 new org.apache.hadoop.hive.ql.metadata.Partition(qlTable,
                         partitionKeyValue, null);
         outputPartition.setLocation("file://a/b/c");
         List<org.apache.hadoop.hive.ql.metadata.Partition> outputPartitions =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>();
+                new ArrayList<>();
         outputPartitions.add(outputPartition);
 
         AuditLogHookUtils.insertAuditLogEntry(embeddedMySqlDb,
                 auditLogHook,
                 HiveOperation.QUERY,
                 DEFAULT_QUERY_STRING,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>(),
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
                 outputPartitions,
                 DB_NAME,
                 AUDIT_LOG_TABLE_NAME,
                 OUTPUT_OBJECTS_TABLE_NAME);
 
         // Check the query audit log
-        List<String> auditLogColumnsToCheck = new ArrayList<String>();
+        List<String> auditLogColumnsToCheck = new ArrayList<>();
         auditLogColumnsToCheck.add("command_type");
         auditLogColumnsToCheck.add("command");
         auditLogColumnsToCheck.add("inputs");
@@ -222,7 +223,7 @@ public class AuditLogHookTest {
                 auditLogColumnsToCheck,
                 null);
 
-        List<String> expectedDbRow = new ArrayList<String>();
+        List<String> expectedDbRow = new ArrayList<>();
         expectedDbRow.add("QUERY");
         expectedDbRow.add(DEFAULT_QUERY_STRING);
         expectedDbRow.add("{}");
@@ -232,7 +233,7 @@ public class AuditLogHookTest {
 
 
         // Check the output objects audit log
-        List<String> outputObjectsColumnsToCheck = new ArrayList<String>();
+        List<String> outputObjectsColumnsToCheck = new ArrayList<>();
         outputObjectsColumnsToCheck.add("name");
         outputObjectsColumnsToCheck.add("type");
         outputObjectsColumnsToCheck.add("serialized_object");

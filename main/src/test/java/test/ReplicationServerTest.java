@@ -239,7 +239,7 @@ public class ReplicationServerTest extends MockClusterTest {
         // entry in the audit log
         String dbName = "test_db";
         String tableName = "test_table";
-        List<String> partitionNames = new ArrayList<String>();
+        List<String> partitionNames = new ArrayList<>();
         partitionNames.add("ds=1/hr=1");
         partitionNames.add("ds=1/hr=2");
         partitionNames.add("ds=1/hr=3");
@@ -300,9 +300,9 @@ public class ReplicationServerTest extends MockClusterTest {
                 srcWarehouseRoot);
 
         List<org.apache.hadoop.hive.ql.metadata.Table> inputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         List<org.apache.hadoop.hive.ql.metadata.Table> outputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         outputTables.add(new org.apache.hadoop.hive.ql.metadata.Table(srcTable));
         removeTableAttributes(outputTables);
 
@@ -311,9 +311,9 @@ public class ReplicationServerTest extends MockClusterTest {
                 HiveOperation.QUERY,
                 "Example query string",
                 inputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
                 outputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
                 AUDIT_LOG_DB_NAME,
                 AUDIT_LOG_TABLE_NAME,
                 AUDIT_LOG_OBJECTS_TABLE_NAME);
@@ -329,13 +329,13 @@ public class ReplicationServerTest extends MockClusterTest {
         srcMetastore.alterTable(dbName, oldTableName, renamedTable);
 
         List<org.apache.hadoop.hive.ql.metadata.Table> inputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         org.apache.hadoop.hive.ql.metadata.Table qlSrcTable =
                 new org.apache.hadoop.hive.ql.metadata.Table(srcTable);
         inputTables.add(qlSrcTable);
 
         List<org.apache.hadoop.hive.ql.metadata.Table> outputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         outputTables.add(qlSrcTable);
         org.apache.hadoop.hive.ql.metadata.Table qlRenamedTable =
                 new org.apache.hadoop.hive.ql.metadata.Table(renamedTable);
@@ -347,9 +347,9 @@ public class ReplicationServerTest extends MockClusterTest {
                 HiveOperation.ALTERTABLE_RENAME,
                 "Example query string",
                 inputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
                 outputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
                 AUDIT_LOG_DB_NAME,
                 AUDIT_LOG_TABLE_NAME,
                 AUDIT_LOG_OBJECTS_TABLE_NAME);
@@ -369,9 +369,9 @@ public class ReplicationServerTest extends MockClusterTest {
                 srcWarehouseRoot);
 
         List<org.apache.hadoop.hive.ql.metadata.Table> inputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         List<org.apache.hadoop.hive.ql.metadata.Table> outputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         outputTables.add(new org.apache.hadoop.hive.ql.metadata.Table(srcTable));
         removeTableAttributes(outputTables);
 
@@ -380,9 +380,9 @@ public class ReplicationServerTest extends MockClusterTest {
                 HiveOperation.QUERY,
                 "Example query string",
                 inputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
                 outputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
                 AUDIT_LOG_DB_NAME,
                 AUDIT_LOG_TABLE_NAME,
                 AUDIT_LOG_OBJECTS_TABLE_NAME);
@@ -402,9 +402,9 @@ public class ReplicationServerTest extends MockClusterTest {
                 partitionSpec);
 
         List<org.apache.hadoop.hive.ql.metadata.Table> inputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         List<org.apache.hadoop.hive.ql.metadata.Partition> outputPartitions =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>();
+                new ArrayList<>();
 
         inputTables.add(new org.apache.hadoop.hive.ql.metadata.Table(srcTable));
         outputPartitions.add(new org.apache.hadoop.hive.ql.metadata.Partition(
@@ -419,8 +419,8 @@ public class ReplicationServerTest extends MockClusterTest {
                 HiveOperation.QUERY,
                 "Example query string",
                 inputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
                 outputPartitions,
                 AUDIT_LOG_DB_NAME,
                 AUDIT_LOG_TABLE_NAME,
@@ -432,9 +432,9 @@ public class ReplicationServerTest extends MockClusterTest {
                                           List<String> partitionNames)
             throws Exception {
         List<org.apache.hadoop.hive.ql.metadata.Table> inputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         List<org.apache.hadoop.hive.ql.metadata.Partition> outputPartitions =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>();
+                new ArrayList<>();
 
 
         Table srcTable = srcMetastore.getTable(dbName, tableName);
@@ -461,8 +461,8 @@ public class ReplicationServerTest extends MockClusterTest {
                 HiveOperation.QUERY,
                 "Example query string",
                 inputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
                 outputPartitions,
                 AUDIT_LOG_DB_NAME,
                 AUDIT_LOG_TABLE_NAME,
@@ -480,17 +480,17 @@ public class ReplicationServerTest extends MockClusterTest {
         srcMetastore.dropTable(dbName, tableName, false);
 
         List<org.apache.hadoop.hive.ql.metadata.Table> outputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         outputTables.add(new org.apache.hadoop.hive.ql.metadata.Table(srcTable));
 
         AuditLogHookUtils.insertAuditLogEntry(embeddedMySqlDb,
                 auditLogHook,
                 HiveOperation.DROPTABLE,
                 "Example query string",
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>(),
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
                 outputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
                 AUDIT_LOG_DB_NAME,
                 AUDIT_LOG_TABLE_NAME,
                 AUDIT_LOG_OBJECTS_TABLE_NAME);
@@ -508,13 +508,13 @@ public class ReplicationServerTest extends MockClusterTest {
         srcMetastore.dropPartition(dbName, tableName, partitionName, false);
 
         List<org.apache.hadoop.hive.ql.metadata.Table> inputTables =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>();
+                new ArrayList<>();
         org.apache.hadoop.hive.ql.metadata.Table qlTable =
                 new org.apache.hadoop.hive.ql.metadata.Table(srcTable);
         inputTables.add(qlTable);
 
         List<org.apache.hadoop.hive.ql.metadata.Partition> outputPartitions =
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>();
+                new ArrayList<>();
         outputPartitions.add(
                 new org.apache.hadoop.hive.ql.metadata.Partition(qlTable,
                         srcPartition));
@@ -524,8 +524,8 @@ public class ReplicationServerTest extends MockClusterTest {
                 HiveOperation.ALTERTABLE_DROPPARTS,
                 "Example query string",
                 inputTables,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
                 outputPartitions,
                 AUDIT_LOG_DB_NAME,
                 AUDIT_LOG_TABLE_NAME,
@@ -562,10 +562,10 @@ public class ReplicationServerTest extends MockClusterTest {
                 auditLogHook,
                 null,
                 query,
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>(),
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Table>(),
-                new ArrayList<org.apache.hadoop.hive.ql.metadata.Partition>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
                 AUDIT_LOG_DB_NAME,
                 AUDIT_LOG_TABLE_NAME,
                 AUDIT_LOG_OBJECTS_TABLE_NAME);

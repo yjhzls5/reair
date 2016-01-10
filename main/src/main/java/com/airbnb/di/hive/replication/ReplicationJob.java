@@ -111,7 +111,7 @@ public class ReplicationJob extends Job {
     public Collection<Long> getParentJobIds() {
         // TODO: Casting is no bueno
         Set<Job> parentJobs = getParentJobs();
-        List<Long> parentJobIds = new ArrayList<Long>();
+        List<Long> parentJobIds = new ArrayList<>();
 
         for (Job parentJob : parentJobs) {
             ReplicationJob replicationJob = (ReplicationJob)parentJob;

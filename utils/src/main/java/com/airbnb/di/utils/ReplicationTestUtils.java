@@ -100,17 +100,17 @@ public class ReplicationTestUtils {
         Table t = new Table();
         t.setDbName(tableSpec.getDbName());
         t.setTableName(tableSpec.getTableName());
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put(HiveParameterKeys.TLDT, Long.toString(
                 System.currentTimeMillis()));
         t.setParameters(parameters);
-        t.setPartitionKeys(new ArrayList<FieldSchema>());
+        t.setPartitionKeys(new ArrayList<>());
         t.setTableType(tableType.toString());
 
         // Setup the columns and the storage descriptor
         StorageDescriptor sd = new StorageDescriptor();
         // Set the schema for the table
-        List<FieldSchema> columns = new ArrayList<FieldSchema>();
+        List<FieldSchema> columns = new ArrayList<>();
         columns.add(new FieldSchema("key", "string",
                 "my comment"));
         sd.setCols(columns);
@@ -157,14 +157,14 @@ public class ReplicationTestUtils {
         Table t = new Table();
         t.setDbName(tableSpec.getDbName());
         t.setTableName(tableSpec.getTableName());
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put(HiveParameterKeys.TLDT, Long.toString(
                 System.currentTimeMillis()));
         t.setParameters(parameters);
         t.setTableType(tableType.toString());
 
         // Set up the partitioning scheme
-        List<FieldSchema> partitionCols = new ArrayList<FieldSchema>();
+        List<FieldSchema> partitionCols = new ArrayList<>();
         partitionCols.add(new FieldSchema("ds", "string", "my ds comment"));
         partitionCols.add(new FieldSchema("hr", "string", "my hr comment"));
         t.setPartitionKeys(partitionCols);
@@ -172,7 +172,7 @@ public class ReplicationTestUtils {
         // Setup the columns and the storage descriptor
         StorageDescriptor sd = new StorageDescriptor();
         // Set the schema for the table
-        List<FieldSchema> columns = new ArrayList<FieldSchema>();
+        List<FieldSchema> columns = new ArrayList<>();
         columns.add(new FieldSchema("key", "string",
                 "my comment"));
         sd.setCols(columns);
@@ -183,7 +183,7 @@ public class ReplicationTestUtils {
 
         sd.setSerdeInfo(new SerDeInfo("LazySimpleSerde",
                 "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
-                new HashMap<String, String>()));
+                new HashMap<>()));
         t.setSd(sd);
 
         // Create DB for table if one does not exist
@@ -241,10 +241,10 @@ public class ReplicationTestUtils {
         // ql Partition objects.
         psd.setSerdeInfo(new SerDeInfo("LazySimpleSerde",
                 "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
-                new HashMap<String, String>()));
+                new HashMap<>()));
         p.setSd(psd);
 
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put(HiveParameterKeys.TLDT, Long.toString(
                 System.currentTimeMillis()));
         p.setParameters(parameters);
@@ -303,7 +303,7 @@ public class ReplicationTestUtils {
     {
         StringBuilder qb = new StringBuilder();
 
-        List<String> columnExpressions = new ArrayList<String>();
+        List<String> columnExpressions = new ArrayList<>();
         for (String columnName : columnNames) {
             columnExpressions.add(String.format("CAST(%s AS CHAR)", columnName));
         }
@@ -331,7 +331,7 @@ public class ReplicationTestUtils {
         List<String> row = null;
 
         if (rs.next()) {
-            row = new ArrayList<String>();
+            row = new ArrayList<>();
             for (int i=1; i <= columnNames.size(); i++) {
                 row.add(rs.getString(i));
             }
@@ -349,7 +349,7 @@ public class ReplicationTestUtils {
     {
         StringBuilder qb = new StringBuilder();
 
-        List<String> columnExpressions = new ArrayList<String>();
+        List<String> columnExpressions = new ArrayList<>();
         for (String columnName : columnNames) {
             columnExpressions.add(String.format("CAST(%s AS CHAR)", columnName));
         }
@@ -377,7 +377,7 @@ public class ReplicationTestUtils {
         List<String> row = null;
 
         if (rs.next()) {
-            row = new ArrayList<String>();
+            row = new ArrayList<>();
             for (int i=1; i <= columnNames.size(); i++) {
                 row.add(rs.getString(i));
             }

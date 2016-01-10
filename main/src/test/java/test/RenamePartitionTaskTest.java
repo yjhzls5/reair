@@ -84,7 +84,7 @@ public class RenamePartitionTaskTest extends MockClusterTest {
 
         // Rename the source partition
         Partition newPartition = new Partition(oldPartition);
-        List<String> newValues = new ArrayList<String>();
+        List<String> newValues = new ArrayList<>();
         newValues.add("1");
         newValues.add("2");
         newPartition.setValues(newValues);

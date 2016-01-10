@@ -83,7 +83,7 @@ public class ReplicationJobFactory {
                         ReplicationOperation.COPY_PARTITIONED_TABLE :
                         ReplicationOperation.COPY_UNPARTITIONED_TABLE;
 
-        Map<String, String> extras = new HashMap<String, String>();
+        Map<String, String> extras = new HashMap<>();
         extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY,
                 Long.toString(auditLogId));
         extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
@@ -140,13 +140,13 @@ public class ReplicationJobFactory {
         ReplicationOperation replicationOperation =
                 ReplicationOperation.COPY_PARTITION;
 
-        Map<String, String> extras = new HashMap<String, String>();
+        Map<String, String> extras = new HashMap<>();
         extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY,
                 Long.toString(auditLogId));
         extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
                 Long.toString(auditLogEntryCreateTime));
 
-        List<String> partitionNames = new ArrayList<String>();
+        List<String> partitionNames = new ArrayList<>();
         partitionNames.add(spec.getPartitionName());
 
         PersistedJobInfo persistedJobInfo = jobInfoStore.resilientCreate(
@@ -184,13 +184,13 @@ public class ReplicationJobFactory {
             throws IOException, SQLException {
         String partitionName = namedPartition.getName();
         Partition partition = namedPartition.getPartition();
-        List<String> partitionNames = new ArrayList<String>();
+        List<String> partitionNames = new ArrayList<>();
         partitionNames.add(partitionName);
 
         ReplicationOperation replicationOperation =
                 ReplicationOperation.COPY_PARTITION;
 
-        Map<String, String> extras = new HashMap<String, String>();
+        Map<String, String> extras = new HashMap<>();
         extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY,
                 Long.toString(auditLogId));
         extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
@@ -249,7 +249,7 @@ public class ReplicationJobFactory {
                 samplePartition.getDbName(),
                 samplePartition.getTableName());
 
-        Map<String, String> extras = new HashMap<String, String>();
+        Map<String, String> extras = new HashMap<>();
         extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY,
                 Long.toString(auditLogId));
         extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
@@ -287,8 +287,7 @@ public class ReplicationJobFactory {
             List<Table> tables) {
         // Create a map from the table spec to the table object. We'll need this
         // for getting the table that a partition belongs to
-        Map<HiveObjectSpec, Table> specToTable =
-                new HashMap<HiveObjectSpec, Table>();
+        Map<HiveObjectSpec, Table> specToTable = new HashMap<>();
         for (Table table : tables) {
             HiveObjectSpec spec = new HiveObjectSpec(table);
             specToTable.put(spec, table);
@@ -303,7 +302,7 @@ public class ReplicationJobFactory {
         ReplicationOperation replicationOperation =
                 ReplicationOperation.DROP_TABLE;
 
-        Map<String, String> extras = new HashMap<String, String>();
+        Map<String, String> extras = new HashMap<>();
         extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY,
                 Long.toString(auditLogId));
         extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
@@ -341,7 +340,7 @@ public class ReplicationJobFactory {
         ReplicationOperation replicationOperation =
                 ReplicationOperation.DROP_PARTITION;
 
-        Map<String, String> extras = new HashMap<String, String>();
+        Map<String, String> extras = new HashMap<>();
         extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY,
                 Long.toString(auditLogId));
         extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
@@ -349,7 +348,7 @@ public class ReplicationJobFactory {
 
         HiveObjectSpec partitionSpec =
                 new HiveObjectSpec(namedPartition);
-        List<String> partitionNames = new ArrayList<String>();
+        List<String> partitionNames = new ArrayList<>();
         partitionNames.add(namedPartition.getName());
         Optional<String> partitionTldt =
                 ReplicationUtils.getTldt(namedPartition.getPartition());
@@ -383,7 +382,7 @@ public class ReplicationJobFactory {
         ReplicationOperation replicationOperation =
                 ReplicationOperation.RENAME_TABLE;
 
-        Map<String, String> extras = new HashMap<String, String>();
+        Map<String, String> extras = new HashMap<>();
         extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY,
                 Long.toString(auditLogId));
         extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
@@ -437,7 +436,7 @@ public class ReplicationJobFactory {
         ReplicationOperation replicationOperation =
                 ReplicationOperation.RENAME_PARTITION;
 
-        Map<String, String> extras = new HashMap<String, String>();
+        Map<String, String> extras = new HashMap<>();
         extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY,
                 Long.toString(auditLogId));
         extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
@@ -458,7 +457,7 @@ public class ReplicationJobFactory {
                 renameFromPath,
                 srcCluster.getName(),
                 renameFromPartitionSpec,
-                new ArrayList<String>(),
+                new ArrayList<>(),
                 ReplicationUtils.getTldt(renameFromPartition.getPartition()),
                 Optional.of(renameToPartitionSpec),
                 renameToPath,
@@ -495,7 +494,7 @@ public class ReplicationJobFactory {
             AuditLogEntry auditLogEntry,
             ReplicationFilter replicationFilter)
             throws IOException, SQLException {
-        List<ReplicationJob> replicationJobs = new ArrayList<ReplicationJob>();
+        List<ReplicationJob> replicationJobs = new ArrayList<>();
 
         if (!replicationFilter.accept(auditLogEntry)) {
             LOG.debug(String.format("Audit log entry id: %s filtered out by %s",
@@ -583,11 +582,10 @@ public class ReplicationJobFactory {
                 operationType = OperationType.COPY;
         }
 
-        List<Table> outputTables = new ArrayList<Table>(
+        List<Table> outputTables = new ArrayList<>(
                 auditLogEntry.getOutputTables());
         List<NamedPartition> outputPartitions =
-                new ArrayList<NamedPartition>(
-                        auditLogEntry.getOutputPartitions());
+                new ArrayList<>(auditLogEntry.getOutputPartitions());
         List<Table> referenceTables = auditLogEntry.getReferenceTables();
 
         // Filter out tables and partitions that we may not want to replicate
@@ -700,7 +698,7 @@ public class ReplicationJobFactory {
         // Create the list of tables that the partitions belong to. These
         // tables were included by the hook, but don't need to be replicated,
         // but is needed for running the filter.
-        Set<HiveObjectSpec> tablesToNotReplicate = new HashSet<HiveObjectSpec>();
+        Set<HiveObjectSpec> tablesToNotReplicate = new HashSet<>();
         for (NamedPartition pwn : partitions) {
             Partition p = pwn.getPartition();
             HiveObjectSpec tableSpec = new HiveObjectSpec(p.getDbName(),

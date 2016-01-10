@@ -12,7 +12,6 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.Trash;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.hadoop.yarn.webapp.hamlet.HamletSpec;
 import org.datanucleus.util.StringUtils;
 
 import java.io.FileNotFoundException;
@@ -78,7 +77,7 @@ public class FsUtils {
         */
         FileSystem fs = FileSystem.get(p.toUri(), conf);
 
-        Queue<Path> pathsToCheck = new LinkedList<Path>();
+        Queue<Path> pathsToCheck = new LinkedList<>();
         pathsToCheck.add(p);
 
         // Traverse the directory tree and find all the paths
@@ -109,7 +108,7 @@ public class FsUtils {
         long totalSize = 0;
         FileSystem fs = FileSystem.get(p.toUri(), conf);
 
-        Queue<Path> pathsToCheck = new LinkedList<Path>();
+        Queue<Path> pathsToCheck = new LinkedList<>();
         pathsToCheck.add(p);
 
         // Traverse the directory tree and find all the paths
@@ -145,9 +144,9 @@ public class FsUtils {
                                                            Optional<PathFilter> filter)
             throws IOException {
         FileSystem fs = FileSystem.get(p.toUri(), conf);
-        Set<FileStatus> fileStatuses = new HashSet<FileStatus>();
+        Set<FileStatus> fileStatuses = new HashSet<>();
 
-        Queue<Path> pathsToCheck = new LinkedList<Path>();
+        Queue<Path> pathsToCheck = new LinkedList<>();
         pathsToCheck.add(p);
 
         // Traverse the directory tree and find all the paths
@@ -183,7 +182,7 @@ public class FsUtils {
     private static Map<String, Long> getRelPathToSizes(Path root,
                                                        Set<FileStatus> statuses)
             throws ArgumentException {
-        Map<String, Long> pathToStatus = new HashMap<String, Long>();
+        Map<String, Long> pathToStatus = new HashMap<>();
         for (FileStatus status : statuses) {
             pathToStatus.put(getRelativePath(root,
                     status.getPath()),
@@ -203,7 +202,7 @@ public class FsUtils {
             Path root,
             Set<FileStatus> statuses)
             throws ArgumentException {
-        Map<String, Long> pathToStatus = new HashMap<String, Long>();
+        Map<String, Long> pathToStatus = new HashMap<>();
         for (FileStatus status : statuses) {
             pathToStatus.put(getRelativePath(root,
                             status.getPath()),

@@ -149,7 +149,7 @@ public class DistCpWrapper {
                                 distcpDestDir));
             }
 
-            List<String> distcpArgs = new ArrayList<String>();
+            List<String> distcpArgs = new ArrayList<>();
             distcpArgs.add("-m");
             distcpArgs.add(Long.toString(
                     Math.max(srcSize / options.getBytesPerMapper(), 1)));

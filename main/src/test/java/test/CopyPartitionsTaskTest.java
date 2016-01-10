@@ -69,14 +69,13 @@ public class CopyPartitionsTaskTest extends MockClusterTest {
         Partition srcPartition3 = ReplicationTestUtils.createPartition(conf,
                 srcMetastore, partitionSpec3);
 
-        Map<HiveObjectSpec, Partition> specToPartition =
-                new HashMap<HiveObjectSpec, Partition>();
+        Map<HiveObjectSpec, Partition> specToPartition = new HashMap<>();
 
         specToPartition.put(partitionSpec1, srcPartition1);
         specToPartition.put(partitionSpec2, srcPartition2);
         specToPartition.put(partitionSpec3, srcPartition3);
 
-        List<String> partitionNames = new ArrayList<String>();
+        List<String> partitionNames = new ArrayList<>();
         partitionNames.add("ds=1/hr=1");
         partitionNames.add("ds=1/hr=2");
         partitionNames.add("ds=1/hr=3");
@@ -152,8 +151,7 @@ public class CopyPartitionsTaskTest extends MockClusterTest {
         Partition srcPartition5 = ReplicationTestUtils.createPartition(conf,
                 srcMetastore, partitionSpec5);
 
-        Map<HiveObjectSpec, Partition> specToPartition =
-                new HashMap<HiveObjectSpec, Partition>();
+        Map<HiveObjectSpec, Partition> specToPartition = new HashMap<>();
 
         specToPartition.put(partitionSpec1, srcPartition1);
         specToPartition.put(partitionSpec2, srcPartition2);
@@ -162,7 +160,7 @@ public class CopyPartitionsTaskTest extends MockClusterTest {
         specToPartition.put(partitionSpec3, srcPartition5);
 
         // Copy only two partitions
-        List<String> partitionNames = new ArrayList<String>();
+        List<String> partitionNames = new ArrayList<>();
         partitionNames.add("ds=1/hr=1");
         partitionNames.add("ds=1/hr=2");
 

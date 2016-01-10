@@ -15,10 +15,9 @@ public class ReplicationJobRegistry {
 
     private static long MAX_RETIRED_JOBS = 200;
 
-    TreeMap<Long, ReplicationJob> idToReplicationJob =
-            new TreeMap<Long, ReplicationJob>();
+    TreeMap<Long, ReplicationJob> idToReplicationJob = new TreeMap<>();
 
-    LinkedList<ReplicationJob> retiredJobs = new LinkedList<ReplicationJob>();
+    LinkedList<ReplicationJob> retiredJobs = new LinkedList<>();
 
     public ReplicationJobRegistry() {
     }

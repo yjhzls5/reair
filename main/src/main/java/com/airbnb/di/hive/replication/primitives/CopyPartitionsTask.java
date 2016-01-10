@@ -92,7 +92,7 @@ public class CopyPartitionsTask implements ReplicationTask {
         }
 
         // Collect all the partition locations
-        Set<Path> partitionLocations = new HashSet<Path>();
+        Set<Path> partitionLocations = new HashSet<>();
         for (Map.Entry<HiveObjectSpec, Partition> entry :
                 specToPartition.entrySet()) {
             partitionLocations.add(new Path(
@@ -305,7 +305,7 @@ public class CopyPartitionsTask implements ReplicationTask {
         // Preserve the directory structure within the dest directory
         // Decompose a directory like /a/b/c and add a, b, c as subdirectories
         // within the tmp direcotry
-        List<String> pathElements = new ArrayList<String>(
+        List<String> pathElements = new ArrayList<>(
                 Arrays.asList(srcPath.toUri().getPath().split("/")));
         // When splitting a path like '/a/b/c', the first element is ''
         if (pathElements.get(0).equals("")) {

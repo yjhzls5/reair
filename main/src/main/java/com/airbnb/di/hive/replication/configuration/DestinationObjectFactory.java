@@ -89,8 +89,7 @@ public class DestinationObjectFactory {
         // Merge the parameters for the table, with the parameter values from
         // the source taking precedence
         if (existingDestTable != null) {
-            Map<String, String> newParameters =
-                    new HashMap<String, String>();
+            Map<String, String> newParameters = new HashMap<>();
             newParameters.putAll(existingDestTable.getParameters());
             newParameters.putAll(destTable.getParameters());
             destTable.setParameters(newParameters);
@@ -128,8 +127,7 @@ public class DestinationObjectFactory {
         // Merge the parameters for the partition, with the parameter values
         // from the source taking precedence
         if (existingDestPartition != null) {
-            Map<String, String> newParameters =
-                    new HashMap<String, String>();
+            Map<String, String> newParameters = new HashMap<>();
             newParameters.putAll(existingDestPartition.getParameters());
             newParameters.putAll(destPartition.getParameters());
         }

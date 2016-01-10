@@ -59,7 +59,7 @@ public class MockHiveMetastoreClientTest {
         String dbName = "test_db";
         String tableName = "test_table";
         String partitionName = "ds=1/hr=2";
-        List<String> partitionValues = new ArrayList<String>();
+        List<String> partitionValues = new ArrayList<>();
         partitionValues.add("1");
         partitionValues.add("2");
 
@@ -70,7 +70,7 @@ public class MockHiveMetastoreClientTest {
         t.setDbName(dbName);
         t.setTableName(tableName);
 
-        List<FieldSchema> partitionCols = new ArrayList<FieldSchema>();
+        List<FieldSchema> partitionCols = new ArrayList<>();
         partitionCols.add(new FieldSchema("ds", "string", "my ds comment"));
         partitionCols.add(new FieldSchema("hr", "string", "my hr comment"));
         t.setPartitionKeys(partitionCols);

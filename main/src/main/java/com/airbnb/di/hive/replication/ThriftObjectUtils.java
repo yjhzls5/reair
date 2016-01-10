@@ -1,9 +1,5 @@
 package com.airbnb.di.hive.replication;
 
-import com.airbnb.di.hive.replication.PersistedJobInfo;
-import com.airbnb.di.hive.replication.ReplicationJob;
-import com.airbnb.di.hive.replication.ReplicationOperation;
-import com.airbnb.di.hive.replication.ReplicationStatus;
 import com.airbnb.di.hive.replication.thrift.TReplicationJob;
 import com.airbnb.di.hive.replication.thrift.TReplicationOperation;
 import com.airbnb.di.hive.replication.thrift.TReplicationStatus;
@@ -56,7 +52,7 @@ public class ThriftObjectUtils {
 
     public static TReplicationJob convert(ReplicationJob job) {
         PersistedJobInfo jobInfo = job.getPersistedJobInfo();
-        List<Long> parentJobIds = new ArrayList<Long>(job.getParentJobIds());
+        List<Long> parentJobIds = new ArrayList<>(job.getParentJobIds());
 
         return new TReplicationJob(
                 job.getId(),
@@ -71,7 +67,7 @@ public class ThriftObjectUtils {
                 jobInfo.getSrcDbName(),
                 jobInfo.getSrcTableName(),
                 jobInfo.getSrcPartitionNames() == null ?
-                        new ArrayList<String>() : jobInfo.getSrcPartitionNames(),
+                        new ArrayList<>() : jobInfo.getSrcPartitionNames(),
                 jobInfo.getSrcObjectTldt().orElse(null),
                 jobInfo.getRenameToDb().orElse(null),
                 jobInfo.getRenameToTable().orElse(null),

@@ -89,8 +89,7 @@ public class CopyCompleteTableTask implements ReplicationTask {
             List<String> partitionNames = srcMs.getPartitionNames(
                     spec.getDbName(),
                     spec.getTableName());
-            Map<HiveObjectSpec, Partition> specToPartition =
-                    new HashMap<HiveObjectSpec, Partition>();
+            Map<HiveObjectSpec, Partition> specToPartition = new HashMap<>();
             for (String partitionName : partitionNames) {
                 Partition partition = srcMs.getPartition(spec.getDbName(),
                         spec.getTableName(), partitionName);
