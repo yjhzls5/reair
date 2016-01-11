@@ -2,13 +2,17 @@ package com.airbnb.di.hive.batchreplication.hivecopy;
 
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.HardCodedCluster;
 import com.airbnb.di.hive.replication.deploy.ConfigurationException;
 import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
+import com.airbnb.di.hive.replication.primitives.TaskEstimate;
+import com.airbnb.di.hive.replication.primitives.TaskEstimator;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -22,18 +26,21 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.airbnb.di.hive.batchreplication.ReplicationUtils.genValue;
+import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.serializeJobResult;
 import static com.airbnb.di.hive.replication.deploy.ReplicationLauncher.makeURI;
 
 /**
+ * Worker to compare table entity
  */
 public class TableCompareWorker {
-    static class BlackListPair {
+    private static class BlackListPair {
         private final Pattern dbNamePattern;
         private final Pattern tblNamePattern;
 
@@ -49,18 +56,21 @@ public class TableCompareWorker {
         }
     }
 
+    private static final DestinationObjectFactory destinationObjectFactory = new DestinationObjectFactory();
+
+    private Configuration conf;
     private HiveMetastoreClient srcClient;
     private HiveMetastoreClient dstClient;
     private Cluster srcCluster;
     private Cluster dstCluster;
     // list of db and table blacklist.
     private List<BlackListPair> blackList;
-
-    private boolean allowS3TableSync;
+    private DirectoryCopier directoryCopier;
+    private TaskEstimator estimator;
 
     protected void setup(Mapper.Context context) throws IOException, InterruptedException, ConfigurationException {
         try {
-            Configuration conf = context.getConfiguration();
+            this.conf = context.getConfiguration();
             // Create the source cluster object
             String srcClusterName = conf.get(
                     DeployConfigurationKeys.SRC_CLUSTER_NAME);
@@ -102,7 +112,7 @@ public class TableCompareWorker {
             this.dstClient = this.dstCluster.getMetastoreClient();
 
             this.blackList = Lists.transform(Arrays.asList(context.getConfiguration().
-                    get(MetastoreReplicationJob.REPLICATION_METASTORE_BLACKLIST).split(",")),
+                    get(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST).split(",")),
                     new Function<String, BlackListPair>() {
                         @Override
                         public BlackListPair apply(@Nullable String s) {
@@ -111,15 +121,19 @@ public class TableCompareWorker {
                         }
                     });
 
-
-            this.allowS3TableSync = context.getConfiguration().getBoolean(MetastoreReplicationJob.REPLICATION_ALLOW_S3, false);
+            this.directoryCopier = new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
+            this.estimator = new TaskEstimator(conf,
+                    destinationObjectFactory,
+                    srcCluster,
+                    dstCluster,
+                    directoryCopier);
         } catch (HiveMetastoreException e) {
             throw new IOException(e);
         }
     }
 
     protected List<String> processTable(final String db, final String table)
-            throws HiveMetastoreException {
+            throws IOException, HiveMetastoreException {
         // If table and db matches black list, we will skip it.
         if (Iterables.any(blackList,
                 new Predicate<BlackListPair>() {
@@ -128,106 +142,36 @@ public class TableCompareWorker {
                         return s.matches(db, table);
                     }
                 })) {
-            return ImmutableList.of(genValue(MetastoreReplicationJob.MetastoreAction.SKIP_TABLE.name(), db, table, "source blacklisted"));
+            return Collections.emptyList();
         }
+
+        HiveObjectSpec spec = new HiveObjectSpec(db, table);
+
+        // Table exists in source, but not in dest. It should copy the table.
+        TaskEstimate estimate = estimator.analyze(spec);
+        ArrayList<String> ret = new ArrayList<>();
+
+        ret.add(serializeJobResult(estimate, spec));
 
         Table tab = srcClient.getTable(db, table);
-        Table dstTab = dstClient.getTable(db, table);
-        if (tab == null) {
-            return ImmutableList.of(genValue(MetastoreReplicationJob.MetastoreAction.SKIP_TABLE.name(), db, table, "source deleted"));
-        } else {
-            String srcLocation = tab.getSd().getLocation();
-            if (!tab.getTableType().contains("VIEW")) {
-                HdfsPath ret = new HdfsPath(srcLocation);
-                if (!allowS3TableSync && ret.getProto().contains("s3")) {
-                    return ImmutableList.of(
-                            genValue(MetastoreReplicationJob.MetastoreAction.SKIP_TABLE.name(), db, table,
-                                    "s3 backed table skipped"));
-                } else {
-                    if (!ret.getHost().matches(MetastoreReplicationJob.HDFSPATH_CHECK_MAP.get(this.metastore)) &&
-                            !ret.getProto().contains("s3")) {
-                        return ImmutableList.of(
-                                genValue(MetastoreReplicationJob.MetastoreAction.SKIP_TABLE.name(), db, table,
-                                        "table is from different cluster"));
-                    }
-                }
-            }
-
-            ArrayList<String> ret = new ArrayList<>();
-            if (dstTab == null) {
-                if (tab.getPartitionKeys().size() > 0) {
-                    ret.add(genValue(
-                            MetastoreReplicationJob.MetastoreAction.CREATE_TABLE.name(), db, table, tab.getSd().getLocation()));
-
-                    ret.addAll(
-                            Lists.transform(srcClient.getPartitionNames(db, table), new Function<String, String>() {
-                                public String apply(String s) {
-                                    return genValue(MetastoreReplicationJob.MetastoreAction.CREATE_PARTITION.name(), db, table, s);
-                                }
-                            }));
-                } else {
-                    if (tab.getTableType().contains("VIEW")) {
-                        ret.add(genValue(MetastoreReplicationJob.MetastoreAction.CREATE_TABLE.name(), db, table, ""));
-                    } else {
-                        ret.add(genValue(MetastoreReplicationJob.MetastoreAction.CREATE_TABLE_NONPART.name(), db, table,
-                                tab.getSd().getLocation()));
-                    }
-                }
-            } else {
-                MetastoreCompareUtils.UpdateAction action = MetastoreCompareUtils.CompareTableForReplication(tab, dstTab);
-                switch (action) {
-                case UPDATE:
-                    ret.add(genValue(MetastoreReplicationJob.MetastoreAction.UPDATE_TABLE.name(), db, table, "table def changed"));
-                    break;
-                case RECREATE:
-                    // work around for hive bug that can not drop view
-                    if (tab.getTableType().contains("VIEW")) {
-                        ret.add(genValue(MetastoreReplicationJob.MetastoreAction.UPDATE_TABLE.name(), db, table, "view def changed"));
-                    } else {
-                        ret.add(genValue(MetastoreReplicationJob.MetastoreAction.RECREATE_TABLE.name(), db, table, "table def changed"));
-                    }
-                    break;
-                case NO_CHANGE:
-                    if (!dstTab.getParameters().containsKey(MetastoreReplicationJob.REPLICATED_FROM_PINKY_BRAIN)) {
-                        ret.add(genValue(MetastoreReplicationJob.MetastoreAction.UPDATE_TABLE.name(), db, table,
-                                "mark table replicated from pinky/brain"));
-                    } else {
-                        ret.add(genValue(MetastoreReplicationJob.MetastoreAction.SAME_META_TABLE.name(), db, table,
-                                "table def not changed"));
-                    }
-                    break;
-                default:
-                    throw new HiveMetastoreException(new InterruptedException("invalid table compare result"));
-                }
-
-                if (tab.getPartitionKeys().size() > 0) {
-                    HashSet<String> partNames = Sets.newHashSet(srcClient.getPartitionNames(db, table));
-                    HashSet<String> dstPartNames = Sets.newHashSet(dstClient.getPartitionNames(db, table));
-                    ret.addAll(Lists.transform(Lists.newArrayList(Sets.difference(partNames, dstPartNames)),
-                            new Function<String, String>() {
-                                public String apply(String s) {
-                                    return genValue(MetastoreReplicationJob.MetastoreAction.CREATE_PARTITION.name(), db, table, s);
-                                }
-                            }));
-                    ret.addAll(Lists.transform(Lists.newArrayList(Sets.difference(dstPartNames, partNames)),
-                            new Function<String, String>() {
-                                public String apply(String s) {
-                                    return genValue(MetastoreReplicationJob.MetastoreAction.DROP_PARTITION.name(), db, table, s);
-                                }
-                            }));
-                    ret.addAll(Lists.transform(Lists.newArrayList(Sets.intersection(partNames, dstPartNames)),
-                            new Function<String, String>() {
-                                public String apply(String s) {
-                                    return genValue(MetastoreReplicationJob.MetastoreAction.UPDATE_PARTITION.name(), db, table, s);
-                                }
-                            }));
-                } else if (!tab.getTableType().contains("VIEW")) {
-                    ret.add(genValue(MetastoreReplicationJob.MetastoreAction.CHECK_DIRECTORY_TABLE.name(), db, table,
-                            "check directory for non-partition table"));
-                }
-            }
-            return ret;
+        if (tab != null && tab.getPartitionKeys().size() > 0) {
+            // partition tables need to generate partitions.
+            HashSet<String> partNames = Sets.newHashSet(srcClient.getPartitionNames(db, table));
+            HashSet<String> dstPartNames = Sets.newHashSet(dstClient.getPartitionNames(db, table));
+            ret.addAll(Lists.transform(Lists.newArrayList(Sets.union(partNames, dstPartNames)),
+                    new Function<String, String>() {
+                        public String apply(String s) {
+                            return serializeJobResult(new TaskEstimate(TaskEstimate.TaskType.CHECK_PARTITION,
+                                                                        false,
+                                                                        false,
+                                                                        new Path(""),
+                                                                        new Path("")),
+                                                      new HiveObjectSpec(db, table, s));
+                        }
+                    }));
         }
+
+        return ret;
     }
 
     protected void cleanup() throws IOException, InterruptedException {

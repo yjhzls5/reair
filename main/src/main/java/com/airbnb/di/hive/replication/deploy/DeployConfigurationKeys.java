@@ -26,6 +26,10 @@ public class DeployConfigurationKeys {
     public static final String DEST_HDFS_ROOT = "airbnb.reair.clusters.dest.hdfs.root";
     public static final String DEST_HDFS_TMP = "airbnb.reair.clusters.dest.hdfs.tmp";
 
+    public static final String BATCH_JOB_OUTPUT_DIR = "airbnb.reair.clusters.batch.output.dir";
+    public static final String BATCH_JOB_INPUT_LIST = "airbnb.reair.clusters.batch.input";
+    public static final String BATCH_JOB_METASTORE_BLACKLIST = "airbnb.reair.clusters.batch.metastore.blacklist";
+
     public static final String OBJECT_FILTER_CLASS = "airbnb.reair.object.filter";
 
     public static final String WORKER_THREADS = "airbnb.reair.worker.threads";

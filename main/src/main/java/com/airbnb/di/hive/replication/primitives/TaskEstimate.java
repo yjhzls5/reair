@@ -15,6 +15,7 @@ public class TaskEstimate {
         COPY_PARTITION,
         DROP_TABLE,
         DROP_PARTITION,
+        CHECK_PARTITION,
         NO_OP,
     }
 
