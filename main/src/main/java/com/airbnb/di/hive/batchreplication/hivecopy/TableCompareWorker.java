@@ -111,15 +111,20 @@ public class TableCompareWorker {
                     new Path(destHdfsTmp));
             this.dstClient = this.dstCluster.getMetastoreClient();
 
-            this.blackList = Lists.transform(Arrays.asList(context.getConfiguration().
-                    get(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST).split(",")),
-                    new Function<String, BlackListPair>() {
-                        @Override
-                        public BlackListPair apply(@Nullable String s) {
-                            String[] parts = s.split(":");
-                            return new BlackListPair(parts[0], parts[1]);
-                        }
-                    });
+            if (context.getConfiguration().get(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST) == null) {
+                this.blackList = Collections.<BlackListPair>emptyList();
+
+            } else {
+                this.blackList = Lists.transform(Arrays.asList(context.getConfiguration().
+                                get(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST).split(",")),
+                        new Function<String, BlackListPair>() {
+                            @Override
+                            public BlackListPair apply(@Nullable String s) {
+                                String[] parts = s.split(":");
+                                return new BlackListPair(parts[0], parts[1]);
+                            }
+                        });
+            }
 
             this.directoryCopier = new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
             this.estimator = new TaskEstimator(conf,
@@ -164,8 +169,8 @@ public class TableCompareWorker {
                             return serializeJobResult(new TaskEstimate(TaskEstimate.TaskType.CHECK_PARTITION,
                                                                         false,
                                                                         false,
-                                                                        new Path(""),
-                                                                        new Path("")),
+                                                                        null,
+                                                                        null),
                                                       new HiveObjectSpec(db, table, s));
                         }
                     }));

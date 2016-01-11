@@ -43,8 +43,8 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     public static String serializeJobResult(TaskEstimate estimate, HiveObjectSpec spec) {
         return genValue(estimate.getTaskType().name(),
-                estimate.getSrcPath().toString(),
-                estimate.getDestPath().toString(),
+                estimate.getSrcPath()==null?null:estimate.getSrcPath().toString(),
+                estimate.getDestPath()==null?null:estimate.getDestPath().toString(),
                 String.valueOf(estimate.isUpdateData()),
                 String.valueOf(estimate.isUpdateMetadata()),
                 spec.getDbName(),
@@ -57,8 +57,8 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         TaskEstimate estimate = new TaskEstimate(TaskEstimate.TaskType.valueOf(fields[0]),
                 Boolean.valueOf(fields[1]),
                 Boolean.valueOf(fields[2]),
-                new Path(fields[3]),
-                new Path(fields[4]));
+                fields[3].equals("NULL")?null:new Path(fields[3]),
+                fields[4].equals("NULL")?null:new Path(fields[4]));
 
         HiveObjectSpec spec = null;
         if (fields[7].equals("NULL")) {
@@ -79,7 +79,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     public static Options constructGnuOptions() {
         Options gnuOptions = new Options();
-        gnuOptions.addOption("conf", "config-files", true, "Comma separated list of paths to configuration files")
+        gnuOptions.addOption("config", "config-files", true, "Comma separated list of paths to configuration files")
                   .addOption("st", "step", true, "Run specific step")
                   .addOption("oi", "override-input", true, "input override for step");
 
@@ -103,11 +103,11 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
         String configPaths = null;
 
-        if (commandLine.hasOption("conf")) {
-            configPaths = commandLine.getOptionValue("conf");
+        if (commandLine.hasOption("config")) {
+            configPaths = commandLine.getOptionValue("config");
             LOG.info("configPaths=" + configPaths);
         } else {
-            System.err.println("-conf option is required.");
+            System.err.println("-config option is required.");
             printUsage(USAGE_COMMAND_STR, constructGnuOptions(), System.out);
             System.out.println();
             ToolRunner.printGenericCommandUsage(System.err);
@@ -191,8 +191,10 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         merged.set(DeployConfigurationKeys.DEST_CLUSTER_METASTORE_URL, inputConfig.get(DeployConfigurationKeys.DEST_CLUSTER_METASTORE_URL));
         merged.set(DeployConfigurationKeys.DEST_HDFS_ROOT, inputConfig.get(DeployConfigurationKeys.DEST_HDFS_ROOT));
         merged.set(DeployConfigurationKeys.DEST_HDFS_TMP, inputConfig.get(DeployConfigurationKeys.DEST_HDFS_TMP));
-        merged.set(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST, inputConfig.get(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST));
-
+        String blacklist = inputConfig.get(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST);
+        if (blacklist != null) {
+            merged.set(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST, blacklist);
+        }
     }
 
     private int runMetastoreCompareJob(Configuration inputConfig, String output)
