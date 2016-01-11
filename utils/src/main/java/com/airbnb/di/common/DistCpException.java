@@ -1,6 +1,7 @@
 package com.airbnb.di.common;
 
 public class DistCpException extends Exception {
+
     public DistCpException(String message) {
         super(message);
     }

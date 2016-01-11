@@ -170,17 +170,6 @@ public class JobDagManager {
                         otherJob.getRequiredLocks().getType(exclusiveLockToGet);
                 if (requiredLockType == Lock.Type.EXCLUSIVE) {
                     parents.add(otherJob);
-                    // TODO: The following if condition was there, but seems to
-                    // be a bug.
-                    //if (parents.size() == 0) {
-                    //    // This means that this is the most recent job that
-                    //    // needed the exclusive lock
-                    //    parents.add(otherJob);
-                    //}
-                    // This means that there were previous jobs that
-                    // required shared locks. Those jobs would depend on
-                    // this job needing the exclusive lock, so no need to
-                    // add this job with the exclusive lock.
                     break;
                 } else if (requiredLockType == Lock.Type.SHARED) {
                     parents.add(otherJob);

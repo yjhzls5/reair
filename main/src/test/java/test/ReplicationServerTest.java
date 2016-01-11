@@ -19,6 +19,8 @@ import com.airbnb.di.hive.replication.PersistedJobInfoStore;
 import com.airbnb.di.hive.replication.filter.ReplicationFilter;
 import com.airbnb.di.hive.replication.ReplicationServer;
 import com.airbnb.di.db.StaticDbConnectionFactory;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.metastore.TableType;
@@ -532,6 +534,28 @@ public class ReplicationServerTest extends MockClusterTest {
                 AUDIT_LOG_OBJECTS_TABLE_NAME);
     }
 
+    /**
+     * Converts a partition name into a spec used for DDL commands. For example,
+     * ds=1/hr=2 -> PARTITION(ds='1', hr='2'). Note the special characters are
+     * not escapsed as they are in production.
+     */
+    public static String partitionNameToDdlSpec(String partitionName) {
+
+        String[] partitionNameSplit = partitionName.split("/");
+        List<String> columnExpressions = new ArrayList<>();
+
+        for (String columnValue : partitionNameSplit) {
+            String[] columnValueSplit = columnValue.split("=");
+            if (columnValueSplit.length != 2) {
+                throw new RuntimeException("Invalid partition name " +
+                        partitionName);
+            }
+            columnExpressions.add(columnValueSplit[0] + "='" +
+                    columnValueSplit[1] + "'");
+        }
+        return "PARTITION(" + StringUtils.join(columnExpressions, ", ") + ")";
+    }
+
     private void simulateExchangePartition(String exchangeFromDbName,
                                            String exchangeFromTableName,
                                            String exchangeToDbName,
@@ -551,7 +575,7 @@ public class ReplicationServerTest extends MockClusterTest {
                 "%s WITH TABLE %s.%s",
                 exchangeToDbName,
                 exchangeToTableName,
-                HiveUtils.partitionNameToDdlSpec(partitionName),
+                partitionNameToDdlSpec(partitionName),
                 exchangeFromDbName,
                 exchangeFromTableName);
 

@@ -2,7 +2,6 @@ package com.airbnb.di.hive.replication.deploy;
 
 import com.airbnb.di.common.ArgumentException;
 import com.airbnb.di.common.CLIUtils;
-import com.airbnb.di.common.ConfigurationKeys;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.ThriftHiveMetastoreClient;
 import com.airbnb.di.hive.replication.DirectoryCopier;
@@ -124,7 +123,6 @@ public class HiveCopy {
         }
 
         Configuration conf = new Configuration();
-        conf.set(ConfigurationKeys.DISTCP_POOL, "default");
         conf.addResource(new Path(configPath));
 
         String srcName = conf.get("airbnb.hive.cluster.src.name");

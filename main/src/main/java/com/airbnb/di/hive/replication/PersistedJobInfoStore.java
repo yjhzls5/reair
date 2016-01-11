@@ -299,9 +299,9 @@ public class PersistedJobInfoStore {
 
             ps.execute();
             ResultSet rs = ps.getGeneratedKeys();
-            // TODO: Check value?
             boolean ret = rs.next();
             if (!ret) {
+                // Shouldn't happen since we asked for the generated keys.
                 throw new RuntimeException("Unexpected behavior!");
             }
             long id = rs.getLong(1);
@@ -436,7 +436,6 @@ public class PersistedJobInfoStore {
         }
     }
 
-    // TODO: Fix typo in name
     synchronized public void changeStautsAndPersist(ReplicationStatus status,
                                        PersistedJobInfo job) {
         job.setStatus(status);
@@ -453,7 +452,6 @@ public class PersistedJobInfoStore {
     }
 
     synchronized PersistedJobInfo getJob(long id) throws SQLException {
-        // TODO: Maybe make this more iterative with next()?
         String query = "SELECT id, create_time, operation, status, src_path, " +
                 "src_cluster, src_db, " +
                 "src_table, src_partitions, src_tldt, " +
@@ -467,8 +465,10 @@ public class PersistedJobInfoStore {
         ResultSet rs = ps.executeQuery(query);
 
         while(rs.next()) {
-            // TODO: Handle invalid values
-            long createTime = rs.getTimestamp("create_time").getTime();
+            Optional<Timestamp> ts = Optional.ofNullable(
+                    rs.getTimestamp("create_time"));
+            long createTime = ts.map(Timestamp::getTime)
+                    .orElse(Long.valueOf(0));
             ReplicationOperation operation =
                     ReplicationOperation.valueOf(rs.getString("operation"));
             ReplicationStatus status = ReplicationStatus.valueOf(

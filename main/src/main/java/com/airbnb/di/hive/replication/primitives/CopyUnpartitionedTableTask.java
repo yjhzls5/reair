@@ -1,6 +1,5 @@
 package com.airbnb.di.hive.replication.primitives;
 
-import com.airbnb.di.common.PathBuilder;
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
@@ -26,7 +25,8 @@ import java.util.Optional;
 import java.util.Random;
 
 /**
- * Created by paul_yang on 6/9/15.
+ * Task that copies an unpartitioned table, copying data if allowed and
+ * necessary.
  */
 public class CopyUnpartitionedTableTask implements ReplicationTask {
     private static final Log LOG = LogFactory.getLog(CopyUnpartitionedTableTask.class);
@@ -180,7 +180,6 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
     public LockSet getRequiredLocks() {
         LockSet lockSet = new LockSet();
         lockSet.add(new Lock(Lock.Type.EXCLUSIVE, spec.toString()));
-        // TODO: Lock the location
         return lockSet;
     }
 }

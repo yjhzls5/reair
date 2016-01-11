@@ -48,16 +48,6 @@ public class ReplicationUtils {
         }
     }
 
-    public static void checkSpecMatch(HiveObjectSpec spec, Partition p) {
-        if (p != null &&
-                (!spec.getDbName().equals(p.getDbName()) ||
-                        !spec.getTableName().equals(p.getTableName()))) {
-            // TODO: Should check partition name
-            throw new RuntimeException("Mismatch between spec and Thrift " +
-                    "object");
-        }
-    }
-
     public static Table stripNonComparables(Table table) {
         Table newTable = new Table(table);
         newTable.setCreateTime(0);
@@ -70,12 +60,6 @@ public class ReplicationUtils {
         newPartition.setCreateTime(0);
         newPartition.setLastAccessTime(0);
         return newPartition;
-    }
-
-    public static String airfsHack(String location) {
-        // TODO: Remove!
-        return location.replace("hdfs://airfs-brain/",
-                "hdfs://nn1.brain.musta.ch/");
     }
 
     public static <T extends TBase> T deserializeObject(
@@ -101,7 +85,6 @@ public class ReplicationUtils {
         } else {
             Database srcDb = srcMs.getDatabase(dbName);
             if (srcDb == null) {
-                // TODO: Throw exception?
                 LOG.warn(String.format("DB %s doesn't exist on the source!",
                         dbName));
                 return;

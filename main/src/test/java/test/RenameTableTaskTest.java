@@ -1,18 +1,15 @@
 package test;
 
-import com.airbnb.di.common.ConfigurationKeys;
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
-import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.primitives.RenameTableTask;
 import com.airbnb.di.multiprocessing.ParallelJobExecutor;
 import com.airbnb.di.utils.ReplicationTestUtils;
-import org.apache.hadoop.conf.Configuration;
+
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.BeforeClass;
@@ -55,10 +52,8 @@ public class RenameTableTaskTest extends MockClusterTest {
                 srcWarehouseRoot);
 
         // Copy the table
-        Configuration testConf = new Configuration(conf);
-        testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyUnpartitionedTableTask copyJob = new CopyUnpartitionedTableTask(
-                testConf,
+                conf,
                 destinationObjectFactory,
                 conflictHandler,
                 srcCluster,
@@ -77,7 +72,7 @@ public class RenameTableTaskTest extends MockClusterTest {
         ReplicationTestUtils.updateModifiedTime(srcMetastore, newTableSpec);
 
         // Propagate the rename
-        RenameTableTask job = new RenameTableTask(testConf,
+        RenameTableTask job = new RenameTableTask(conf,
                 srcCluster,
                 destCluster,
                 destinationObjectFactory,
@@ -128,9 +123,7 @@ public class RenameTableTaskTest extends MockClusterTest {
         ReplicationTestUtils.updateModifiedTime(srcMetastore, newTableSpec);
 
         // Propagate the rename
-        Configuration testConf = new Configuration(conf);
-        testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
-        RenameTableTask job = new RenameTableTask(testConf,
+        RenameTableTask job = new RenameTableTask(conf,
                 srcCluster,
                 destCluster,
                 destinationObjectFactory,

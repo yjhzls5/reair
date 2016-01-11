@@ -39,11 +39,10 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
     }
 
     /**
+     * Returns the partition name (e.g. ds=1/hr=2) given a Table and Partition
+     * object. For simplicity, this does not handle special characters
+     * properly.
      *
-     * @param t
-     * @param p
-     * @return the partition name (e.g. ds=1/hr=2) given a Table and Partition
-     * object
      * @throws HiveMetastoreException
      */
     private String getPartitionName(Table t, Partition p)
@@ -55,7 +54,6 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
         }
 
         StringBuilder sb = new StringBuilder();
-        // TODO: This doesn't handle escaping of special chars in values
         List<String> keyValues = new ArrayList<>();
         int i = 0;
         for (FieldSchema field : t.getPartitionKeys()) {
@@ -195,7 +193,10 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
     }
 
 
-
+    /**
+     * Drops the table, but for safety, doesn't delete the data.
+     * @throws HiveMetastoreException
+     */
     @Override
     public void dropTable(String dbName, String tableName,
                           boolean deleteData) throws HiveMetastoreException {
@@ -217,16 +218,18 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
                 mapIterator.remove();
             }
         }
-
         // For safety, don't delete data.
     }
 
+    /**
+     * Drops the partition, but for safety, doesn't delete the data.
+     * @throws HiveMetastoreException
+     */
     @Override
     public void dropPartition(String dbName,
                               String tableName,
                               String partitionName, boolean deleteData)
             throws HiveMetastoreException {
-        // TODO: Handle delete data
         HiveObjectSpec partitionSpec = new HiveObjectSpec(dbName, tableName,
                 partitionName);
         if (!existsPartition(dbName, tableName, partitionName)) {
@@ -282,8 +285,12 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
         return tableNames;
     }
 
+    /**
+     * Converts a map of partition key-value pairs to a name. Note that special
+     * characters are not escaped unlike in production, and the order of the
+     * key is dictated by the iteration order for the map.
+     */
     private static String partitionSpecToName(Map<String, String> spec) {
-        // Note: This does not handle escaping in partition names correctly
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, String> entry : spec.entrySet()) {
             if (sb.length() != 0) {

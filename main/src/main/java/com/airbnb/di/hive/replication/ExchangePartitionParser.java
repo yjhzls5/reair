@@ -9,6 +9,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Parses exchange partition query commands. Since it uses a regex, there are
+ * cases that won't be handled properly. See warnings below for details.
+ *
+ * TODO: Deprecate once HIVE-12215 is resolved
+ */
 public class ExchangePartitionParser {
 
     private static String EXCHANGE_REGEX = "\\s*ALTER\\s+TABLE\\s+" +
@@ -49,7 +55,7 @@ public class ExchangePartitionParser {
     private HiveObjectSpec getSpec(String spec) {
         String[] specSplit = spec.split("\\.");
         if (specSplit.length == 1) {
-            // TODO: Address assumption of default DB
+            // Warning! Assumes default DB.
             return new HiveObjectSpec("default", specSplit[0]);
         } else if (specSplit.length == 2) {
             return new HiveObjectSpec(specSplit[0], specSplit[1]);
@@ -66,8 +72,8 @@ public class ExchangePartitionParser {
      */
 
     private String getPartitionName(String partitionSpec) {
-        // TODO: This is not correct for values that are escaped or with commas
-        // There also may be corner cases
+        // Warning - incorrect for cases where there are commas in values and
+        // other corner cases.
         String[] partitionSpecSplit = partitionSpec.split(",");
         StringBuilder sb = new StringBuilder();
 
@@ -96,8 +102,8 @@ public class ExchangePartitionParser {
 
 
     private List<String> getPartitionValues(String partitionSpec) {
-        // TODO: This is not correct for values that are escaped or with commas
-        // There also may be corner cases
+        // Warning - incorrect for cases where there are commas in values and
+        // other corner cases.
         String[] partitionSpecSplit = partitionSpec.split(",");
         List<String> partitionValues = new ArrayList<>();
 

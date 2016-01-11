@@ -33,6 +33,12 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
+/**
+ * Task that copies multiple partitions. To reduce the number of distcp jobs
+ * necessary, this task tries to copy a common parent directory of those
+ * partitions. However, a better solution would be to use a copy tool that can
+ * copy multiple source and destination directories simultaneously.
+ */
 public class CopyPartitionsTask implements ReplicationTask {
 
     private static final Log LOG = LogFactory.getLog(
@@ -75,8 +81,6 @@ public class CopyPartitionsTask implements ReplicationTask {
             Map<HiveObjectSpec, Partition> specToPartition) {
         // Sanity check - verify that all the specified objects are partitions
         // and that they are from the same table
-        String srcDb = null;
-        String srcTable = null;
 
         for (HiveObjectSpec spec : specToPartition.keySet()) {
 
@@ -99,16 +103,11 @@ public class CopyPartitionsTask implements ReplicationTask {
                     entry.getValue().getSd().getLocation()));
         }
         // Find the common subdirectory among all the partitions
-        // TODO: This may copy more data than necessary. Revisit later.
+        // TODO: This may copy more data than necessary - use multi directory
+        // copy instead once it's available.
         Optional<Path> commonDirectory = ReplicationUtils.getCommonDirectory(
                 partitionLocations);
         LOG.debug("Common directory of partitions is " + commonDirectory);
-        // TODO: Resolve in a better way
-        if (commonDirectory.toString().startsWith("s3")) {
-            LOG.error("Since common directory starts with S3, it will be set " +
-                    "to null");
-            commonDirectory = null;
-        }
         return commonDirectory;
     }
 
@@ -136,21 +135,21 @@ public class CopyPartitionsTask implements ReplicationTask {
             return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
         }
 
-        // TODO: Handle view case
-
-        Path tableLocation = new Path(freshSrcTable.getSd().getLocation());
+        Optional<Path> tableLocation =
+                ReplicationUtils.getLocation(freshSrcTable);
         LOG.debug("Location of table " + srcTableSpec + " is " + tableLocation);
 
         // If possible, copy the common directory in a single distcp job.
         // We call this the optimistic copy as this should result in no
-        // additional distcp jobs.
+        // additional distcp jobs when copying the partitions.
 
         long bytesCopied = 0;
         boolean doOptimisticCopy = false;
 
         if (commonDirectory.isPresent() &&
-                (tableLocation.equals(commonDirectory.get()) ||
-                        FsUtils.isSubDirectory(tableLocation,
+                tableLocation.isPresent() &&
+                (tableLocation.equals(commonDirectory) ||
+                        FsUtils.isSubDirectory(tableLocation.get(),
                                 commonDirectory.get()))) {
             Path commonDir = commonDirectory.get();
             // Get the size of all the partitions in the common directory and
@@ -161,7 +160,6 @@ public class CopyPartitionsTask implements ReplicationTask {
             for (String partitionName : partitionNames) {
                 Partition p = srcMs.getPartition(srcTableSpec.getDbName(),
                         srcTableSpec.getTableName(), partitionName);
-                // TODO: Think about and handle view case
                 if (p != null && p.getSd().getLocation() != null) {
                     Path partitionLocation = new Path(p.getSd().getLocation());
                     if (FsUtils.isSubDirectory(commonDir,

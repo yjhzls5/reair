@@ -1,6 +1,5 @@
 package test;
 
-import com.airbnb.di.common.ConfigurationKeys;
 import com.airbnb.di.common.FsUtils;
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
@@ -8,12 +7,9 @@ import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
-import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.utils.ReplicationTestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -70,10 +66,8 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
                 srcWarehouseRoot);
 
         // Copy the table
-        Configuration testConf = new Configuration(conf);
-        testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyUnpartitionedTableTask copyJob = new CopyUnpartitionedTableTask(
-                testConf,
+                conf,
                 destinationObjectFactory,
                 conflictHandler,
                 srcCluster,
@@ -112,7 +106,7 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
                 TableType.MANAGED_TABLE,
                 srcWarehouseRoot);
         CopyUnpartitionedTableTask copyJob2 = new CopyUnpartitionedTableTask(
-                testConf,
+                conf,
                 destinationObjectFactory,
                 conflictHandler,
                 srcCluster,
@@ -140,10 +134,8 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
                 srcWarehouseRoot);
 
         // Copy the table
-        Configuration testConf = new Configuration(conf);
-        testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyUnpartitionedTableTask copyJob = new CopyUnpartitionedTableTask(
-                testConf,
+                conf,
                 destinationObjectFactory,
                 conflictHandler,
                 srcCluster,

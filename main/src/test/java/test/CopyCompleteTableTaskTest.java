@@ -1,18 +1,15 @@
 package test;
 
-import com.airbnb.di.common.ConfigurationKeys;
 import com.airbnb.di.common.FsUtils;
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.primitives.CopyCompleteTableTask;
-import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.multiprocessing.ParallelJobExecutor;
 import com.airbnb.di.utils.ReplicationTestUtils;
-import org.apache.hadoop.conf.Configuration;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -55,10 +52,8 @@ public class CopyCompleteTableTaskTest extends MockClusterTest {
                 srcWarehouseRoot);
 
         // Copy the table
-        Configuration testConf = new Configuration(conf);
-        testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyCompleteTableTask copyJob = new CopyCompleteTableTask(
-                testConf,
+                conf,
                 destinationObjectFactory,
                 conflictHandler,
                 srcCluster,
@@ -125,10 +120,8 @@ public class CopyCompleteTableTaskTest extends MockClusterTest {
         specToPartition.put(partitionSpec3, srcPartition3);
 
         // Copy the partition
-        Configuration testConf = new Configuration(conf);
-        testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyCompleteTableTask copyCompleteTableTask =
-                new CopyCompleteTableTask(testConf,
+                new CopyCompleteTableTask(conf,
                         destinationObjectFactory,
                         conflictHandler,
                         srcCluster,

@@ -14,6 +14,7 @@ import com.airbnb.di.hive.replication.primitives.CopyPartitionsTask;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.DropPartitionTask;
 import com.airbnb.di.hive.replication.primitives.DropTableTask;
+import com.airbnb.di.hive.replication.primitives.RenamePartitionTask;
 import com.airbnb.di.hive.replication.primitives.RenameTableTask;
 import com.airbnb.di.hive.replication.primitives.ReplicationTask;
 import com.airbnb.di.hive.replication.thrift.TReplicationJob;
@@ -90,7 +91,6 @@ public class ReplicationServer implements TReplicationService.Iface {
     private class JobStateChangeHandler implements OnStateChangeHandler {
         @Override
         public void onStart(ReplicationJob replicationJob) {
-            // TODO: This is not yet used
             LOG.debug("Job id: " + replicationJob.getId() + " started");
             jobInfoStore.changeStautsAndPersist(
                     ReplicationStatus.RUNNING,
@@ -308,7 +308,7 @@ public class ReplicationServer implements TReplicationService.Iface {
             case RENAME_PARTITION:
                 // TODO: Handle rename partition
             default:
-                throw new RuntimeException("Unhandled operation: " +
+                throw new UnsupportedOperationException("Unhandled operation:" +
                         persistedJobInfo.getOperation());
         }
 

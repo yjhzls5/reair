@@ -27,7 +27,11 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Created by paul_yang on 7/10/15.
+ * Task that copies the entire table, include all the partitions if it's a
+ * partitioned table. To reduce the number of distcp jobs necessary, this task
+ * tries to copy a common parent directory. However, a better solution would be
+ * to use a copy tool that can copy multiple source and destination directories
+ * simultaneously.
  */
 public class CopyCompleteTableTask implements ReplicationTask {
 
@@ -102,8 +106,18 @@ public class CopyCompleteTableTask implements ReplicationTask {
             Optional<Path> commonDirectory = Optional.empty();
 
             if (specToPartition.size() > 0) {
-                commonDirectory = CopyPartitionsTask.findCommonDirectory(
-                        spec, specToPartition);
+                // If there are partitions to copy, see if there a common
+                // parent directory to optimistically copy.
+                Optional<Path> foundCommonDir =
+                        CopyPartitionsTask.findCommonDirectory(spec,
+                                specToPartition);
+                if (foundCommonDir.isPresent() &&
+                        objectModifier.shouldCopyData(
+                                foundCommonDir.get().toString())) {
+                    commonDirectory = foundCommonDir;
+                } else {
+                    LOG.warn("Not copying common directory " + foundCommonDir);
+                }
             }
 
             CopyPartitionsTask job = new CopyPartitionsTask(conf,

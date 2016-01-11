@@ -31,6 +31,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
+// TODO: Add a handler to exit on uncaught exceptions
 public class ReplicationLauncher {
     private static final Log LOG = LogFactory.getLog(
             ReplicationLauncher.class);

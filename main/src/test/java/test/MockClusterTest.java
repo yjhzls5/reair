@@ -1,6 +1,5 @@
 package test;
 
-import com.airbnb.di.common.ConfigurationKeys;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
@@ -60,7 +59,6 @@ public abstract class MockClusterTest {
         conf.setInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB, 64);
         conf.setClass(YarnConfiguration.RM_SCHEDULER,
                 FifoScheduler.class, ResourceScheduler.class);
-        conf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         miniCluster = new MiniYARNCluster(
                 "test", 1, 1, 1);
         miniCluster.init(conf);

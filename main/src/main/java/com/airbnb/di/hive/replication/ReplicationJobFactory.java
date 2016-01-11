@@ -503,10 +503,12 @@ public class ReplicationJobFactory {
             return replicationJobs;
         }
 
-        // TODO: The inputs and outputs for exchange partitions in the audit
-        // log is broken due to a Hive bug - see HIVE-12215. This workaround is
-        // to parse the exchange partition command to figure out what the
-        // input and output partitions are.
+
+        // TODO: Rewrite once HIVE-12215 is resolved.
+        // The inputs and outputs for exchange partitions in the audit log is
+        // broken due to HIVE-12215. This workaround is to parse the exchange
+        // partition command to figure out what the input and output partitions
+        // are.
         if (auditLogEntry.getOutputTables().size() == 0 &&
                 auditLogEntry.getCommandType() == null) {
             // This is probably an exchange partition command
@@ -556,7 +558,7 @@ public class ReplicationJobFactory {
                 LOG.warn("Error parsing query " + auditLogEntry.getCommand());
             }
         }
-        // TODO: End remove exchange partitions hack
+        // End exchange partitions workaround
 
         if (auditLogEntry.getOutputTables().size() == 0 &&
                 auditLogEntry.getOutputPartitions().size() == 0) {

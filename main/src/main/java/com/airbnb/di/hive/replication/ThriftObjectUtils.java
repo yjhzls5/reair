@@ -29,7 +29,8 @@ public class ThriftObjectUtils {
             case RENAME_PARTITION:
                 return TReplicationOperation.RENAME_PARTITION;
             default:
-                throw new RuntimeException("Unhandled operation: " + op);
+                throw new UnsupportedOperationException("Unhandled operation: "
+                        + op);
         }
     }
 
@@ -57,7 +58,7 @@ public class ThriftObjectUtils {
         return new TReplicationJob(
                 job.getId(),
                 job.getCreateTime(),
-                // TODO: Non-zero
+                // TODO: Maybe fetch the update time from the DB?
                 0,
                 convert(jobInfo.getOperation()),
                 convert(jobInfo.getStatus()),

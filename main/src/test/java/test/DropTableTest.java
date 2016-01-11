@@ -1,19 +1,15 @@
 package test;
 
-import com.airbnb.di.common.ConfigurationKeys;
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.replication.RunInfo;
-import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.DropTableTask;
 import com.airbnb.di.utils.ReplicationTestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.Test;
@@ -46,10 +42,8 @@ public class DropTableTest extends MockClusterTest {
                 srcWarehouseRoot);
 
         // Copy the table
-        Configuration testConf = new Configuration(conf);
-        testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyUnpartitionedTableTask copyJob = new CopyUnpartitionedTableTask(
-                testConf,
+                conf,
                 destinationObjectFactory,
                 conflictHandler,
                 srcCluster,

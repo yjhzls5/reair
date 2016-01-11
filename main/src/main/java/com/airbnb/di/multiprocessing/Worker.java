@@ -6,9 +6,8 @@ import org.apache.commons.logging.LogFactory;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * Executes a job as a thread
- *
- * @param <T>
+ * Executes a job in a thread. The job is required to return a return code of 0
+ * or else an exception will be thrown.
  */
 public class Worker <T extends Job> extends Thread {
 
@@ -54,8 +53,8 @@ public class Worker <T extends Job> extends Thread {
                 if (ret != 0) {
                     LOG.error("Error running job " + job + " return code: " +
                             ret);
-                    // TODO: Need to recover from failures with retires
-                    System.exit(-1);
+                    throw new RuntimeException(String.format(
+                            "Job %s returned %s", job, ret));
                 }
                 LOG.debug("**** Done running job: " + job + " ****");
                 parallelJobExecutor.notifyDone(job);

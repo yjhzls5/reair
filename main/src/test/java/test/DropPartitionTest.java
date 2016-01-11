@@ -1,17 +1,14 @@
 package test;
 
-import com.airbnb.di.common.ConfigurationKeys;
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.replication.RunInfo;
-import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
 import com.airbnb.di.hive.replication.primitives.DropPartitionTask;
 import com.airbnb.di.utils.ReplicationTestUtils;
-import org.apache.hadoop.conf.Configuration;
+
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -48,9 +45,7 @@ public class DropPartitionTest extends MockClusterTest {
                 srcMetastore, partitionSpec);
 
         // Copy the partition
-        Configuration testConf = new Configuration(conf);
-        testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
-        CopyPartitionTask copyPartitionTask = new CopyPartitionTask(testConf,
+        CopyPartitionTask copyPartitionTask = new CopyPartitionTask(conf,
                 destinationObjectFactory,
                 conflictHandler,
                 srcCluster,

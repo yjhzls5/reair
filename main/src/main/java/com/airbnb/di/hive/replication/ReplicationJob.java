@@ -98,8 +98,6 @@ public class ReplicationJob extends Job {
         return persistedJobInfo.getId();
     }
 
-    // TODO: Does this belong in this class?
-
     public long getCreateTime() {
         Optional<String> createTime = Optional.ofNullable(getPersistedJobInfo()
                 .getExtras()
@@ -109,11 +107,12 @@ public class ReplicationJob extends Job {
     }
 
     public Collection<Long> getParentJobIds() {
-        // TODO: Casting is no bueno
         Set<Job> parentJobs = getParentJobs();
         List<Long> parentJobIds = new ArrayList<>();
 
         for (Job parentJob : parentJobs) {
+            // Generally good to avoid casting, but done here since the getId()
+            // is not a part of the Job class.
             ReplicationJob replicationJob = (ReplicationJob)parentJob;
             parentJobIds.add(replicationJob.getId());
         }
