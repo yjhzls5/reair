@@ -3,6 +3,9 @@ package test;
 import com.airbnb.di.common.ConfigurationKeys;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.DirectoryCopier;
+import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
+import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
@@ -38,6 +41,9 @@ public abstract class MockClusterTest {
 
     protected static DirectoryCopier directoryCopier;
 
+    protected static ObjectConflictHandler conflictHandler;
+    protected static DestinationObjectFactory destinationObjectFactory;
+
     // Temporary directories on the local filesystem that we'll treat as the
     // source and destination filesystems
     @Rule
@@ -60,6 +66,11 @@ public abstract class MockClusterTest {
         miniCluster.init(conf);
              miniCluster.start();
 
+        conflictHandler = new ObjectConflictHandler();
+        conflictHandler.setConf(conf);
+
+        destinationObjectFactory = new DestinationObjectFactory();
+        destinationObjectFactory.setConf(conf);
     }
 
     @Before

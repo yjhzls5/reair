@@ -74,8 +74,8 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
         testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyUnpartitionedTableTask copyJob = new CopyUnpartitionedTableTask(
                 testConf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 spec,
@@ -113,8 +113,8 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
                 srcWarehouseRoot);
         CopyUnpartitionedTableTask copyJob2 = new CopyUnpartitionedTableTask(
                 testConf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 spec2,
@@ -144,8 +144,8 @@ public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
         testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyUnpartitionedTableTask copyJob = new CopyUnpartitionedTableTask(
                 testConf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 spec,

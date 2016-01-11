@@ -90,8 +90,8 @@ public class CopyPartitionsTaskTest extends MockClusterTest {
         testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyPartitionsTask copyPartitionsTask =
                 new CopyPartitionsTask(testConf,
-                        new DestinationObjectFactory(),
-                        new ObjectConflictHandler(),
+                        destinationObjectFactory,
+                        conflictHandler,
                         srcCluster,
                         destCluster,
                         tableSpec,
@@ -177,8 +177,8 @@ public class CopyPartitionsTaskTest extends MockClusterTest {
         testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyPartitionsTask copyPartitionsTask =
                 new CopyPartitionsTask(testConf,
-                        new DestinationObjectFactory(),
-                        new ObjectConflictHandler(),
+                        destinationObjectFactory,
+                        conflictHandler,
                         srcCluster,
                         destCluster,
                         tableSpec,

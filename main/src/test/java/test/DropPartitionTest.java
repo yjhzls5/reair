@@ -51,8 +51,8 @@ public class DropPartitionTest extends MockClusterTest {
         Configuration testConf = new Configuration(conf);
         testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyPartitionTask copyPartitionTask = new CopyPartitionTask(testConf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 partitionSpec,

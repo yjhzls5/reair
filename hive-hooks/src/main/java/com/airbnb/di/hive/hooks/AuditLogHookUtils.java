@@ -73,8 +73,6 @@ public class AuditLogHookUtils {
         Statement statement = connection.createStatement();
 
         // Create the tables
-        // TODO: Does the statement need to be recreated?
-
         try {
             statement.execute(createDbSql);
 

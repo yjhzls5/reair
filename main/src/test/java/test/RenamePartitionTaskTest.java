@@ -70,8 +70,8 @@ public class RenamePartitionTaskTest extends MockClusterTest {
         Configuration testConf = new Configuration(conf);
         CopyPartitionTask copyJob = new CopyPartitionTask(
                 testConf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 oldPartitionSpec,
@@ -97,8 +97,8 @@ public class RenamePartitionTaskTest extends MockClusterTest {
 
         // Propagate the rename
         RenamePartitionTask task = new RenamePartitionTask(testConf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 oldPartitionSpec,

@@ -59,8 +59,8 @@ public class CopyCompleteTableTaskTest extends MockClusterTest {
         testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyCompleteTableTask copyJob = new CopyCompleteTableTask(
                 testConf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 spec,
@@ -129,8 +129,8 @@ public class CopyCompleteTableTaskTest extends MockClusterTest {
         testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyCompleteTableTask copyCompleteTableTask =
                 new CopyCompleteTableTask(testConf,
-                        new DestinationObjectFactory(),
-                        new ObjectConflictHandler(),
+                        destinationObjectFactory,
+                        conflictHandler,
                         srcCluster,
                         destCluster,
                         tableSpec,

@@ -50,8 +50,8 @@ public class CopyPartitionTaskTest extends MockClusterTest {
 
         // Copy the partition
         CopyPartitionTask copyPartitionTask = new CopyPartitionTask(conf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 partitionSpec,
@@ -71,8 +71,8 @@ public class CopyPartitionTaskTest extends MockClusterTest {
         ReplicationTestUtils.createPartition(conf,
                 srcMetastore, partitionSpec);
         copyPartitionTask = new CopyPartitionTask(conf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 partitionSpec,
@@ -107,8 +107,8 @@ public class CopyPartitionTaskTest extends MockClusterTest {
         Configuration testConf = new Configuration(conf);
         testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyPartitionTask copyPartitionTask = new CopyPartitionTask(conf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 partitionSpec,

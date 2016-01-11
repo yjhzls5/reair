@@ -50,8 +50,8 @@ public class DropTableTest extends MockClusterTest {
         testConf.set(ConfigurationKeys.DISTCP_POOL, "default_pool");
         CopyUnpartitionedTableTask copyJob = new CopyUnpartitionedTableTask(
                 testConf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 spec,

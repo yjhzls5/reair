@@ -167,7 +167,8 @@ public class AuditLogReader {
                 "type, serialized_object " +
                 "FROM %s a LEFT OUTER JOIN %s b on a.id = b.audit_log_id " +
                 "WHERE a.id >= %s AND a.id <= %s " +
-                "AND (command_type IS NULL OR command_type NOT IN('SHOWTABLES', 'SHOWPARTITIONS', 'SWITCHDATABASE')) " +
+                "AND (command_type IS NULL OR command_type " +
+                "NOT IN('SHOWTABLES', 'SHOWPARTITIONS', 'SWITCHDATABASE')) " +
                 "ORDER BY id";
         String query = String.format(queryFormatString,
                 auditLogTableName, outputObjectsTableName,
@@ -312,8 +313,6 @@ public class AuditLogReader {
 
         // This is the case where we read to the end of the table.
         if (id != -1) {
-            // TODO: Redundant with lastReadId = idsToRead.getMaximumLong();
-            lastReadId = id;
             AuditLogEntry entry = new AuditLogEntry(
                     id,
                     createTime,
@@ -326,11 +325,12 @@ public class AuditLogReader {
                     renameFromTable,
                     renameFromPartition);
             auditLogEntries.add(entry);
-            return;
         }
-        // If we constantly get empty results, then this won't be updated. This
-        // can happen if the range selected has no objects, but it should be
+        // Note: if we constantly get empty results (i.e. no valid entries
+        // because all the commands got filtered out), then the lastReadId won't
+        // be updated for a while.
         lastReadId = idsToRead.getMaximumLong();
+        return;
     }
 
     /**

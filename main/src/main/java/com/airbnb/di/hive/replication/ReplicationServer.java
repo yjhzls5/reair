@@ -165,7 +165,9 @@ public class ReplicationServer implements TReplicationService.Iface {
         this.onStateChangeHandler = new JobStateChangeHandler();
 
         this.objectConflictHandler = new ObjectConflictHandler();
+        this.objectConflictHandler.setConf(conf);
         this.destinationObjectFactory = new DestinationObjectFactory();
+        this.destinationObjectFactory.setConf(conf);
 
         this.replicationFilter = replicationFilter;
 

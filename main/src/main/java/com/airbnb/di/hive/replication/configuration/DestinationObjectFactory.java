@@ -4,6 +4,9 @@ import com.airbnb.di.common.FsUtils;
 import com.airbnb.di.hive.common.HiveParameterKeys;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.configuration.Cluster;
+
+import org.apache.hadoop.conf.Configurable;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -13,11 +16,23 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Creates the Hive thrift object that should be created on the destination cluster
+ * Creates the Hive thrift object that should be created on the destination
+ * cluster. Note that only the Thrift object is generated - it's not actually
+ * created in the metastore.
  */
-public class DestinationObjectFactory {
+public class DestinationObjectFactory implements Configurable {
+
+    private Optional<Configuration> conf;
 
     public DestinationObjectFactory() {
+    }
+
+    public void setConf(Configuration conf) {
+        this.conf = Optional.ofNullable(conf);
+    }
+
+    public Configuration getConf() {
+        return conf.orElse(null);
     }
 
     /**

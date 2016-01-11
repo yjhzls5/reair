@@ -174,14 +174,20 @@ public class HiveCopy {
         DirectoryCopier directoryCopier = new DirectoryCopier(
                 conf, destTmpDir, true);
 
+        ObjectConflictHandler conflictHandler = new ObjectConflictHandler();
+        conflictHandler.setConf(conf);
+        DestinationObjectFactory destinationObjectFactory =
+                new DestinationObjectFactory();
+        destinationObjectFactory.setConf(conf);
+
         if ("copy-unpartitioned-table".equals(op)) {
             LOG.info("Copying an unpartitioned table");
             ThriftHiveMetastoreClient ms = srcCluster.getMetastoreClient();
             Table srcTable = ms.getTable(spec.getDbName(), spec.getTableName());
             CopyUnpartitionedTableTask job = new CopyUnpartitionedTableTask(
                     conf,
-                    new DestinationObjectFactory(),
-                    new ObjectConflictHandler(),
+                    destinationObjectFactory,
+                    conflictHandler,
                     srcCluster,
                     destCluster,
                     spec,
@@ -199,8 +205,8 @@ public class HiveCopy {
             Table srcTable = ms.getTable(spec.getDbName(), spec.getTableName());
             CopyPartitionedTableTask job = new CopyPartitionedTableTask(
                     conf,
-                    new DestinationObjectFactory(),
-                    new ObjectConflictHandler(),
+                    destinationObjectFactory,
+                    conflictHandler,
                     srcCluster,
                     destCluster,
                     spec,
@@ -217,8 +223,8 @@ public class HiveCopy {
                     spec.getTableName(), spec.getPartitionName());
             CopyPartitionTask job = new CopyPartitionTask(
                     conf,
-                    new DestinationObjectFactory(),
-                    new ObjectConflictHandler(),
+                    destinationObjectFactory,
+                    conflictHandler,
                     srcCluster,
                     destCluster,
                     spec,

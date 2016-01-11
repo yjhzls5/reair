@@ -41,9 +41,6 @@ public class TaskEstimatorTest extends MockClusterTest {
     private static final String HIVE_TABLE = "test_table";
     private static final String HIVE_PARTITION = "ds=1/hr=1";
 
-    private static final DestinationObjectFactory destinationObjectFactory
-            = new DestinationObjectFactory();
-
     @BeforeClass
     public static void setupClass() throws IOException, SQLException {
         MockClusterTest.setupClass();
@@ -56,8 +53,6 @@ public class TaskEstimatorTest extends MockClusterTest {
         DirectoryCopier directoryCopier = new DirectoryCopier(conf,
                 srcCluster.getTmpDir(),
                 false);
-        ObjectConflictHandler objectConflictHandler =
-                new ObjectConflictHandler();
 
         // Create an unpartitioned table in the source
         HiveObjectSpec spec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE);
@@ -87,7 +82,7 @@ public class TaskEstimatorTest extends MockClusterTest {
         CopyUnpartitionedTableTask copyJob = new CopyUnpartitionedTableTask(
                 conf,
                 destinationObjectFactory,
-                objectConflictHandler,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 spec,
@@ -138,8 +133,6 @@ public class TaskEstimatorTest extends MockClusterTest {
         DirectoryCopier directoryCopier = new DirectoryCopier(conf,
                 srcCluster.getTmpDir(),
                 false);
-        ObjectConflictHandler objectConflictHandler =
-                new ObjectConflictHandler();
 
         // Create an partitioned table in the source
         HiveObjectSpec spec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE);
@@ -166,8 +159,8 @@ public class TaskEstimatorTest extends MockClusterTest {
         // Replicate the table
         CopyPartitionedTableTask copyJob = new CopyPartitionedTableTask(
                 conf,
-                new DestinationObjectFactory(),
-                new ObjectConflictHandler(),
+                destinationObjectFactory,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 spec,
@@ -203,8 +196,6 @@ public class TaskEstimatorTest extends MockClusterTest {
         DirectoryCopier directoryCopier = new DirectoryCopier(conf,
                 srcCluster.getTmpDir(),
                 false);
-        ObjectConflictHandler objectConflictHandler =
-                new ObjectConflictHandler();
 
         // Create an partitioned table in the source
         HiveObjectSpec tableSpec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE);
@@ -243,7 +234,7 @@ public class TaskEstimatorTest extends MockClusterTest {
         CopyPartitionTask copyJob = new CopyPartitionTask(
                 conf,
                 destinationObjectFactory,
-                objectConflictHandler,
+                conflictHandler,
                 srcCluster,
                 destCluster,
                 spec,
