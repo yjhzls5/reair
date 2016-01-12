@@ -86,8 +86,8 @@ public class TaskEstimator {
             return new TaskEstimate(TaskEstimate.TaskType.DROP_TABLE,
                     false,
                     false,
-                    null,
-                    null);
+                    Optional.empty(),
+                    Optional.empty());
         }
 
         // Nothing to do if the source table doesn't exist
@@ -95,8 +95,8 @@ public class TaskEstimator {
             return new TaskEstimate(TaskEstimate.TaskType.NO_OP,
                     false,
                     false,
-                    null,
-                    null);
+                    Optional.empty(),
+                    Optional.empty());
         }
 
         boolean isPartitionedTable = HiveUtils.isPartitioned(tableOnSrc);
@@ -132,22 +132,22 @@ public class TaskEstimator {
             return new TaskEstimate(TaskEstimate.TaskType.NO_OP,
                     false,
                     false,
-                    null,
-                    null);
+                    Optional.empty(),
+                    Optional.empty());
         } else if (!isPartitionedTable) {
             return new TaskEstimate(
                     TaskEstimate.TaskType.COPY_UNPARTITIONED_TABLE,
                     updateMetadata,
                     updateData,
-                    srcPath.get(),
-                    destPath.get());
+                    srcPath,
+                    destPath);
         } else {
             return new TaskEstimate(
                     TaskEstimate.TaskType.COPY_PARTITIONED_TABLE,
                     true,
                     false,
-                    null,
-                    null);
+                    Optional.empty(),
+                    Optional.empty());
         }
     }
 
@@ -174,16 +174,16 @@ public class TaskEstimator {
             return new TaskEstimate(TaskEstimate.TaskType.DROP_PARTITION,
                     false,
                     false,
-                    null,
-                    null);
+                    Optional.empty(),
+                    Optional.empty());
         }
 
         if (partitionOnSrc == null) {
             return new TaskEstimate(TaskEstimate.TaskType.NO_OP,
                     false,
                     false,
-                    null,
-                    null);
+                    Optional.empty(),
+                    Optional.empty());
         }
 
         Partition expectedDestPartition = destObjectFactory.createDestPartition(
@@ -214,14 +214,14 @@ public class TaskEstimator {
             return new TaskEstimate(TaskEstimate.TaskType.NO_OP,
                     false,
                     false,
-                    null,
-                    null);
+                    Optional.empty(),
+                    Optional.empty());
         } else {
             return new TaskEstimate(TaskEstimate.TaskType.COPY_PARTITION,
                     updateMetadata,
                     updateData,
-                    srcPath.get(),
-                    destPath.orElse(null));
+                    srcPath,
+                    destPath);
         }
     }
 }

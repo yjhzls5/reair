@@ -80,7 +80,7 @@ public class TaskEstimatorTest extends MockClusterTest {
                 TaskEstimate.TaskType.COPY_UNPARTITIONED_TABLE);
         assertTrue(estimate.isUpdateMetadata());
         assertTrue(estimate.isUpdateData());
-        assertTrue(estimate.getSrcPath().equals(
+        assertTrue(estimate.getSrcPath().get().equals(
                 new Path(srcTable.getSd().getLocation())));
 
         // Replicate the table
@@ -122,7 +122,7 @@ public class TaskEstimatorTest extends MockClusterTest {
                 TaskEstimate.TaskType.COPY_UNPARTITIONED_TABLE);
         assertTrue(estimate.isUpdateMetadata());
         assertTrue(estimate.isUpdateData());
-        assertTrue(estimate.getSrcPath().equals(
+        assertTrue(estimate.getSrcPath().get().equals(
                 new Path(srcTable.getSd().getLocation())));
 
         // Drop the source. It should now be a drop.
@@ -236,7 +236,7 @@ public class TaskEstimatorTest extends MockClusterTest {
                 TaskEstimate.TaskType.COPY_PARTITION);
         assertTrue(estimate.isUpdateMetadata());
         assertTrue(estimate.isUpdateData());
-        assertTrue(estimate.getSrcPath().equals(
+        assertTrue(estimate.getSrcPath().get().equals(
                 new Path(srcPartition.getSd().getLocation())));
 
         // Replicate the partition
@@ -279,7 +279,7 @@ public class TaskEstimatorTest extends MockClusterTest {
                 TaskEstimate.TaskType.COPY_PARTITION);
         assertTrue(estimate.isUpdateMetadata());
         assertTrue(estimate.isUpdateData());
-        assertTrue(estimate.getSrcPath().equals(
+        assertTrue(estimate.getSrcPath().get().equals(
                 new Path(srcPartition.getSd().getLocation())));
 
         // Drop the source. It should now be a drop.

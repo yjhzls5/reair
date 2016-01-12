@@ -2,6 +2,8 @@ package com.airbnb.di.hive.replication.primitives;
 
 import org.apache.hadoop.fs.Path;
 
+import java.util.Optional;
+
 /**
  * Stores information about the estimated task required to replicate a Hive
  * object.
@@ -19,14 +21,14 @@ public class TaskEstimate {
     private TaskType taskType;
     private boolean updateMetadata;
     private boolean updateData;
-    private Path srcPath;
-    private Path destPath;
+    private Optional<Path> srcPath;
+    private Optional<Path> destPath;
 
     public TaskEstimate(TaskType taskType,
                         boolean updateMetadata,
                         boolean updateData,
-                        Path srcPath,
-                        Path destPath) {
+                        Optional<Path> srcPath,
+                        Optional<Path> destPath) {
         this.taskType = taskType;
         this.updateMetadata = updateMetadata;
         this.updateData = updateData;
@@ -42,11 +44,11 @@ public class TaskEstimate {
         return updateData;
     }
 
-    public Path getSrcPath() {
+    public Optional<Path> getSrcPath() {
         return srcPath;
     }
 
-    public Path getDestPath() {
+    public Optional<Path> getDestPath() {
         return destPath;
     }
 
