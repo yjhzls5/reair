@@ -5,6 +5,7 @@ import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.DirectoryCopier;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
@@ -15,6 +16,8 @@ import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
+import com.airbnb.di.hive.replication.primitives.DropPartitionTask;
+import com.airbnb.di.hive.replication.primitives.DropTableTask;
 import com.airbnb.di.hive.replication.primitives.TaskEstimate;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -120,6 +123,7 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
                 status = copyPartitionTask.runTask();
                 context.write(value, new Text(status.getRunStatus().toString()));
                 break;
+
             case COPY_PARTITIONED_TABLE:
                 CopyPartitionedTableTask copyPartitionedTableTaskJob = new CopyPartitionedTableTask(
                         conf,
@@ -132,8 +136,8 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
                 status = copyPartitionedTableTaskJob.runTask();
                 context.write(value, new Text(status.getRunStatus().toString()));
                 break;
+
             case COPY_UNPARTITIONED_TABLE:
-                // Replicate the table
                 CopyUnpartitionedTableTask copyUnpartitionedTableTask = new CopyUnpartitionedTableTask(
                         conf,
                         DESTINATION_OBJECT_FACTORY,
@@ -147,52 +151,43 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
                 status = copyUnpartitionedTableTask.runTask();
                 context.write(value, new Text(status.getRunStatus().toString()));
                 break;
+
             case DROP_PARTITION:
                 Partition dstPart = dstClient.getPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName());
                 if (dstPart == null) {
-                    context.write(value, new Text("partition already dropped"));
+                    context.write(value, new Text(RunInfo.RunStatus.SUCCESSFUL.toString()));
                     break;
                 }
 
-                HdfsPath partHdfsPath = new HdfsPath(dstPart.getSd().getLocation());
-                if (partHdfsPath.getProto().contains("s3")) {
-                    context.write(value, new Text("s3 backed partition drop skipped"));
-                } else {
-                    try {
-                        dstClient.dropPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName(), true);
-                        context.write(value, new Text("partition dropped"));
-                    } catch (HiveMetastoreException e) {
-                        LOG.info("failed to drop partition." + e.getMessage());
-                        context.write(value, new Text("drop partition failed"));
-                    }
-                }
+                DropPartitionTask dropPartitionTask = new DropPartitionTask(srcCluster,
+                        dstCluster,
+                        spec,
+                        ReplicationUtils.getTldt(dstPart));
+
+                status = dropPartitionTask.runTask();
+                context.write(value, new Text(status.getRunStatus().toString()));
                 break;
+
             case DROP_TABLE:
                 Table dstTable = dstClient.getTable(spec.getDbName(), spec.getTableName());
                 if (dstTable == null) {
-                    context.write(value, new Text("table already dropped"));
+                    context.write(value, new Text(RunInfo.RunStatus.SUCCESSFUL.toString()));
                     break;
                 }
 
-                HdfsPath tblHdfsPath = new HdfsPath(dstTable.getSd().getLocation());
-                if (tblHdfsPath.getProto().contains("s3")) {
-                    context.write(value, new Text("s3 backed table drop skipped"));
-                } else {
-                    try {
-                        dstClient.dropTable(spec.getDbName(), spec.getTableName(), true);
-                        context.write(value, new Text("table dropped"));
-                    } catch (HiveMetastoreException e) {
-                        LOG.info("failed to drop table." + e.getMessage());
-                        context.write(value, new Text("drop table failed"));
-                    }
-                }
+                DropTableTask dropTableTask = new DropTableTask(srcCluster,
+                        dstCluster,
+                        spec,
+                        ReplicationUtils.getTldt(dstTable));
+                status = dropTableTask.runTask();
+                context.write(value, new Text(status.getRunStatus().toString()));
                 break;
+
             default:
                 break;
             }
         } catch (HiveMetastoreException | DistCpException e) {
-            LOG.info(String.format("%s got exception", value.toString()));
-            LOG.info(e.getMessage());
+            LOG.error(String.format("Got exception while processing %s", value.toString()), e);
         }
     }
 

@@ -108,7 +108,8 @@ public class PartitionCompareReducer extends Reducer<LongWritable, Text, Text, T
             Pair<TaskEstimate, HiveObjectSpec> input = deseralizeJobResult(value.toString());
             TaskEstimate estimate = input.getLeft();
             HiveObjectSpec spec = input.getRight();
-            String result = null;
+            String result = value.toString();
+            String extra = "";
 
             try {
                 if (estimate.getTaskType() == TaskEstimate.TaskType.CHECK_PARTITION) {
@@ -119,12 +120,12 @@ public class PartitionCompareReducer extends Reducer<LongWritable, Text, Text, T
                 }
             } catch (HiveMetastoreException e) {
                 LOG.info(String.format("Hit exception during db:%s, tbl:%s, part:%s", spec.getDbName(), spec.getTableName(), spec.getPartitionName()));
-                result = String.format("exception in %s of mapper = %s", estimate.getTaskType().toString(),
+                extra = String.format("exception in %s of mapper = %s", estimate.getTaskType().toString(),
                         context.getTaskAttemptID().toString());
                 LOG.info(e.getMessage());
             }
 
-            context.write(value, new Text(result));
+            context.write(new Text(result), new Text(extra));
             ++this.count;
             if (this.count % 100 == 0) {
                 LOG.info("Processed " + this.count + "entities");

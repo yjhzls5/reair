@@ -43,11 +43,16 @@ public class Stage2FolderCopyMapper extends Mapper<LongWritable, Text, LongWrita
         TaskEstimate estimate = input.getLeft();
         HiveObjectSpec spec = input.getRight();
 
+        LOG.info(estimate.toString());
+        LOG.info(spec.toString());
+
         switch (estimate.getTaskType()) {
         case COPY_PARTITION:
         case COPY_UNPARTITIONED_TABLE:
-            UpdateDirectory(context, spec.getDbName(), spec.getTableName(), spec.getPartitionName(), estimate.getSrcPath(),
-                    estimate.getDestPath());
+            if (estimate.isUpdateData()) {
+                UpdateDirectory(context, spec.getDbName(), spec.getTableName(), spec.getPartitionName(),
+                        estimate.getSrcPath().get(), estimate.getDestPath().get());
+            }
             break;
         default:
             break;
@@ -89,12 +94,19 @@ public class Stage2FolderCopyMapper extends Mapper<LongWritable, Text, LongWrita
 
     private void UpdateDirectory(Context context, String db, String table, String partition, Path src, Path dst)
             throws IOException, InterruptedException {
+
+        LOG.info("UpdateDirectory:" + dst.toString());
+
         if (!hdfsCleanFolder(db, table, partition, dst.toString(), this.conf, true)) {
             throw new InterruptedException("Failed to update directory:" + dst);
         } else {
             try {
                 FileSystem srcFs = src.getFileSystem(this.conf);
+                LOG.info("src file:" + src.toString());
+
                 for (FileStatus status : srcFs.listStatus(src, hiddenFileFilter)) {
+                    LOG.info("file:" + status.getPath().toString());
+
                     long hashValue = Hashing.murmur3_128().hashLong(
                             (long) (Long.valueOf(status.getLen()).hashCode() *
                                     Long.valueOf(status.getModificationTime()).hashCode())).asLong();

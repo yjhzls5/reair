@@ -2,6 +2,8 @@ package com.airbnb.di.hive.batchreplication.hivecopy;
 
 import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
 import com.airbnb.di.hive.batchreplication.ReplicationUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -17,7 +19,13 @@ import static com.airbnb.di.hive.batchreplication.ReplicationUtils.genValue;
  * Stage 2 reducer to handle folder copy.
  */
 public class Stage2FolderCopyReducer extends Reducer<LongWritable, Text, Text, Text> {
+    private static final Log LOG = LogFactory.getLog(Stage2FolderCopyReducer.class);
     private Configuration conf;
+
+    enum COPY_STATUS {
+        COPIED,
+        SKIPPED
+    }
 
     public Stage2FolderCopyReducer() {
     }
@@ -39,10 +47,10 @@ public class Stage2FolderCopyReducer extends Reducer<LongWritable, Text, Text, T
             String result = ReplicationUtils.doCopyFileAction(conf, fileStatus, srcFs, dstFolder, dstFs, context, false,
                     context.getTaskAttemptID().toString());
             if (result == null) {
-                context.write(new Text("copied"),
+                context.write(new Text(COPY_STATUS.COPIED.toString()),
                         new Text(genValue(value.toString(), " ", String.valueOf(System.currentTimeMillis()))));
             } else {
-                context.write(new Text("skip copy"),
+                context.write(new Text(COPY_STATUS.SKIPPED.toString()),
                         new Text(genValue(value.toString(), result, String.valueOf(System.currentTimeMillis()))));
             }
         }

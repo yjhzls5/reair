@@ -1,5 +1,6 @@
 package com.airbnb.di.hive.replication.primitives;
 
+import com.google.common.base.Objects;
 import org.apache.hadoop.fs.Path;
 
 import java.util.Optional;
@@ -55,5 +56,15 @@ public class TaskEstimate {
 
     public TaskType getTaskType() {
         return taskType;
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this).add("taskType", taskType.toString())
+                .add("updateMetadata", updateMetadata)
+                .add("updateData", updateData)
+                .add("srcPath", srcPath)
+                .add("destPath", destPath)
+                .toString();
     }
 }

@@ -29,10 +29,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.airbnb.di.hive.batchreplication.ReplicationUtils.genValue;
 import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.serializeJobResult;
 import static com.airbnb.di.hive.replication.deploy.ReplicationLauncher.makeURI;
 
@@ -126,7 +126,7 @@ public class TableCompareWorker {
                         });
             }
 
-            this.directoryCopier = new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
+            this.directoryCopier = new DirectoryCopier(conf, srcCluster.getTmpDir(), true);
             this.estimator = new TaskEstimator(conf,
                     destinationObjectFactory,
                     srcCluster,
@@ -169,8 +169,8 @@ public class TableCompareWorker {
                             return serializeJobResult(new TaskEstimate(TaskEstimate.TaskType.CHECK_PARTITION,
                                                                         false,
                                                                         false,
-                                                                        null,
-                                                                        null),
+                                                                        Optional.empty(),
+                                                                        Optional.empty()),
                                                       new HiveObjectSpec(db, table, s));
                         }
                     }));
