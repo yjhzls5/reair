@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
  * Parses exchange partition query commands. Since it uses a regex, there are
  * cases that won't be handled properly. See warnings below for details.
  *
- * TODO: Deprecate once HIVE-12215 is resolved
+ * TODO: Deprecate once HIVE-12865 is resolved
  */
 public class ExchangePartitionParser {
 

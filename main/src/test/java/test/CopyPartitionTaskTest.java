@@ -20,9 +20,6 @@ import java.util.Optional;
 
 import static org.junit.Assert.*;
 
-/**
- * Created by paul_yang on 7/16/15.
- */
 public class CopyPartitionTaskTest extends MockClusterTest {
     private static final Log LOG = LogFactory.getLog(
             CopyPartitionTaskTest.class);

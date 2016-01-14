@@ -10,9 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-/**
- * Created by paul_yang on 7/30/15.
- */
 public class EmbeddedMySqlDb {
 
     private static final Log LOG = LogFactory.getLog(

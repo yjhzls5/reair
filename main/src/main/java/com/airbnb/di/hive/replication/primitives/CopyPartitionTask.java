@@ -265,7 +265,7 @@ public class CopyPartitionTask implements ReplicationTask {
     @Override
     public LockSet getRequiredLocks() {
         LockSet lockSet = new LockSet();
-        lockSet.add(new Lock(Lock.Type.SHARED, spec.getTableName().toString()));
+        lockSet.add(new Lock(Lock.Type.SHARED, spec.getTableSpec().toString()));
         lockSet.add(new Lock(Lock.Type.EXCLUSIVE, spec.toString()));
         return lockSet;
     }

@@ -1,8 +1,5 @@
 package com.airbnb.di.multiprocessing;
 
-/**
- * Created by paul_yang on 6/12/15.
- */
 public class Lock {
 
     public enum Type {SHARED, EXCLUSIVE}

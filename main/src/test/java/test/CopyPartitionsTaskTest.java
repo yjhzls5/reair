@@ -27,9 +27,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by paul_yang on 7/28/15.
- */
 public class CopyPartitionsTaskTest extends MockClusterTest {
 
     private static ParallelJobExecutor jobExecutor = new ParallelJobExecutor(1);

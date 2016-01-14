@@ -20,9 +20,6 @@ import java.util.Optional;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-/**
- * Created by paul_yang on 8/5/15.
- */
 public class DbKeyValueStoreTest {
     private static final Log LOG = LogFactory.getLog(
             DbKeyValueStore.class);

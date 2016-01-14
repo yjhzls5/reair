@@ -23,9 +23,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by paul_yang on 7/30/15.
- */
 public class RenameTableTaskTest extends MockClusterTest {
 
     private static ParallelJobExecutor jobExecutor = new ParallelJobExecutor(1);

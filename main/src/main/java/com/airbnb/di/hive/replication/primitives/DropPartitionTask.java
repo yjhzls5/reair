@@ -14,9 +14,6 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 
 import java.util.Optional;
 
-/**
- * Created by paul_yang on 6/9/15.
- */
 public class DropPartitionTask implements ReplicationTask {
     private static final Log LOG = LogFactory.getLog(DropPartitionTask.class);
 

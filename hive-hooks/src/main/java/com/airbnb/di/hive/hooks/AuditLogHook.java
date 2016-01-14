@@ -201,8 +201,8 @@ public class AuditLogHook implements PostExecute {
                 // HiveOperation class once this is in.
                 boolean renameTable = "ALTERTABLE_RENAME".equals(commandType);
                 boolean renamePartition =
-                        "ALTERTABLE_RENAMEPART".equals(commandType) ||
-                        "ALTERTABLE_EXCHANGEPART".equals(commandType);
+                    "ALTERTABLE_RENAMEPART".equals(commandType) ||
+                        "ALTERTABLE_EXCHANGEPARTITION".equals(commandType);
                 boolean renameOperation = renameTable || renamePartition;
 
                 // When renaming a table, the read entities contain

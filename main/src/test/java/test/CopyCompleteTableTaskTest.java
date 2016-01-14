@@ -26,9 +26,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by paul_yang on 7/29/15.
- */
 public class CopyCompleteTableTaskTest extends MockClusterTest {
 
     private static ParallelJobExecutor jobExecutor = new ParallelJobExecutor(1);

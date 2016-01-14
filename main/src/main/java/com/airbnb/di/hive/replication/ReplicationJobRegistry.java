@@ -45,7 +45,7 @@ public class ReplicationJobRegistry {
      * jobs are returned ordered by id ascending.
      */
     synchronized public Collection<ReplicationJob> getActiveJobs() {
-        return idToReplicationJob.values();
+        return new ArrayList<>(idToReplicationJob.values());
     }
 
     synchronized public boolean retireJob(ReplicationJob job) {
@@ -69,7 +69,7 @@ public class ReplicationJobRegistry {
     }
 
     synchronized public Collection<ReplicationJob> getRetiredJobs() {
-        return retiredJobs;
+        return new ArrayList<>(retiredJobs);
     }
 
 

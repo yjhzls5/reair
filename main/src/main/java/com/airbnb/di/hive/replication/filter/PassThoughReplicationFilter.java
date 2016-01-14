@@ -7,9 +7,6 @@ import com.airbnb.di.hive.replication.filter.ReplicationFilter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.Table;
 
-/**
- * Created by paul_yang on 8/11/15.
- */
 public class PassThoughReplicationFilter implements ReplicationFilter {
     @Override
     public void setConf(Configuration conf) {

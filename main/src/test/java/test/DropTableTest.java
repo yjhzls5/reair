@@ -21,9 +21,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by paul_yang on 8/5/15.
- */
 public class DropTableTest extends MockClusterTest {
     private static final Log LOG = LogFactory.getLog(
             DropTableTest.class);

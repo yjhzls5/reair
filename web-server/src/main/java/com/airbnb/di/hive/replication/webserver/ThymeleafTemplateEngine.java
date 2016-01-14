@@ -27,6 +27,10 @@ import spark.ModelAndView;
 import spark.TemplateEngine;
 
 /**
+ * Note: Pulled from Thymeleaf examples.
+ */
+
+/**
  * Defaults to the 'templates' directory under the resource path
  *
  * @author David Vaillant https://github.com/dvaillant

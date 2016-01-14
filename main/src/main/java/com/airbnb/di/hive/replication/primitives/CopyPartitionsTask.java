@@ -173,7 +173,10 @@ public class CopyPartitionsTask implements ReplicationTask {
                 }
             }
 
-            if (!FsUtils.exceedsSize(conf, commonDir,
+            if (!FsUtils.dirExists(conf, commonDir)) {
+                LOG.debug(String.format("Common dir: %s does not exist",
+                    commonDir));
+            } else if (!FsUtils.exceedsSize(conf, commonDir,
                     sizeOfPartitionsInCommonDirectory * 2)) {
                 doOptimisticCopy = true;
             } else {

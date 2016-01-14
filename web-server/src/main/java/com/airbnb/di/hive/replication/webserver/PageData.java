@@ -11,9 +11,6 @@ import org.apache.thrift.transport.TTransport;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by paul_yang on 10/14/15.
- */
 public class PageData {
     private String host;
     private int port;

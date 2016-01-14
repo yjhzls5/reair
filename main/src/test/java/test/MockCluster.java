@@ -5,9 +5,6 @@ import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import org.apache.hadoop.fs.Path;
 
-/**
- * Created by paul_yang on 7/15/15.
- */
 public class MockCluster implements Cluster {
 
     private String name;

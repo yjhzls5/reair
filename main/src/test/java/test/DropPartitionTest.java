@@ -20,9 +20,6 @@ import java.util.Optional;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by paul_yang on 8/5/15.
- */
 public class DropPartitionTest extends MockClusterTest {
     @Test
     public void testDrop() throws DistCpException, HiveMetastoreException,

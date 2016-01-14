@@ -161,7 +161,7 @@ public class AuditLogReader {
         }
 
         // TODO: Remove left outer join and command type filter once the
-        // exchange partition bug is fixed in HIVE-12215
+        // exchange partition bug is fixed in HIVE-12865
         String queryFormatString = "SELECT a.id, a.create_time, " +
                 "command_type, command, name, category, " +
                 "type, serialized_object " +

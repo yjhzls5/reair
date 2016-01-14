@@ -14,7 +14,6 @@ import com.airbnb.di.hive.replication.primitives.CopyPartitionsTask;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.DropPartitionTask;
 import com.airbnb.di.hive.replication.primitives.DropTableTask;
-import com.airbnb.di.hive.replication.primitives.RenamePartitionTask;
 import com.airbnb.di.hive.replication.primitives.RenameTableTask;
 import com.airbnb.di.hive.replication.primitives.ReplicationTask;
 import com.airbnb.di.hive.replication.thrift.TReplicationJob;
@@ -92,7 +91,7 @@ public class ReplicationServer implements TReplicationService.Iface {
         @Override
         public void onStart(ReplicationJob replicationJob) {
             LOG.debug("Job id: " + replicationJob.getId() + " started");
-            jobInfoStore.changeStautsAndPersist(
+            jobInfoStore.changeStatusAndPersist(
                     ReplicationStatus.RUNNING,
                     replicationJob.getPersistedJobInfo());
         }
@@ -114,21 +113,21 @@ public class ReplicationServer implements TReplicationService.Iface {
 
             switch (runInfo.getRunStatus()) {
                 case SUCCESSFUL:
-                    jobInfoStore.changeStautsAndPersist(
+                    jobInfoStore.changeStatusAndPersist(
                             ReplicationStatus.SUCCESSFUL,
                             replicationJob.getPersistedJobInfo());
                     counters.incrementCounter(
                             ReplicationCounters.Type.SUCCESSFUL_TASKS);
                     break;
                 case NOT_COMPLETABLE:
-                    jobInfoStore.changeStautsAndPersist(
+                    jobInfoStore.changeStatusAndPersist(
                             ReplicationStatus.NOT_COMPLETABLE,
                             replicationJob.getPersistedJobInfo());
                     counters.incrementCounter(
                             ReplicationCounters.Type.NOT_COMPLETABLE_TASKS);
                     break;
                 case FAILED:
-                    jobInfoStore.changeStautsAndPersist(
+                    jobInfoStore.changeStatusAndPersist(
                             ReplicationStatus.FAILED,
                             replicationJob.getPersistedJobInfo());
                     counters.incrementCounter(

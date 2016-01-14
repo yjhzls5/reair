@@ -21,9 +21,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * Created by paul_yang on 7/15/15.
- */
 public abstract class MockClusterTest {
 
     private static final Log LOG = LogFactory.getLog(

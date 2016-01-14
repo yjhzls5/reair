@@ -11,9 +11,6 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 
-/**
- * Created by paul_yang on 8/27/15.
- */
 public class CopyPartitionJob extends Job {
 
     private static final Log LOG = LogFactory.getLog(

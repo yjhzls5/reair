@@ -189,7 +189,7 @@ public class RenamePartitionTask implements ReplicationTask {
                 return copyPartition(renameToSpec, renameToPath);
 
             case EXCHANGE_PARTITION:
-                // TODO: Exchange partition can't be done without HIVE-12215
+                // TODO: Exchange partition can't be done without HIVE-12865
                 // Just do a copy instead.
 
             case COPY_PARTITION:

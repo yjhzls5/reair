@@ -1,7 +1,8 @@
 package com.airbnb.di.hive.hooks;
 
 /**
- * TODO: Migrate to HiveOperation from hive-exec once exchange partitions is fixed in HIVE-12215
+ * TODO: Migrate to HiveOperation from hive-exec once exchange partition types
+ * are added.
  */
 public enum HiveOperation {
     EXPLAIN,

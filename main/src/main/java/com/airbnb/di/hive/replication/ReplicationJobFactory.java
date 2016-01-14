@@ -504,9 +504,9 @@ public class ReplicationJobFactory {
         }
 
 
-        // TODO: Rewrite once HIVE-12215 is resolved.
+        // TODO: Rewrite once HIVE-12865 is resolved.
         // The inputs and outputs for exchange partitions in the audit log is
-        // broken due to HIVE-12215. This workaround is to parse the exchange
+        // broken as per HIVE-12865. This workaround is to parse the exchange
         // partition command to figure out what the input and output partitions
         // are.
         if (auditLogEntry.getOutputTables().size() == 0 &&

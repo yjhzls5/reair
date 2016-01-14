@@ -436,8 +436,8 @@ public class PersistedJobInfoStore {
         }
     }
 
-    synchronized public void changeStautsAndPersist(ReplicationStatus status,
-                                       PersistedJobInfo job) {
+    synchronized public void changeStatusAndPersist(ReplicationStatus status,
+                                                    PersistedJobInfo job) {
         job.setStatus(status);
         persist(job);
     }
