@@ -6,29 +6,29 @@ import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.HardCodedCluster;
 import com.airbnb.di.hive.replication.deploy.ConfigurationException;
-import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.hive.replication.primitives.TaskEstimate;
 import com.airbnb.di.hive.replication.primitives.TaskEstimator;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
-import java.net.URI;
 
 import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.deseralizeJobResult;
 import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.serializeJobResult;
 import static com.airbnb.di.hive.replication.deploy.ReplicationLauncher.makeURI;
 
 /**
- * Reducer to compare partition entity
+ * Reducer to compare partition entity.
+ *
+ * Partition entities are evenly distributed using shuffle. The reducer will figure out action for each partition.
+ * The reducer will pass through the action for each table entity and append partition action as output for the stage1
+ * job.
  */
 public class PartitionCompareReducer extends Reducer<LongWritable, Text, Text, Text> {
     private static final Log LOG = LogFactory.getLog(PartitionCompareReducer.class);
@@ -51,46 +51,15 @@ public class PartitionCompareReducer extends Reducer<LongWritable, Text, Text, T
             InterruptedException {
         try {
             this.conf = context.getConfiguration();
-            // Create the source cluster object
-            String srcClusterName = conf.get(
-                    DeployConfigurationKeys.SRC_CLUSTER_NAME);
-            String srcMetastoreUrlString = conf.get(
-                    DeployConfigurationKeys.SRC_CLUSTER_METASTORE_URL);
-            URI srcMetastoreUrl = makeURI(srcMetastoreUrlString);
-            String srcHdfsRoot = conf.get(
-                    DeployConfigurationKeys.SRC_HDFS_ROOT);
-            String srcHdfsTmp = conf.get(
-                    DeployConfigurationKeys.SRC_HDFS_TMP);
-            this.srcCluster = new HardCodedCluster(
-                    srcClusterName,
-                    srcMetastoreUrl.getHost(),
-                    srcMetastoreUrl.getPort(),
-                    null,
-                    null,
-                    new Path(srcHdfsRoot),
-                    new Path(srcHdfsTmp));
+
+            this.srcCluster = MetastoreReplUtils.getCluster(conf, true);
             this.srcClient = this.srcCluster.getMetastoreClient();
 
-            // Create the dest cluster object
-            String destClusterName = conf.get(
-                    DeployConfigurationKeys.DEST_CLUSTER_NAME);
-            String destMetastoreUrlString = conf.get(
-                    DeployConfigurationKeys.DEST_CLUSTER_METASTORE_URL);
-            URI destMetastoreUrl = makeURI(destMetastoreUrlString);
-            String destHdfsRoot = conf.get(
-                    DeployConfigurationKeys.DEST_HDFS_ROOT);
-            String destHdfsTmp = conf.get(
-                    DeployConfigurationKeys.DEST_HDFS_TMP);
-            this.dstCluster = new HardCodedCluster(
-                    destClusterName,
-                    destMetastoreUrl.getHost(),
-                    destMetastoreUrl.getPort(),
-                    null,
-                    null,
-                    new Path(destHdfsRoot),
-                    new Path(destHdfsTmp));
+            this.dstCluster = MetastoreReplUtils.getCluster(conf, false);
             this.dstClient = this.dstCluster.getMetastoreClient();
-            this.directoryCopier = new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
+
+            this.directoryCopier = MetastoreReplUtils.getDirectoryCopier(conf);
+
             this.estimator = new TaskEstimator(conf,
                     destinationObjectFactory,
                     srcCluster,
@@ -119,16 +88,16 @@ public class PartitionCompareReducer extends Reducer<LongWritable, Text, Text, T
                     result = serializeJobResult(newEstimate, spec);
                 }
             } catch (HiveMetastoreException e) {
-                LOG.info(String.format("Hit exception during db:%s, tbl:%s, part:%s", spec.getDbName(), spec.getTableName(), spec.getPartitionName()));
+                LOG.error(String.format("Hit exception during db:%s, tbl:%s, part:%s", spec.getDbName(),
+                        spec.getTableName(), spec.getPartitionName()), e);
                 extra = String.format("exception in %s of mapper = %s", estimate.getTaskType().toString(),
                         context.getTaskAttemptID().toString());
-                LOG.info(e.getMessage());
             }
 
             context.write(new Text(result), new Text(extra));
             ++this.count;
             if (this.count % 100 == 0) {
-                LOG.info("Processed " + this.count + "entities");
+                LOG.info("Processed " + this.count + " entities");
             }
         }
     }

@@ -88,21 +88,6 @@ public class ReplicationUtils {
         return Joiner.on("\t").useForNull("NULL").join(columns);
     }
 
-    public static String getClusterName(HdfsPath path) {
-        if(path.getHost().matches("airfs-silver")) {
-            return "silver";
-        } else if(path.getHost().matches("airfs-brain")) {
-            return "brain";
-        } else if(path.getHost().matches("airfs-gold")) {
-            return "gold";
-        } else if(path.getProto().matches("s3n|s3a|s3")) {
-            return "s3";
-        } else {
-            LOG.info("invalid cluster path:" + path.getFullPath());
-            return "unknown";
-        }
-    }
-
     public static void removeOutputDirectory(String path, Configuration conf) throws IOException {
         Path outputPath = new Path(path);
         FileSystem fs = outputPath.getFileSystem(conf);

@@ -6,7 +6,6 @@ import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.HardCodedCluster;
 import com.airbnb.di.hive.replication.deploy.ConfigurationException;
 import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.hive.replication.primitives.TaskEstimate;
@@ -17,13 +16,11 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,10 +31,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.serializeJobResult;
-import static com.airbnb.di.hive.replication.deploy.ReplicationLauncher.makeURI;
 
 /**
- * Worker to compare table entity
+ * Worker to figure out action for a table entity.
+ *
+ * For partitioned table, the worker will generate CHECK_PATITION action for each partition. In PartitionCompareReducer
+ * action for each partition will be figured out. The reason to separate table and partition check is to do load balance.
+ * In a production data warehouse, we will have hundreds thousands and millions of partitions unevenly distributed. Each
+ * check to metastore takes hundred millseconds. So it is important to load balance the work evenly.
+ * Using shuffle between map and reducer, we can redistribute partition check evenly.
  */
 public class TableCompareWorker {
     private static class BlackListPair {
@@ -71,45 +73,14 @@ public class TableCompareWorker {
     protected void setup(Mapper.Context context) throws IOException, InterruptedException, ConfigurationException {
         try {
             this.conf = context.getConfiguration();
-            // Create the source cluster object
-            String srcClusterName = conf.get(
-                    DeployConfigurationKeys.SRC_CLUSTER_NAME);
-            String srcMetastoreUrlString = conf.get(
-                    DeployConfigurationKeys.SRC_CLUSTER_METASTORE_URL);
-            URI srcMetastoreUrl = makeURI(srcMetastoreUrlString);
-            String srcHdfsRoot = conf.get(
-                    DeployConfigurationKeys.SRC_HDFS_ROOT);
-            String srcHdfsTmp = conf.get(
-                    DeployConfigurationKeys.SRC_HDFS_TMP);
-            this.srcCluster = new HardCodedCluster(
-                    srcClusterName,
-                    srcMetastoreUrl.getHost(),
-                    srcMetastoreUrl.getPort(),
-                    null,
-                    null,
-                    new Path(srcHdfsRoot),
-                    new Path(srcHdfsTmp));
+
+            this.srcCluster = MetastoreReplUtils.getCluster(conf, true);
             this.srcClient = this.srcCluster.getMetastoreClient();
 
-            // Create the dest cluster object
-            String destClusterName = conf.get(
-                    DeployConfigurationKeys.DEST_CLUSTER_NAME);
-            String destMetastoreUrlString = conf.get(
-                    DeployConfigurationKeys.DEST_CLUSTER_METASTORE_URL);
-            URI destMetastoreUrl = makeURI(destMetastoreUrlString);
-            String destHdfsRoot = conf.get(
-                    DeployConfigurationKeys.DEST_HDFS_ROOT);
-            String destHdfsTmp = conf.get(
-                    DeployConfigurationKeys.DEST_HDFS_TMP);
-            this.dstCluster = new HardCodedCluster(
-                    destClusterName,
-                    destMetastoreUrl.getHost(),
-                    destMetastoreUrl.getPort(),
-                    null,
-                    null,
-                    new Path(destHdfsRoot),
-                    new Path(destHdfsTmp));
+            this.dstCluster = MetastoreReplUtils.getCluster(conf, false);
             this.dstClient = this.dstCluster.getMetastoreClient();
+
+            this.directoryCopier = MetastoreReplUtils.getDirectoryCopier(conf);
 
             if (context.getConfiguration().get(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST) == null) {
                 this.blackList = Collections.<BlackListPair>emptyList();
@@ -126,7 +97,6 @@ public class TableCompareWorker {
                         });
             }
 
-            this.directoryCopier = new DirectoryCopier(conf, srcCluster.getTmpDir(), true);
             this.estimator = new TaskEstimator(conf,
                     destinationObjectFactory,
                     srcCluster,

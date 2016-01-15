@@ -17,6 +17,9 @@ import static com.airbnb.di.hive.batchreplication.ReplicationUtils.genValue;
 
 /**
  * Stage 2 reducer to handle folder copy.
+ *
+ * Input is the files needs to be copied. Load balance is done through shuffle.
+ * Output of the job is file copied or skipped.
  */
 public class Stage2FolderCopyReducer extends Reducer<LongWritable, Text, Text, Text> {
     private static final Log LOG = LogFactory.getLog(Stage2FolderCopyReducer.class);

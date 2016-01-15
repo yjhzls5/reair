@@ -2,7 +2,8 @@ package com.airbnb.di.hive.batchreplication.hivecopy;
 
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.common.ThriftHiveMetastoreClient;
+import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.replication.deploy.ConfigurationException;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
@@ -35,8 +36,6 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
     private static final int NUMBER_OF_THREADS = 16;
     private static final int NUMBER_OF_MAPPERS = 100;
 
-    public static final String SRC_METASTORE_HOST_CONF = "replication.metastore.src.host";
-
     @Override
     public RecordReader<Text, Text> createRecordReader(InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
             throws IOException, InterruptedException {
@@ -47,25 +46,20 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
     public List<InputSplit> getSplits(JobContext context) throws IOException {
         // split into pieces, fetching the splits in parallel
         ExecutorService executor = Executors.newCachedThreadPool();
-        List<InputSplit> splits = new ArrayList<>();
-        HiveMetastoreClient client = null;
+        Cluster srcCluster = null;
+        HiveMetastoreClient srcClient = null;
         List<String> allTables = new ArrayList<>();
 
-        String metastoreHost = context.getConfiguration().get(SRC_METASTORE_HOST_CONF);
-        if (metastoreHost == null) {
-            throw new IOException("Invalid metastore host name.");
-        }
-
-        String[] parts = metastoreHost.split(":");
         try {
-            client = new ThriftHiveMetastoreClient(parts[0], Integer.valueOf(parts[1]));
-        } catch (HiveMetastoreException e) {
-            throw new IOException(e);
+            srcCluster = MetastoreReplUtils.getCluster(context.getConfiguration(), true);
+            srcClient = srcCluster.getMetastoreClient();
+        } catch (ConfigurationException | HiveMetastoreException e) {
+            throw new IOException("Invalid metastore host name.", e);
         }
 
         try
         {
-            List<String> databases = client.getAllDatabases();
+            List<String> databases = srcClient.getAllDatabases();
             LOG.info("Total dbs: " + databases.size());
 
             List<Future<List<String>>> splitfutures = new ArrayList<>();
@@ -75,7 +69,7 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
             for (List<String> range : Lists.partition(databases, dbPerThread)) {
                 // for each range, pick a live owner and ask it to compute bite-sized splits
                 splitfutures.add(executor.submit(
-                        new SplitCallable(range, parts[0], Integer.valueOf(parts[1]))));
+                        new SplitCallable(range, srcClient)));
             }
 
             // wait until we have all the results back
@@ -96,7 +90,7 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
         finally
         {
             executor.shutdownNow();
-            client.close();
+            srcClient.close();
         }
 
         assert allTables.size() > 0;
@@ -117,22 +111,19 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
      */
     class SplitCallable implements Callable<List<String>>
     {
-        private final String host;
-        private final int port;
+        private final HiveMetastoreClient client;
         private final List<String> candidates;
 
 
-        public SplitCallable(List<String> candidates, String host, int port)
+        public SplitCallable(List<String> candidates, HiveMetastoreClient client)
         {
             this.candidates = candidates;
-            this.host = host;
-            this.port = port;
+            this.client = client;
         }
 
         public List<String> call() throws Exception
         {
             ArrayList<String> tables = new ArrayList<>();
-            HiveMetastoreClient client = new ThriftHiveMetastoreClient(host, port);
             for(final String db : candidates) {
                 tables.addAll(Lists.transform(client.getAllTables(db), new Function<String, String>() {
                     @Override

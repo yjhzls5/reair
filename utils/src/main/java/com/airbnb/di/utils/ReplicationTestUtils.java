@@ -419,4 +419,27 @@ public class ReplicationTestUtils {
             ms.dropTable(dbName, tableName, true);
         }
     }
+
+    /**
+     * Drops a table from the given Hive DB
+     * @throws HiveMetastoreException
+     */
+    public static void dropTable(HiveMetastoreClient ms, HiveObjectSpec spec)
+            throws HiveMetastoreException {
+        ms.dropTable(spec.getDbName(), spec.getTableName(), true);
+    }
+
+    /**
+     * Drops a partition from the given partitioned table
+     * @throws HiveMetastoreException
+     */
+    public static void dropPartition(HiveMetastoreClient ms, HiveObjectSpec spec)
+            throws HiveMetastoreException {
+        if (spec.isPartition()) {
+            ms.dropPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName(), true);
+            return;
+        } else {
+            throw new HiveMetastoreException("unpartitioned table provided" + spec.toString());
+        }
+    }
 }

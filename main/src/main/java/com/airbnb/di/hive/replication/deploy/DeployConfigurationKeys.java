@@ -29,6 +29,8 @@ public class DeployConfigurationKeys {
     public static final String BATCH_JOB_OUTPUT_DIR = "airbnb.reair.clusters.batch.output.dir";
     public static final String BATCH_JOB_INPUT_LIST = "airbnb.reair.clusters.batch.input";
     public static final String BATCH_JOB_METASTORE_BLACKLIST = "airbnb.reair.clusters.batch.metastore.blacklist";
+    public static final String BATCH_JOB_INJECTION_CLASS = "airbnb.reair.clusters.batch.test.injection.class";
+
 
     public static final String OBJECT_FILTER_CLASS = "airbnb.reair.object.filter";
 

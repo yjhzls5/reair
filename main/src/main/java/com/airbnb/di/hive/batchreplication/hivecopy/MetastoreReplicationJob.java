@@ -9,11 +9,15 @@ import com.airbnb.di.hive.replication.primitives.TaskEstimate;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Optional;
 
+import com.google.common.collect.ImmutableList;
+import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.tuple.Pair;
@@ -46,8 +50,8 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         return genValue(estimate.getTaskType().name(),
                 String.valueOf(estimate.isUpdateMetadata()),
                 String.valueOf(estimate.isUpdateData()),
-                !estimate.getSrcPath().isPresent()?null:estimate.getSrcPath().get().toString(),
-                !estimate.getDestPath().isPresent()?null:estimate.getDestPath().get().toString(),
+                !estimate.getSrcPath().isPresent() ? null : estimate.getSrcPath().get().toString(),
+                !estimate.getDestPath().isPresent() ? null : estimate.getDestPath().get().toString(),
                 spec.getDbName(),
                 spec.getTableName(),
                 spec.getPartitionName());
@@ -58,8 +62,8 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         TaskEstimate estimate = new TaskEstimate(TaskEstimate.TaskType.valueOf(fields[0]),
                 Boolean.valueOf(fields[1]),
                 Boolean.valueOf(fields[2]),
-                fields[3].equals("NULL")? Optional.empty():Optional.of(new Path(fields[3])),
-                fields[4].equals("NULL")? Optional.empty():Optional.of(new Path(fields[4])));
+                fields[3].equals("NULL") ? Optional.empty() : Optional.of(new Path(fields[3])),
+                fields[4].equals("NULL") ? Optional.empty() : Optional.of(new Path(fields[4])));
 
         HiveObjectSpec spec = null;
         if (fields[7].equals("NULL")) {
@@ -78,25 +82,36 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         writer.flush();
     }
 
-    public static Options constructGnuOptions() {
-        Options gnuOptions = new Options();
-        gnuOptions.addOption("config-files", "config-files", true, "Comma separated list of paths to configuration files")
-                  .addOption("st", "step", true, "Run specific step")
-                  .addOption("oi", "override-input", true, "input override for step");
-
-        return gnuOptions;
-    }
-
     public int run(String[] args) throws Exception {
-        GnuParser cmdLineGnuParser = new GnuParser();
-        Options gnuOptions = constructGnuOptions();
+        Options options = new Options();
 
-        CommandLine commandLine;
+        options.addOption(OptionBuilder.withLongOpt("config-files")
+                .withDescription("Comma separated list of paths to " +
+                        "configuration files")
+                .hasArg()
+                .withArgName("PATH")
+                .create());
+
+        options.addOption(OptionBuilder.withLongOpt("step")
+                .withDescription("Run specific step")
+                .hasArg()
+                .withArgName("ST")
+                .create());
+
+        options.addOption(OptionBuilder.withLongOpt("override-input")
+                .withDescription("Input override for step")
+                .hasArg()
+                .withArgName("OI")
+                .create());
+
+        CommandLineParser parser = new BasicParser();
+        CommandLine cl = null;
+
         try {
-            commandLine = cmdLineGnuParser.parse(gnuOptions, args);
+            parser.parse(options, args);
         } catch (ParseException e) {
             System.err.println("Encountered exception while parsing using GnuParser:\n" + e.getMessage());
-            printUsage(USAGE_COMMAND_STR, constructGnuOptions(), System.out);
+            printUsage(USAGE_COMMAND_STR, options, System.out);
             System.out.println();
             ToolRunner.printGenericCommandUsage(System.err);
             return 1;
@@ -104,78 +119,78 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
         String configPaths = null;
 
-        if (commandLine.hasOption("config")) {
-            configPaths = commandLine.getOptionValue("config");
+        if (cl.hasOption("config-files")) {
+            configPaths = cl.getOptionValue("config-files");
             LOG.info("configPaths=" + configPaths);
-        } else {
-            System.err.println("-config option is required.");
-            printUsage(USAGE_COMMAND_STR, constructGnuOptions(), System.out);
-            System.out.println();
-            ToolRunner.printGenericCommandUsage(System.err);
-            return 1;
-        }
 
-        Configuration conf = new Configuration();
+            // load configure and merge with job conf
+            Configuration conf = new Configuration();
 
-        if (configPaths != null) {
-            for (String configPath : configPaths.split(",")) {
-                conf.addResource(new Path(configPath));
+            if (configPaths != null) {
+                for (String configPath : configPaths.split(",")) {
+                    conf.addResource(new Path(configPath));
+                }
             }
+
+            mergeConfiguration(conf, this.getConf());
+        } else {
+            LOG.info("Unit test mode, getting configure from caller");
         }
+
 
         int step = -1;
-        if (commandLine.hasOption("st")) {
-            step = Integer.valueOf(commandLine.getOptionValue("st"));
+        if (cl.hasOption("step")) {
+            step = Integer.valueOf(cl.getOptionValue("step"));
         }
 
-        String finalOutput = conf.get(DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR);
+        String finalOutput = this.getConf().get(DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR);
         if (finalOutput == null) {
-            System.err.println(DeployConfigurationKeys.BATCH_JOB_INPUT_LIST + " is required in configuration file.");
+            System.err.println(DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR + " is required in configuration file.");
             return 1;
         }
 
-        String inputTableList = conf.get(DeployConfigurationKeys.BATCH_JOB_INPUT_LIST);
+        String inputTableList = this.getConf().get(DeployConfigurationKeys.BATCH_JOB_INPUT_LIST);
 
         Path outputParent = new Path(finalOutput);
-        String step1Out = outputParent + "/step1output";
-        String step2Out = outputParent + "/step2output";
-        String step3Out = outputParent + "/step3output";
+        String step1Out = new Path(outputParent, "step1output").toString();
+        String step2Out = new Path(outputParent + "step2output").toString();
+        String step3Out = new Path(outputParent + "step3output").toString();
         if (step == -1) {
             removeOutputDirectory(step1Out, this.getConf());
             removeOutputDirectory(step2Out, this.getConf());
             removeOutputDirectory(step3Out, this.getConf());
             int result = 0;
             if (inputTableList != null) {
-                result = this.runMetastoreCompareJobWithTextInput(conf, inputTableList, step1Out);
+                result = this.runMetastoreCompareJobWithTextInput(inputTableList, step1Out);
             } else {
-                result = this.runMetastoreCompareJob(conf, step1Out);
+                result = this.runMetastoreCompareJob(step1Out);
             }
             return result == 0 &&
-                    this.runHdfsCopyJob(conf, step1Out + "/part*", step2Out) == 0 ? this
-                    .runCommitChangeJob(conf, step1Out + "/part*", step3Out) : 1;
+                    this.runHdfsCopyJob(step1Out + "/part*", step2Out) == 0 ? this
+                    .runCommitChangeJob(step1Out + "/part*", step3Out) : 1;
         } else {
             switch (step) {
             case 1:
                 removeOutputDirectory(step1Out, this.getConf());
                 if (inputTableList != null) {
-                    return this.runMetastoreCompareJobWithTextInput(conf, inputTableList, step1Out);
+                    return this.runMetastoreCompareJobWithTextInput(inputTableList, step1Out);
                 } else {
-                    return this.runMetastoreCompareJob(conf, step1Out);
+                    return this.runMetastoreCompareJob(step1Out);
                 }
             case 2:
                 removeOutputDirectory(step2Out, this.getConf());
-                if (commandLine.hasOption("oi")) {
-                    step1Out = commandLine.getOptionValue("oi");
+                if (cl.hasOption("override-input")) {
+                    step1Out = cl.getOptionValue("override-input");
                 }
 
-                return this.runHdfsCopyJob(conf, step1Out + "/part*", step2Out);
+                return this.runHdfsCopyJob(step1Out + "/part*", step2Out);
             case 3:
                 removeOutputDirectory(step3Out, this.getConf());
-                if (commandLine.hasOption("oi")) {
-                    step1Out = commandLine.getOptionValue("oi");
+                if (cl.hasOption("override-input")) {
+                    step1Out = cl.getOptionValue("override-input");
                 }
 
-                return this.runCommitChangeJob(conf, step1Out + "/part*", step3Out);
+                return this.runCommitChangeJob(step1Out + "/part*", step3Out);
             default:
                 LOG.error("Invalid steps specified:" + step);
                 return 1;
@@ -184,22 +199,27 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     }
 
     private void mergeConfiguration (Configuration inputConfig, Configuration merged) {
-        merged.set(DeployConfigurationKeys.SRC_CLUSTER_NAME, inputConfig.get(DeployConfigurationKeys.SRC_CLUSTER_NAME));
-        merged.set(DeployConfigurationKeys.SRC_CLUSTER_METASTORE_URL, inputConfig.get(DeployConfigurationKeys.SRC_CLUSTER_METASTORE_URL));
-        merged.set(DeployConfigurationKeys.SRC_HDFS_ROOT, inputConfig.get(DeployConfigurationKeys.SRC_HDFS_ROOT));
-        merged.set(DeployConfigurationKeys.SRC_HDFS_TMP, inputConfig.get(DeployConfigurationKeys.SRC_HDFS_TMP));
-        merged.set(DeployConfigurationKeys.DEST_CLUSTER_NAME, inputConfig.get(DeployConfigurationKeys.DEST_CLUSTER_NAME));
-        merged.set(DeployConfigurationKeys.DEST_CLUSTER_METASTORE_URL, inputConfig.get(DeployConfigurationKeys.DEST_CLUSTER_METASTORE_URL));
-        merged.set(DeployConfigurationKeys.DEST_HDFS_ROOT, inputConfig.get(DeployConfigurationKeys.DEST_HDFS_ROOT));
-        merged.set(DeployConfigurationKeys.DEST_HDFS_TMP, inputConfig.get(DeployConfigurationKeys.DEST_HDFS_TMP));
+        List<String> mergeKeys = ImmutableList.of(DeployConfigurationKeys.SRC_CLUSTER_NAME,
+                                                DeployConfigurationKeys.SRC_CLUSTER_METASTORE_URL,
+                                                DeployConfigurationKeys.SRC_HDFS_ROOT,
+                                                DeployConfigurationKeys.SRC_HDFS_TMP,
+                                                DeployConfigurationKeys.DEST_CLUSTER_NAME,
+                                                DeployConfigurationKeys.DEST_CLUSTER_METASTORE_URL,
+                                                DeployConfigurationKeys.DEST_HDFS_ROOT,
+                                                DeployConfigurationKeys.DEST_HDFS_TMP,
+                                                DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST,
+                                                DeployConfigurationKeys.BATCH_JOB_INJECTION_CLASS
+                                                );
 
-        String blacklist = inputConfig.get(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST);
-        if (blacklist != null) {
-            merged.set(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST, blacklist);
+        for (String key : mergeKeys) {
+            String value = inputConfig.get(key);
+            if (value != null) {
+                merged.set(key, value);
+            }
         }
     }
 
-    private int runMetastoreCompareJob(Configuration inputConfig, String output)
+    private int runMetastoreCompareJob(String output)
             throws IOException, InterruptedException, ClassNotFoundException {
         Job job = Job.getInstance(this.getConf(), "Stage1: Metastore Compare Job");
 
@@ -207,8 +227,6 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         job.setInputFormatClass(MetastoreScanInputFormat.class);
         job.setMapperClass(Stage1ProcessTableMapper.class);
         job.setReducerClass(PartitionCompareReducer.class);
-
-        mergeConfiguration(inputConfig, job.getConfiguration());
 
         job.setOutputKeyClass(LongWritable.class);
         job.setOutputValueClass(Text.class);
@@ -221,7 +239,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         return success?0:1;
     }
 
-    private int runMetastoreCompareJobWithTextInput(Configuration inputConfig, String input, String output)
+    private int runMetastoreCompareJobWithTextInput(String input, String output)
             throws IOException, InterruptedException, ClassNotFoundException {
         Job job = Job.getInstance(this.getConf(), "Stage1: Metastore Compare Job with Input List");
 
@@ -229,8 +247,6 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         job.setInputFormatClass(TextInputFormat.class);
         job.setMapperClass(Stage1ProcessTableMapperWithTextInput.class);
         job.setReducerClass(PartitionCompareReducer.class);
-
-        mergeConfiguration(inputConfig, job.getConfiguration());
 
         FileInputFormat.setInputPaths(job, new Path(input));
         FileInputFormat.setMaxInputSplitSize(job, 6000L);
@@ -246,7 +262,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         return success?0:1;
     }
 
-    private int runHdfsCopyJob(Configuration inputConfig, String input, String output)
+    private int runHdfsCopyJob(String input, String output)
             throws IOException, InterruptedException, ClassNotFoundException {
         Job job = Job.getInstance(this.getConf(), "Stage2: HDFS Copy Job");
 
@@ -254,8 +270,6 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         job.setInputFormatClass(TextInputFormat.class);
         job.setMapperClass(Stage2FolderCopyMapper.class);
         job.setReducerClass(Stage2FolderCopyReducer.class);
-
-        mergeConfiguration(inputConfig, job.getConfiguration());
 
         FileInputFormat.setInputPaths(job, new Path(input));
         FileInputFormat.setMaxInputSplitSize(job, 60000L);
@@ -271,7 +285,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         return success?0:1;
     }
 
-    private int runCommitChangeJob(Configuration inputConfig, String input, String output)
+    private int runCommitChangeJob(String input, String output)
             throws IOException, InterruptedException, ClassNotFoundException {
         Job job = Job.getInstance(this.getConf(), "Stage3: Commit Change Job");
 
@@ -282,8 +296,6 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         job.setNumReduceTasks(0);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
-
-        mergeConfiguration(inputConfig, job.getConfiguration());
 
         FileInputFormat.setInputPaths(job, new Path(input));
         FileInputFormat.setMaxInputSplitSize(job, 60000L);
@@ -309,8 +321,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
             try {
                 worker.setup(context);
             } catch (ConfigurationException e) {
-                LOG.error("Invalid configuration", e);
-                throw new IOException(e.getMessage());
+                throw new IOException("Invalid configuration", e);
             }
         }
 
@@ -322,8 +333,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
                 LOG.info(String.format("database %s, table %s processed", key.toString(), value.toString()));
             } catch (HiveMetastoreException e) {
-                LOG.error(String.format("database %s, table %s got exception", key.toString(), value.toString()), e);
-                throw new IOException(e.getMessage());
+                throw new IOException(String.format("database %s, table %s got exception", key.toString(), value.toString()), e);
             }
 
         }
@@ -340,8 +350,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
             try {
                 worker.setup(context);
             } catch (ConfigurationException e) {
-                LOG.error("Invalid configuration", e);
-                throw new IOException(e.getMessage());            }
+                throw new IOException("Invalid configuration", e);            }
         }
 
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -358,8 +367,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
                 LOG.info(String.format("database %s, table %s processed", key.toString(), value.toString()));
             } catch (HiveMetastoreException e) {
-                LOG.error(String.format("database %s, table %s got exception", key.toString(), value.toString()), e);
-                throw new IOException(e.getMessage());
+                throw new IOException(String.format("database %s, table %s got exception", key.toString(), value.toString()), e);
             }
 
         }

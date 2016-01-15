@@ -9,10 +9,8 @@ import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.HardCodedCluster;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.deploy.ConfigurationException;
-import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
@@ -31,7 +29,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Optional;
 
 import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.deseralizeJobResult;
@@ -39,6 +36,9 @@ import static com.airbnb.di.hive.replication.deploy.ReplicationLauncher.makeURI;
 
 /**
  * Stage 3 mapper for commit copy action
+ *
+ * Input of the Stage 3 job is Stage 1 job output. It contains action of table and partition. In this stage,
+ * we need to commit metadata operation, and finalize all drop actions.
  */
 public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, Text> {
     private static final Log LOG = LogFactory.getLog(Stage3CommitChangeMapper.class);
@@ -55,46 +55,13 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
     protected void setup(Context context) throws IOException, InterruptedException {
         try {
             this.conf = context.getConfiguration();
-            // Create the source cluster object
-            String srcClusterName = conf.get(
-                    DeployConfigurationKeys.SRC_CLUSTER_NAME);
-            String srcMetastoreUrlString = conf.get(
-                    DeployConfigurationKeys.SRC_CLUSTER_METASTORE_URL);
-            URI srcMetastoreUrl = makeURI(srcMetastoreUrlString);
-            String srcHdfsRoot = conf.get(
-                    DeployConfigurationKeys.SRC_HDFS_ROOT);
-            String srcHdfsTmp = conf.get(
-                    DeployConfigurationKeys.SRC_HDFS_TMP);
-            this.srcCluster = new HardCodedCluster(
-                    srcClusterName,
-                    srcMetastoreUrl.getHost(),
-                    srcMetastoreUrl.getPort(),
-                    null,
-                    null,
-                    new Path(srcHdfsRoot),
-                    new Path(srcHdfsTmp));
+            this.srcCluster = MetastoreReplUtils.getCluster(conf, true);
             this.srcClient = this.srcCluster.getMetastoreClient();
 
-            // Create the dest cluster object
-            String destClusterName = conf.get(
-                    DeployConfigurationKeys.DEST_CLUSTER_NAME);
-            String destMetastoreUrlString = conf.get(
-                    DeployConfigurationKeys.DEST_CLUSTER_METASTORE_URL);
-            URI destMetastoreUrl = makeURI(destMetastoreUrlString);
-            String destHdfsRoot = conf.get(
-                    DeployConfigurationKeys.DEST_HDFS_ROOT);
-            String destHdfsTmp = conf.get(
-                    DeployConfigurationKeys.DEST_HDFS_TMP);
-            this.dstCluster = new HardCodedCluster(
-                    destClusterName,
-                    destMetastoreUrl.getHost(),
-                    destMetastoreUrl.getPort(),
-                    null,
-                    null,
-                    new Path(destHdfsRoot),
-                    new Path(destHdfsTmp));
+            this.dstCluster = MetastoreReplUtils.getCluster(conf, false);
             this.dstClient = this.dstCluster.getMetastoreClient();
-            this.directoryCopier = new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
+
+            this.directoryCopier = MetastoreReplUtils.getDirectoryCopier(conf);
         } catch (HiveMetastoreException | ConfigurationException e) {
             throw new IOException(e);
         }
@@ -188,6 +155,7 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
             }
         } catch (HiveMetastoreException | DistCpException e) {
             LOG.error(String.format("Got exception while processing %s", value.toString()), e);
+            context.write(value, new Text(RunInfo.RunStatus.FAILED.toString()));
         }
     }
 
