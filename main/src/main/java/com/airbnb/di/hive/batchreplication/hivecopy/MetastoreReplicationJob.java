@@ -108,7 +108,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         CommandLine cl = null;
 
         try {
-            parser.parse(options, args);
+            cl = parser.parse(options, args);
         } catch (ParseException e) {
             System.err.println("Encountered exception while parsing using GnuParser:\n" + e.getMessage());
             printUsage(USAGE_COMMAND_STR, options, System.out);

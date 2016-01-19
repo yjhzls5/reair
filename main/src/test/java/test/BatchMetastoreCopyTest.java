@@ -3,8 +3,8 @@ package test;
 import com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.ReplicationUtils;
-import com.airbnb.di.multiprocessing.ParallelJobExecutor;
 import com.airbnb.di.utils.ReplicationTestUtils;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -22,13 +22,10 @@ import static org.junit.Assert.assertTrue;
  * Unit Test for MetastoreReplicationJob
  */
 public class BatchMetastoreCopyTest extends MockClusterTest {
-    private static ParallelJobExecutor jobExecutor = new ParallelJobExecutor(1);
-
     @BeforeClass
     public static void setupClass() throws IOException, SQLException {
         MockClusterTest.setupClass();
-        jobExecutor.start();
-    }
+   }
 
 
     @Test
@@ -67,7 +64,8 @@ public class BatchMetastoreCopyTest extends MockClusterTest {
         JobConf jobConf = new JobConf(conf);
 
         String[] args = {};
-        jobConf.set("airbnb.reair.clusters.batch.output.dir", "file:///Users/jingwei_lu/test_output");
+        jobConf.set("airbnb.reair.clusters.batch.output.dir",
+                new Path(destCluster.getFsRoot(), "test_output").toString());
         jobConf.set("airbnb.reair.clusters.batch.test.injection.class", "test.MockClusterTest");
 
         ToolRunner.run(jobConf, new MetastoreReplicationJob(), args);
