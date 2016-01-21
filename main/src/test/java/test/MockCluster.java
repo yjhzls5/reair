@@ -7,36 +7,35 @@ import org.apache.hadoop.fs.Path;
 
 public class MockCluster implements Cluster {
 
-    private String name;
-    private HiveMetastoreClient client;
-    private Path fsRoot;
-    private Path tmpDir;
+  private String name;
+  private HiveMetastoreClient client;
+  private Path fsRoot;
+  private Path tmpDir;
 
-    public MockCluster(String name, HiveMetastoreClient client, Path fsRoot,
-                       Path tmpDir) {
-        this.name = name;
-        this.client = client;
-        this.fsRoot = fsRoot;
-        this.tmpDir = tmpDir;
-    }
+  public MockCluster(String name, HiveMetastoreClient client, Path fsRoot, Path tmpDir) {
+    this.name = name;
+    this.client = client;
+    this.fsRoot = fsRoot;
+    this.tmpDir = tmpDir;
+  }
 
-    @Override
-    public HiveMetastoreClient getMetastoreClient() throws HiveMetastoreException {
-        return client;
-    }
+  @Override
+  public HiveMetastoreClient getMetastoreClient() throws HiveMetastoreException {
+    return client;
+  }
 
-    @Override
-    public Path getFsRoot() {
-        return fsRoot;
-    }
+  @Override
+  public Path getFsRoot() {
+    return fsRoot;
+  }
 
-    @Override
-    public Path getTmpDir() {
-        return tmpDir;
-    }
+  @Override
+  public Path getTmpDir() {
+    return tmpDir;
+  }
 
-    @Override
-    public String getName() {
-        return name;
-    }
+  @Override
+  public String getName() {
+    return name;
+  }
 }

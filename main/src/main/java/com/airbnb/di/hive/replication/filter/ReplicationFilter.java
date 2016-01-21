@@ -9,11 +9,11 @@ import org.apache.hadoop.hive.metastore.api.Table;
 
 public interface ReplicationFilter {
 
-    void setConf(Configuration conf);
+  void setConf(Configuration conf);
 
-    boolean accept(AuditLogEntry entry);
+  boolean accept(AuditLogEntry entry);
 
-    boolean accept(Table table);
+  boolean accept(Table table);
 
-    boolean accept(Table table, NamedPartition partition);
+  boolean accept(Table table, NamedPartition partition);
 }

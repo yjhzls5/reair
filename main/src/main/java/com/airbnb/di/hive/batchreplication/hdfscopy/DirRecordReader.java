@@ -12,55 +12,54 @@ import java.util.List;
  * Record Reader return directory path.
  */
 public class DirRecordReader extends RecordReader<Text, Boolean> {
-    private List<InputSplit> inputSplits;
-    private int index = 0;
-    private DirInputSplit cur;
+  private List<InputSplit> inputSplits;
+  private int index = 0;
+  private DirInputSplit cur;
 
-    @Override
-    public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
-            throws IOException, InterruptedException {
-        if (!(inputSplit instanceof ListDirInputSplit)) {
-            throw new IOException("Invalid split class passed in.");
-        }
-
-        this.inputSplits = ((ListDirInputSplit) inputSplit).getSplits();
-        this.index = 0;
-        this.cur = null;
+  @Override
+  public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
+      throws IOException, InterruptedException {
+    if (!(inputSplit instanceof ListDirInputSplit)) {
+      throw new IOException("Invalid split class passed in.");
     }
 
-    @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException {
-        if (index < inputSplits.size()) {
-            cur = (DirInputSplit) inputSplits.get(index++);
-            return true;
-        }
+    this.inputSplits = ((ListDirInputSplit) inputSplit).getSplits();
+    this.index = 0;
+    this.cur = null;
+  }
 
-        return false;
+  @Override
+  public boolean nextKeyValue() throws IOException, InterruptedException {
+    if (index < inputSplits.size()) {
+      cur = (DirInputSplit) inputSplits.get(index++);
+      return true;
     }
 
-    @Override
-    public Text getCurrentKey() throws IOException, InterruptedException {
-        if (cur == null) {
-            return null;
-        }
+    return false;
+  }
 
-        return new Text(cur.getFilePath());
+  @Override
+  public Text getCurrentKey() throws IOException, InterruptedException {
+    if (cur == null) {
+      return null;
     }
 
-    @Override
-    public Boolean getCurrentValue() throws IOException, InterruptedException {
-        if (cur == null) {
-            return null;
-        }
-        return cur.isLeafLevel();
-    }
+    return new Text(cur.getFilePath());
+  }
 
-    @Override
-    public float getProgress() throws IOException, InterruptedException {
-        return ((float) index + 1) / inputSplits.size();
+  @Override
+  public Boolean getCurrentValue() throws IOException, InterruptedException {
+    if (cur == null) {
+      return null;
     }
+    return cur.isLeafLevel();
+  }
 
-    @Override
-    public void close() throws IOException {
-    }
+  @Override
+  public float getProgress() throws IOException, InterruptedException {
+    return ((float) index + 1) / inputSplits.size();
+  }
+
+  @Override
+  public void close() throws IOException {}
 }

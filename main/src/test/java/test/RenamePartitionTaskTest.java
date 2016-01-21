@@ -29,100 +29,64 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class RenamePartitionTaskTest extends MockClusterTest {
-    private static ParallelJobExecutor jobExecutor = new ParallelJobExecutor(1);
+  private static ParallelJobExecutor jobExecutor = new ParallelJobExecutor(1);
 
-    @BeforeClass
-    public static void setupClass() throws IOException, SQLException {
-        MockClusterTest.setupClass();
-        jobExecutor.start();
-    }
+  @BeforeClass
+  public static void setupClass() throws IOException, SQLException {
+    MockClusterTest.setupClass();
+    jobExecutor.start();
+  }
 
-    @Test
-    public void testRenamePartition() throws IOException,
-            HiveMetastoreException, DistCpException {
-        String dbName = "test_db";
-        String tableName = "test_table";
-        String oldPartitionName = "ds=1/hr=1";
-        String newPartitionName = "ds=1/hr=2";
+  @Test
+  public void testRenamePartition() throws IOException, HiveMetastoreException, DistCpException {
+    String dbName = "test_db";
+    String tableName = "test_table";
+    String oldPartitionName = "ds=1/hr=1";
+    String newPartitionName = "ds=1/hr=2";
 
-        // Create an partitioned table in the source
-        HiveObjectSpec originalTableSpec = new HiveObjectSpec(dbName, tableName);
-        HiveObjectSpec oldPartitionSpec = new HiveObjectSpec(dbName, tableName,
-                oldPartitionName);
-        HiveObjectSpec newPartitionSpec = new HiveObjectSpec(dbName, tableName,
-                newPartitionName);
+    // Create an partitioned table in the source
+    HiveObjectSpec originalTableSpec = new HiveObjectSpec(dbName, tableName);
+    HiveObjectSpec oldPartitionSpec = new HiveObjectSpec(dbName, tableName, oldPartitionName);
+    HiveObjectSpec newPartitionSpec = new HiveObjectSpec(dbName, tableName, newPartitionName);
 
-        Table srcTable = ReplicationTestUtils.createPartitionedTable(conf,
-                srcMetastore,
-                originalTableSpec,
-                TableType.MANAGED_TABLE,
-                srcWarehouseRoot);
+    Table srcTable = ReplicationTestUtils.createPartitionedTable(conf, srcMetastore,
+        originalTableSpec, TableType.MANAGED_TABLE, srcWarehouseRoot);
 
-        Partition oldPartition = ReplicationTestUtils.createPartition(
-                conf,
-                srcMetastore,
-                oldPartitionSpec);
+    Partition oldPartition =
+        ReplicationTestUtils.createPartition(conf, srcMetastore, oldPartitionSpec);
 
-        // Copy the partition
-        Configuration testConf = new Configuration(conf);
-        CopyPartitionTask copyJob = new CopyPartitionTask(
-                testConf,
-                destinationObjectFactory,
-                conflictHandler,
-                srcCluster,
-                destCluster,
-                oldPartitionSpec,
-                ReplicationUtils.getLocation(oldPartition),
-                Optional.empty(),
-                directoryCopier,
-                true);
+    // Copy the partition
+    Configuration testConf = new Configuration(conf);
+    CopyPartitionTask copyJob = new CopyPartitionTask(testConf, destinationObjectFactory,
+        conflictHandler, srcCluster, destCluster, oldPartitionSpec,
+        ReplicationUtils.getLocation(oldPartition), Optional.empty(), directoryCopier, true);
 
-        RunInfo status = copyJob.runTask();
+    RunInfo status = copyJob.runTask();
 
-        // Rename the source partition
-        Partition newPartition = new Partition(oldPartition);
-        List<String> newValues = new ArrayList<>();
-        newValues.add("1");
-        newValues.add("2");
-        newPartition.setValues(newValues);
+    // Rename the source partition
+    Partition newPartition = new Partition(oldPartition);
+    List<String> newValues = new ArrayList<>();
+    newValues.add("1");
+    newValues.add("2");
+    newPartition.setValues(newValues);
 
-        srcMetastore.renamePartition(
-                dbName,
-                tableName,
-                oldPartition.getValues(),
-                newPartition);
+    srcMetastore.renamePartition(dbName, tableName, oldPartition.getValues(), newPartition);
 
-        // Propagate the rename
-        RenamePartitionTask task = new RenamePartitionTask(testConf,
-                destinationObjectFactory,
-                conflictHandler,
-                srcCluster,
-                destCluster,
-                oldPartitionSpec,
-                newPartitionSpec,
-                ReplicationUtils.getLocation(oldPartition),
-                ReplicationUtils.getLocation(newPartition),
-                ReplicationUtils.getTldt(oldPartition),
-                directoryCopier);
+    // Propagate the rename
+    RenamePartitionTask task = new RenamePartitionTask(testConf, destinationObjectFactory,
+        conflictHandler, srcCluster, destCluster, oldPartitionSpec, newPartitionSpec,
+        ReplicationUtils.getLocation(oldPartition), ReplicationUtils.getLocation(newPartition),
+        ReplicationUtils.getTldt(oldPartition), directoryCopier);
 
-        RunInfo runInfo = task.runTask();
+    RunInfo runInfo = task.runTask();
 
-        // Check to make sure that the rename has succeeded
-        assertEquals(RunInfo.RunStatus.SUCCESSFUL,
-                runInfo.getRunStatus());
-        assertTrue(destMetastore.existsPartition(
-                newPartitionSpec.getDbName(),
-                newPartitionSpec.getTableName(),
-                newPartitionSpec.getPartitionName()));
-        assertFalse(destMetastore.existsPartition(
-                oldPartitionSpec.getDbName(),
-                oldPartitionSpec.getTableName(),
-                oldPartitionSpec.getPartitionName()));
-        assertEquals(ReplicationTestUtils.getModifiedTime(
-                        srcMetastore,
-                        newPartitionSpec),
-                ReplicationTestUtils.getModifiedTime(
-                        destMetastore,
-                        newPartitionSpec));
-    }
+    // Check to make sure that the rename has succeeded
+    assertEquals(RunInfo.RunStatus.SUCCESSFUL, runInfo.getRunStatus());
+    assertTrue(destMetastore.existsPartition(newPartitionSpec.getDbName(),
+        newPartitionSpec.getTableName(), newPartitionSpec.getPartitionName()));
+    assertFalse(destMetastore.existsPartition(oldPartitionSpec.getDbName(),
+        oldPartitionSpec.getTableName(), oldPartitionSpec.getPartitionName()));
+    assertEquals(ReplicationTestUtils.getModifiedTime(srcMetastore, newPartitionSpec),
+        ReplicationTestUtils.getModifiedTime(destMetastore, newPartitionSpec));
+  }
 }

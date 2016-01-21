@@ -22,59 +22,42 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class DropTableTest extends MockClusterTest {
-    private static final Log LOG = LogFactory.getLog(
-            DropTableTest.class);
+  private static final Log LOG = LogFactory.getLog(DropTableTest.class);
 
-    @Test
-    public void testDrop() throws DistCpException, HiveMetastoreException,
-            IOException {
-        String dbName = "test_db";
-        String tableName = "test_Table";
-        // Create an unpartitioned table in the source
-        HiveObjectSpec spec = new HiveObjectSpec(dbName, tableName);
-        Table srcTable = ReplicationTestUtils.createUnpartitionedTable(conf,
-                srcMetastore,
-                spec,
-                TableType.MANAGED_TABLE,
-                srcWarehouseRoot);
+  @Test
+  public void testDrop() throws DistCpException, HiveMetastoreException, IOException {
+    String dbName = "test_db";
+    String tableName = "test_Table";
+    // Create an unpartitioned table in the source
+    HiveObjectSpec spec = new HiveObjectSpec(dbName, tableName);
+    Table srcTable = ReplicationTestUtils.createUnpartitionedTable(conf, srcMetastore, spec,
+        TableType.MANAGED_TABLE, srcWarehouseRoot);
 
-        // Copy the table
-        CopyUnpartitionedTableTask copyJob = new CopyUnpartitionedTableTask(
-                conf,
-                destinationObjectFactory,
-                conflictHandler,
-                srcCluster,
-                destCluster,
-                spec,
-                ReplicationUtils.getLocation(srcTable),
-                directoryCopier,
-                true);
-        RunInfo status = copyJob.runTask();
+    // Copy the table
+    CopyUnpartitionedTableTask copyJob =
+        new CopyUnpartitionedTableTask(conf, destinationObjectFactory, conflictHandler, srcCluster,
+            destCluster, spec, ReplicationUtils.getLocation(srcTable), directoryCopier, true);
+    RunInfo status = copyJob.runTask();
 
-        // Verify that the table exists on the destination
-        assertTrue(destMetastore.existsTable(dbName, tableName));
+    // Verify that the table exists on the destination
+    assertTrue(destMetastore.existsTable(dbName, tableName));
 
-        // Pretend that a drop operation needs to be performed
-        DropTableTask dropTableTask = new DropTableTask(srcCluster,
-                destCluster,
-                spec,
-                ReplicationUtils.getTldt(srcTable));
-        dropTableTask.runTask();
+    // Pretend that a drop operation needs to be performed
+    DropTableTask dropTableTask =
+        new DropTableTask(srcCluster, destCluster, spec, ReplicationUtils.getTldt(srcTable));
+    dropTableTask.runTask();
 
-        // Verify that the table doesn't exist on the destination
-        assertFalse(destMetastore.existsTable(dbName, tableName));
+    // Verify that the table doesn't exist on the destination
+    assertFalse(destMetastore.existsTable(dbName, tableName));
 
-        // Create a different table on the destination, but with the same name
-        Table destTable = ReplicationTestUtils.createUnpartitionedTable(conf,
-                destMetastore,
-                spec,
-                TableType.MANAGED_TABLE,
-                destWarehouseRoot);
+    // Create a different table on the destination, but with the same name
+    Table destTable = ReplicationTestUtils.createUnpartitionedTable(conf, destMetastore, spec,
+        TableType.MANAGED_TABLE, destWarehouseRoot);
 
-        // Pretend that a drop operation needs to be performed
-        dropTableTask.runTask();
+    // Pretend that a drop operation needs to be performed
+    dropTableTask.runTask();
 
-        // Verify that the table still exists on the destination
-        assertTrue(destMetastore.existsTable(dbName, tableName));
-    }
+    // Verify that the table still exists on the destination
+    assertTrue(destMetastore.existsTable(dbName, tableName));
+  }
 }

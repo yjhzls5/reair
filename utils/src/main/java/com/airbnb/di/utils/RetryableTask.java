@@ -2,5 +2,5 @@ package com.airbnb.di.utils;
 
 
 public interface RetryableTask {
-    void run() throws Exception;
+  void run() throws Exception;
 }

@@ -20,48 +20,35 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class CopyPartitionedTableTaskTest extends MockClusterTest {
-    private static final Log LOG = LogFactory.getLog(
-            CopyPartitionedTableTaskTest.class);
+  private static final Log LOG = LogFactory.getLog(CopyPartitionedTableTaskTest.class);
 
-    @Test
-    public void testCopyPartitionedTable() throws IOException,
-            HiveMetastoreException, DistCpException {
+  @Test
+  public void testCopyPartitionedTable()
+      throws IOException, HiveMetastoreException, DistCpException {
 
-        // Create a partitioned table in the source
-        HiveObjectSpec spec = new HiveObjectSpec("test_db", "test_table");
-        Table srcTable = ReplicationTestUtils.createPartitionedTable(conf,
-                srcMetastore,
-                spec,
-                TableType.MANAGED_TABLE,
-                srcWarehouseRoot);
+    // Create a partitioned table in the source
+    HiveObjectSpec spec = new HiveObjectSpec("test_db", "test_table");
+    Table srcTable = ReplicationTestUtils.createPartitionedTable(conf, srcMetastore, spec,
+        TableType.MANAGED_TABLE, srcWarehouseRoot);
 
-        // Copy the table
-        CopyPartitionedTableTask copyJob = new CopyPartitionedTableTask(
-                conf,
-                destinationObjectFactory,
-                conflictHandler,
-                srcCluster,
-                destCluster,
-                spec,
-                ReplicationUtils.getLocation(srcTable));
-        RunInfo status = copyJob.runTask();
+    // Copy the table
+    CopyPartitionedTableTask copyJob = new CopyPartitionedTableTask(conf, destinationObjectFactory,
+        conflictHandler, srcCluster, destCluster, spec, ReplicationUtils.getLocation(srcTable));
+    RunInfo status = copyJob.runTask();
 
-        // Verify that the table exists on the destination, the location is
-        // within the destination filesystem, and no data was copied.
-        assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
-        Table destTable = destMetastore.getTable(spec.getDbName(),
-                spec.getTableName());
-        assertNotNull(destTable);
-        assertTrue(destTable.getSd().getLocation().startsWith(
-                destCluster.getFsRoot() + "/"));
-        assertEquals(0, status.getBytesCopied());
+    // Verify that the table exists on the destination, the location is
+    // within the destination filesystem, and no data was copied.
+    assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
+    Table destTable = destMetastore.getTable(spec.getDbName(), spec.getTableName());
+    assertNotNull(destTable);
+    assertTrue(destTable.getSd().getLocation().startsWith(destCluster.getFsRoot() + "/"));
+    assertEquals(0, status.getBytesCopied());
 
-        // Verify that doing a copy again is a no-op
-        RunInfo rerunStatus = copyJob.runTask();
-        assertEquals(RunInfo.RunStatus.SUCCESSFUL,
-                rerunStatus.getRunStatus());
-        assertEquals(0, rerunStatus.getBytesCopied());
-    }
+    // Verify that doing a copy again is a no-op
+    RunInfo rerunStatus = copyJob.runTask();
+    assertEquals(RunInfo.RunStatus.SUCCESSFUL, rerunStatus.getRunStatus());
+    assertEquals(0, rerunStatus.getBytesCopied());
+  }
 
-    // Additional test cases - copying of other table types such as views?
+  // Additional test cases - copying of other table types such as views?
 }

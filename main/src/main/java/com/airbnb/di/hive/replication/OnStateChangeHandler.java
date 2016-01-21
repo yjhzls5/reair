@@ -5,7 +5,7 @@ package com.airbnb.di.hive.replication;
  */
 public interface OnStateChangeHandler {
 
-    public void onStart(ReplicationJob replicationJob);
+  public void onStart(ReplicationJob replicationJob);
 
-    public void onComplete(RunInfo runInfo, ReplicationJob replicationJob);
+  public void onComplete(RunInfo runInfo, ReplicationJob replicationJob);
 }

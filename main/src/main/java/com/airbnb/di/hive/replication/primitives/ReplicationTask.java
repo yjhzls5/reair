@@ -8,10 +8,9 @@ import com.airbnb.di.multiprocessing.LockSet;
 import java.io.IOException;
 
 public interface ReplicationTask {
-    public RunInfo runTask() throws HiveMetastoreException,
-            IOException, DistCpException;
+  public RunInfo runTask() throws HiveMetastoreException, IOException, DistCpException;
 
-    public LockSet getRequiredLocks();
+  public LockSet getRequiredLocks();
 
 
 }

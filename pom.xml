@@ -17,10 +17,30 @@
         <module>web-server</module>
     </modules>
 
+    <properties>
+      <checkstyle.config.location>config/google_checkstyle.xml</checkstyle.config.location>
+    </properties>
 
     <build>
         <pluginManagement>
             <plugins>
+                <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-checkstyle-plugin</artifactId>
+                  <version>2.17</version>
+                  <executions>
+                    <execution>
+                      <phase>validate</phase>
+                      <goals>
+                        <goal>check</goal>
+                      </goals>
+                    </execution>
+                  </executions>
+                  <configuration>
+                    <violationSeverity>warning</violationSeverity>
+                    <consoleOutput>true</consoleOutput>
+                  </configuration>
+                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>

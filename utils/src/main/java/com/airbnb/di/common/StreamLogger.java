@@ -13,47 +13,46 @@ import java.io.InputStreamReader;
  */
 public class StreamLogger extends Thread {
 
-    private static final Log LOG = LogFactory.getLog(StreamLogger.class);
+  private static final Log LOG = LogFactory.getLog(StreamLogger.class);
 
-    private InputStream inputStream;
-    private boolean saveToString;
-    private String streamAsString;
+  private InputStream inputStream;
+  private boolean saveToString;
+  private String streamAsString;
 
-    /**
-     *
-     * @param inputStream
-     * @param saveToString whether to return the entire output from the input
-     *                     stream as a single string.
-     */
-    public StreamLogger(String threadName, InputStream inputStream,
-                        boolean saveToString) {
-        this.inputStream = inputStream;
-        this.saveToString = saveToString;
-        this.streamAsString = null;
-        setName(threadName);
-        setDaemon(true);
-    }
+  /**
+   *
+   * @param inputStream
+   * @param saveToString whether to return the entire output from the input stream as a single
+   *        string.
+   */
+  public StreamLogger(String threadName, InputStream inputStream, boolean saveToString) {
+    this.inputStream = inputStream;
+    this.saveToString = saveToString;
+    this.streamAsString = null;
+    setName(threadName);
+    setDaemon(true);
+  }
 
-    @Override
-    public void run() {
-        try {
-            StringBuilder sb = new StringBuilder();
-            InputStreamReader isr = new InputStreamReader(inputStream);
-            BufferedReader br = new BufferedReader(isr);
-            String line;
-            while ((line = br.readLine()) != null) {
-                LOG.debug(line);
-                if (saveToString) {
-                    sb.append(line);
-                }
-            }
-            streamAsString = sb.toString();
-        } catch (IOException e) {
-            LOG.error(e);
+  @Override
+  public void run() {
+    try {
+      StringBuilder sb = new StringBuilder();
+      InputStreamReader isr = new InputStreamReader(inputStream);
+      BufferedReader br = new BufferedReader(isr);
+      String line;
+      while ((line = br.readLine()) != null) {
+        LOG.debug(line);
+        if (saveToString) {
+          sb.append(line);
         }
+      }
+      streamAsString = sb.toString();
+    } catch (IOException e) {
+      LOG.error(e);
     }
+  }
 
-    public String getStreamAsString() {
-        return streamAsString;
-    }
+  public String getStreamAsString() {
+    return streamAsString;
+  }
 }

@@ -21,96 +21,61 @@ import java.util.Optional;
 import static org.junit.Assert.*;
 
 public class CopyPartitionTaskTest extends MockClusterTest {
-    private static final Log LOG = LogFactory.getLog(
-            CopyPartitionTaskTest.class);
+  private static final Log LOG = LogFactory.getLog(CopyPartitionTaskTest.class);
 
-    @Test
-    public void testCopyPartition() throws IOException, HiveMetastoreException,
-            DistCpException {
-        // Create a partitioned table in the source
-        HiveObjectSpec tableSpec = new HiveObjectSpec("test_db", "test_table");
-        Table srcTable = ReplicationTestUtils.createPartitionedTable(conf,
-                srcMetastore,
-                tableSpec,
-                TableType.MANAGED_TABLE,
-                srcWarehouseRoot);
+  @Test
+  public void testCopyPartition() throws IOException, HiveMetastoreException, DistCpException {
+    // Create a partitioned table in the source
+    HiveObjectSpec tableSpec = new HiveObjectSpec("test_db", "test_table");
+    Table srcTable = ReplicationTestUtils.createPartitionedTable(conf, srcMetastore, tableSpec,
+        TableType.MANAGED_TABLE, srcWarehouseRoot);
 
-        // Create a partition in the source table
-        HiveObjectSpec partitionSpec = new HiveObjectSpec("test_db",
-                "test_table", "ds=1/hr=1");
-        Partition srcPartition = ReplicationTestUtils.createPartition(conf,
-                srcMetastore, partitionSpec);
+    // Create a partition in the source table
+    HiveObjectSpec partitionSpec = new HiveObjectSpec("test_db", "test_table", "ds=1/hr=1");
+    Partition srcPartition =
+        ReplicationTestUtils.createPartition(conf, srcMetastore, partitionSpec);
 
-        // Copy the partition
-        CopyPartitionTask copyPartitionTask = new CopyPartitionTask(conf,
-                destinationObjectFactory,
-                conflictHandler,
-                srcCluster,
-                destCluster,
-                partitionSpec,
-                ReplicationUtils.getLocation(srcPartition),
-                Optional.empty(),
-                directoryCopier,
-                true);
-        RunInfo status = copyPartitionTask.runTask();
+    // Copy the partition
+    CopyPartitionTask copyPartitionTask = new CopyPartitionTask(conf, destinationObjectFactory,
+        conflictHandler, srcCluster, destCluster, partitionSpec,
+        ReplicationUtils.getLocation(srcPartition), Optional.empty(), directoryCopier, true);
+    RunInfo status = copyPartitionTask.runTask();
 
-        // Verify that the partition got copied
-        assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
-        assertEquals(9, status.getBytesCopied());
+    // Verify that the partition got copied
+    assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
+    assertEquals(9, status.getBytesCopied());
 
-        // Copying a new partition without a data copy should not succeed.
-        partitionSpec = new HiveObjectSpec("test_db",
-                "test_table", "ds=1/hr=2");
-        ReplicationTestUtils.createPartition(conf,
-                srcMetastore, partitionSpec);
-        copyPartitionTask = new CopyPartitionTask(conf,
-                destinationObjectFactory,
-                conflictHandler,
-                srcCluster,
-                destCluster,
-                partitionSpec,
-                ReplicationUtils.getLocation(srcPartition),
-                Optional.<Path>empty(),
-                directoryCopier,
-                false);
-        status = copyPartitionTask.runTask();
-        assertEquals(RunInfo.RunStatus.NOT_COMPLETABLE, status.getRunStatus());
-        assertEquals(0, status.getBytesCopied());
-    }
+    // Copying a new partition without a data copy should not succeed.
+    partitionSpec = new HiveObjectSpec("test_db", "test_table", "ds=1/hr=2");
+    ReplicationTestUtils.createPartition(conf, srcMetastore, partitionSpec);
+    copyPartitionTask = new CopyPartitionTask(conf, destinationObjectFactory, conflictHandler,
+        srcCluster, destCluster, partitionSpec, ReplicationUtils.getLocation(srcPartition),
+        Optional.<Path>empty(), directoryCopier, false);
+    status = copyPartitionTask.runTask();
+    assertEquals(RunInfo.RunStatus.NOT_COMPLETABLE, status.getRunStatus());
+    assertEquals(0, status.getBytesCopied());
+  }
 
-    @Test
-    public void testCopyPartitionView() throws IOException,
-            HiveMetastoreException, DistCpException {
-        // Create a partitioned table in the source
-        HiveObjectSpec tableSpec = new HiveObjectSpec("test_db",
-                "test_table_view");
-        ReplicationTestUtils.createPartitionedTable(conf,
-                srcMetastore,
-                tableSpec,
-                TableType.VIRTUAL_VIEW,
-                srcWarehouseRoot);
+  @Test
+  public void testCopyPartitionView() throws IOException, HiveMetastoreException, DistCpException {
+    // Create a partitioned table in the source
+    HiveObjectSpec tableSpec = new HiveObjectSpec("test_db", "test_table_view");
+    ReplicationTestUtils.createPartitionedTable(conf, srcMetastore, tableSpec,
+        TableType.VIRTUAL_VIEW, srcWarehouseRoot);
 
-        // Create a partition in the source table
-        HiveObjectSpec partitionSpec = new HiveObjectSpec("test_db",
-                "test_table_view", "ds=1/hr=1");
-        Partition srcPartition = ReplicationTestUtils.createPartition(conf,
-                srcMetastore, partitionSpec);
+    // Create a partition in the source table
+    HiveObjectSpec partitionSpec = new HiveObjectSpec("test_db", "test_table_view", "ds=1/hr=1");
+    Partition srcPartition =
+        ReplicationTestUtils.createPartition(conf, srcMetastore, partitionSpec);
 
-        // Copy the partition
-        CopyPartitionTask copyPartitionTask = new CopyPartitionTask(conf,
-                destinationObjectFactory,
-                conflictHandler,
-                srcCluster,
-                destCluster,
-                partitionSpec,
-                ReplicationUtils.getLocation(srcPartition),
-                Optional.<Path>empty(),
-                directoryCopier,
-                true);
-        RunInfo status = copyPartitionTask.runTask();
+    // Copy the partition
+    CopyPartitionTask copyPartitionTask = new CopyPartitionTask(conf, destinationObjectFactory,
+        conflictHandler, srcCluster, destCluster, partitionSpec,
+        ReplicationUtils.getLocation(srcPartition), Optional.<Path>empty(), directoryCopier, true);
+    RunInfo status = copyPartitionTask.runTask();
 
-        // Verify that the partition got copied
-        assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
-        assertEquals(0, status.getBytesCopied());
-    }
+    // Verify that the partition got copied
+    assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
+    assertEquals(0, status.getBytesCopied());
+  }
 }

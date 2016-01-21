@@ -5,10 +5,11 @@ package com.airbnb.di.hive.common;
  */
 public class HiveMetastoreException extends Exception {
 
-    public HiveMetastoreException(String message) {
-        super(message);
-    }
-    public HiveMetastoreException(Throwable throwable) {
-        super(throwable);
-    }
+  public HiveMetastoreException(String message) {
+    super(message);
+  }
+
+  public HiveMetastoreException(Throwable throwable) {
+    super(throwable);
+  }
 }

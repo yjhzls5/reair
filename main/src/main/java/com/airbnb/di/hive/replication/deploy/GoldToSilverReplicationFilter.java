@@ -9,37 +9,37 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 public class GoldToSilverReplicationFilter implements ReplicationFilter {
-    private static final Log LOG = LogFactory.getLog(GoldToSilverReplicationFilter.class);
+  private static final Log LOG = LogFactory.getLog(GoldToSilverReplicationFilter.class);
 
-    @Override
-    public void setConf(Configuration conf) {
-        return;
+  @Override
+  public void setConf(Configuration conf) {
+    return;
+  }
+
+  @Override
+  public boolean accept(AuditLogEntry entry) {
+    return true;
+  }
+
+  @Override
+  public boolean accept(Table table) {
+    if (table.getDbName().startsWith("tmp")) {
+      return false;
     }
 
-    @Override
-    public boolean accept(AuditLogEntry entry) {
-        return true;
+    if (table.getTableName().startsWith("staging")) {
+      return false;
     }
 
-    @Override
-    public boolean accept(Table table) {
-        if (table.getDbName().startsWith("tmp")) {
-            return false;
-        }
-
-        if (table.getTableName().startsWith("staging")) {
-            return false;
-        }
-
-        if (table.getTableName().startsWith("tmp")) {
-            return false;
-        }
-
-        return true;
+    if (table.getTableName().startsWith("tmp")) {
+      return false;
     }
 
-    @Override
-    public boolean accept(Table table, NamedPartition partition) {
-        return accept(table);
-    }
+    return true;
+  }
+
+  @Override
+  public boolean accept(Table table, NamedPartition partition) {
+    return accept(table);
+  }
 }

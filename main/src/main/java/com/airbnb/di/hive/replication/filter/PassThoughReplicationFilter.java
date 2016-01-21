@@ -8,23 +8,23 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 public class PassThoughReplicationFilter implements ReplicationFilter {
-    @Override
-    public void setConf(Configuration conf) {
-        return;
-    }
+  @Override
+  public void setConf(Configuration conf) {
+    return;
+  }
 
-    @Override
-    public boolean accept(AuditLogEntry entry) {
-        return true;
-    }
+  @Override
+  public boolean accept(AuditLogEntry entry) {
+    return true;
+  }
 
-    @Override
-    public boolean accept(Table table) {
-        return true;
-    }
+  @Override
+  public boolean accept(Table table) {
+    return true;
+  }
 
-    @Override
-    public boolean accept(Table table, NamedPartition partition) {
-        return true;
-    }
+  @Override
+  public boolean accept(Table table, NamedPartition partition) {
+    return true;
+  }
 }

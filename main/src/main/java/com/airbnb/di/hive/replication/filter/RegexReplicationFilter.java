@@ -14,54 +14,52 @@ import org.apache.hadoop.hive.metastore.api.Table;
  */
 public class RegexReplicationFilter implements ReplicationFilter {
 
-    private static final Log LOG = LogFactory.getLog(
-            RegexReplicationFilter.class);
+  private static final Log LOG = LogFactory.getLog(RegexReplicationFilter.class);
 
-    public static final String WHITELIST_REGEX_KEY = "airbnb.reair.whitelist.regex";
-    public static final String BLACKLIST_REGEX_KEY = "airbnb.reair.blacklist.regex";
+  public static final String WHITELIST_REGEX_KEY = "airbnb.reair.whitelist.regex";
+  public static final String BLACKLIST_REGEX_KEY = "airbnb.reair.blacklist.regex";
 
-    private Configuration conf;
+  private Configuration conf;
 
-    @Override
-    public void setConf(Configuration conf) {
-        this.conf = conf;
+  @Override
+  public void setConf(Configuration conf) {
+    this.conf = conf;
+  }
+
+  @Override
+  public boolean accept(AuditLogEntry entry) {
+    return true;
+  }
+
+  @Override
+  public boolean accept(Table table) {
+    return accept(table, null);
+  }
+
+  @Override
+  public boolean accept(Table table, NamedPartition partition) {
+    return accept(table.getDbName(), table.getTableName(),
+        partition == null ? null : partition.getName());
+  }
+
+  public boolean accept(String dbName, String tableName, String partitionName) {
+    HiveObjectSpec spec = new HiveObjectSpec(dbName, tableName, partitionName);
+    String objectName = spec.toString();
+
+    String whitelistRegex = conf.get(WHITELIST_REGEX_KEY);
+    if (whitelistRegex == null) {
+      LOG.warn("Missing value for whitelist key: " + WHITELIST_REGEX_KEY);
+      return false;
     }
-
-    @Override
-    public boolean accept(AuditLogEntry entry) {
-        return true;
+    if (!objectName.matches(whitelistRegex)) {
+      return false;
     }
-
-    @Override
-    public boolean accept(Table table) {
-        return accept(table, null);
+    String blacklistRegex = conf.get(BLACKLIST_REGEX_KEY);
+    if (blacklistRegex == null) {
+      LOG.warn("Missing value for blacklist key: " + BLACKLIST_REGEX_KEY);
+      // It can be accepted since it passed the whitelist
+      return true;
     }
-
-    @Override
-    public boolean accept(Table table, NamedPartition partition) {
-        return accept(table.getDbName(),
-                table.getTableName(),
-                partition == null ? null : partition.getName());
-    }
-
-    public boolean accept(String dbName, String tableName, String partitionName) {
-        HiveObjectSpec spec = new HiveObjectSpec(dbName, tableName, partitionName);
-        String objectName = spec.toString();
-
-        String whitelistRegex = conf.get(WHITELIST_REGEX_KEY);
-        if (whitelistRegex == null) {
-            LOG.warn("Missing value for whitelist key: " + WHITELIST_REGEX_KEY);
-            return false;
-        }
-        if (!objectName.matches(whitelistRegex)) {
-            return false;
-        }
-        String blacklistRegex = conf.get(BLACKLIST_REGEX_KEY);
-        if (blacklistRegex == null) {
-            LOG.warn("Missing value for blacklist key: " + BLACKLIST_REGEX_KEY);
-            // It can be accepted since it passed the whitelist
-            return true;
-        }
-        return !objectName.matches(blacklistRegex);
-    }
+    return !objectName.matches(blacklistRegex);
+  }
 }

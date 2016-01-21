@@ -15,47 +15,47 @@ import java.util.List;
  * InputSplit for a direcotry
  */
 public class HiveTablesInputSplit extends InputSplit implements Writable {
-    private List<String> tables;
+  private List<String> tables;
 
-    public HiveTablesInputSplit(List<String> tables) {
-        this.tables = tables;
+  public HiveTablesInputSplit(List<String> tables) {
+    this.tables = tables;
+  }
+
+  public HiveTablesInputSplit() {}
+
+  @Override
+  public long getLength() throws IOException, InterruptedException {
+    return 0;
+  }
+
+  @Override
+  public String toString() {
+    return Joiner.on(",").join(tables);
+  }
+
+  @Override
+  public void write(DataOutput dataOutput) throws IOException {
+    dataOutput.writeInt(tables.size());
+    for (String t : tables) {
+      Text.writeString(dataOutput, t);
     }
+  }
 
-    public HiveTablesInputSplit() {}
-
-    @Override
-    public long getLength() throws IOException, InterruptedException {
-        return 0;
+  @Override
+  public void readFields(DataInput dataInput) throws IOException {
+    int size = dataInput.readInt();
+    this.tables = new ArrayList<>(size);
+    for (int i = 0; i < size; i++) {
+      this.tables.add(Text.readString(dataInput));
     }
+  }
 
-    @Override
-    public String toString() {
-        return Joiner.on(",").join(tables);
-    }
+  @Override
+  public String[] getLocations() throws IOException, InterruptedException {
+    return new String[0];
+  }
 
-    @Override
-    public void write(DataOutput dataOutput) throws IOException {
-        dataOutput.writeInt(tables.size());
-        for(String t : tables) {
-            Text.writeString(dataOutput, t);
-        }
-    }
-
-    @Override
-    public void readFields(DataInput dataInput) throws IOException {
-        int size = dataInput.readInt();
-        this.tables = new ArrayList<>(size);
-        for(int i=0; i<size; i++) {
-            this.tables.add(Text.readString(dataInput));
-        }
-    }
-
-    @Override
-    public String[] getLocations() throws IOException, InterruptedException {
-        return new String[0];
-    }
-
-    public List<String> getTables() {
-        return tables;
-    }
+  public List<String> getTables() {
+    return tables;
+  }
 }

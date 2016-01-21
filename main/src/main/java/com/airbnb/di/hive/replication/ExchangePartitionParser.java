@@ -10,132 +10,128 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Parses exchange partition query commands. Since it uses a regex, there are
- * cases that won't be handled properly. See warnings below for details.
+ * Parses exchange partition query commands. Since it uses a regex, there are cases that won't be
+ * handled properly. See warnings below for details.
  *
  * TODO: Deprecate once HIVE-12865 is resolved
  */
 public class ExchangePartitionParser {
 
-    private static String EXCHANGE_REGEX = "\\s*ALTER\\s+TABLE\\s+" +
-            "(?<exchangeToTable>\\S+)\\s+EXCHANGE\\s+PARTITION\\s*\\(\\s*" +
-            "(?<partitionSpec>.*)\\)\\s+WITH\\s+TABLE\\s+"+
-            "(?<exchangeFromTable>\\S+)\\s*";
+  private static String EXCHANGE_REGEX =
+      "\\s*ALTER\\s+TABLE\\s+" + "(?<exchangeToTable>\\S+)\\s+EXCHANGE\\s+PARTITION\\s*\\(\\s*"
+          + "(?<partitionSpec>.*)\\)\\s+WITH\\s+TABLE\\s+" + "(?<exchangeFromTable>\\S+)\\s*";
 
-    private HiveObjectSpec exchangeFromTableSpec;
-    private HiveObjectSpec exchangeToTableSpec;
-    private String partitionName;
-    private List<String> partitionValues;
+  private HiveObjectSpec exchangeFromTableSpec;
+  private HiveObjectSpec exchangeToTableSpec;
+  private String partitionName;
+  private List<String> partitionValues;
 
-    public boolean parse(String query) {
-        Matcher m = Pattern
-                .compile(EXCHANGE_REGEX, Pattern.CASE_INSENSITIVE)
-                .matcher(query);
+  public boolean parse(String query) {
+    Matcher m = Pattern.compile(EXCHANGE_REGEX, Pattern.CASE_INSENSITIVE).matcher(query);
 
-        if (!m.matches()) {
-            return false;
-        }
-
-        String exchangeFromTable = m.group("exchangeFromTable");
-        String exchangeToTable = m.group("exchangeToTable");
-        String partitionSpec = m.group("partitionSpec");
-
-        exchangeFromTableSpec = getSpec(exchangeFromTable);
-        exchangeToTableSpec = getSpec(exchangeToTable);
-        partitionName = getPartitionName(partitionSpec);
-        partitionValues = getPartitionValues(partitionSpec);
-        return true;
+    if (!m.matches()) {
+      return false;
     }
 
-    /**
-     *
-     * @param spec table specification in the form "db.table"
-     * @return
-     */
-    private HiveObjectSpec getSpec(String spec) {
-        String[] specSplit = spec.split("\\.");
-        if (specSplit.length == 1) {
-            // Warning! Assumes default DB.
-            return new HiveObjectSpec("default", specSplit[0]);
-        } else if (specSplit.length == 2) {
-            return new HiveObjectSpec(specSplit[0], specSplit[1]);
-        } else {
-            throw new RuntimeException("Unexpected split from " + spec +
-                    " to " + Arrays.asList(specSplit));
-        }
+    String exchangeFromTable = m.group("exchangeFromTable");
+    String exchangeToTable = m.group("exchangeToTable");
+    String partitionSpec = m.group("partitionSpec");
+
+    exchangeFromTableSpec = getSpec(exchangeFromTable);
+    exchangeToTableSpec = getSpec(exchangeToTable);
+    partitionName = getPartitionName(partitionSpec);
+    partitionValues = getPartitionValues(partitionSpec);
+    return true;
+  }
+
+  /**
+   *
+   * @param spec table specification in the form "db.table"
+   * @return
+   */
+  private HiveObjectSpec getSpec(String spec) {
+    String[] specSplit = spec.split("\\.");
+    if (specSplit.length == 1) {
+      // Warning! Assumes default DB.
+      return new HiveObjectSpec("default", specSplit[0]);
+    } else if (specSplit.length == 2) {
+      return new HiveObjectSpec(specSplit[0], specSplit[1]);
+    } else {
+      throw new RuntimeException(
+          "Unexpected split from " + spec + " to " + Arrays.asList(specSplit));
+    }
+  }
+
+  /**
+   *
+   * param partitionSpec a partition specification in the form "ds=1, hr=2"
+   * 
+   * @return the partition spec converted to that name
+   */
+
+  private String getPartitionName(String partitionSpec) {
+    // Warning - incorrect for cases where there are commas in values and
+    // other corner cases.
+    String[] partitionSpecSplit = partitionSpec.split(",");
+    StringBuilder sb = new StringBuilder();
+
+    for (String columnSpec : partitionSpecSplit) {
+      columnSpec = StringUtils.stripEnd(columnSpec, " \t\n");
+      columnSpec = StringUtils.stripStart(columnSpec, " \t\n");
+      // columnSpec should be something of the form ds='1'
+      String[] columnSpecSplit = columnSpec.split("=");
+      if (columnSpecSplit.length != 2) {
+        throw new RuntimeException("Unexpected column spec " + columnSpec);
+      }
+
+      if (sb.length() != 0) {
+        sb.append("/");
+      }
+      String partitionColumnName = columnSpecSplit[0];
+      String partitionColumnValue = columnSpecSplit[1].replace("'", "");
+      sb.append(partitionColumnName);
+      sb.append("=");
+      sb.append(partitionColumnValue);
     }
 
-    /**
-     *
-     * param partitionSpec a partition specification in the form "ds=1, hr=2"
-     * @return the partition spec converted to that name
-     */
+    return sb.toString();
+  }
 
-    private String getPartitionName(String partitionSpec) {
-        // Warning - incorrect for cases where there are commas in values and
-        // other corner cases.
-        String[] partitionSpecSplit = partitionSpec.split(",");
-        StringBuilder sb = new StringBuilder();
 
-        for(String columnSpec : partitionSpecSplit) {
-            columnSpec = StringUtils.stripEnd(columnSpec, " \t\n");
-            columnSpec = StringUtils.stripStart(columnSpec, " \t\n");
-            // columnSpec should be something of the form ds='1'
-            String[] columnSpecSplit = columnSpec.split("=");
-            if (columnSpecSplit.length != 2) {
-                throw new RuntimeException("Unexpected column spec " +
-                        columnSpec);
-            }
+  private List<String> getPartitionValues(String partitionSpec) {
+    // Warning - incorrect for cases where there are commas in values and
+    // other corner cases.
+    String[] partitionSpecSplit = partitionSpec.split(",");
+    List<String> partitionValues = new ArrayList<>();
 
-            if (sb.length() != 0) {
-                sb.append("/");
-            }
-            String partitionColumnName = columnSpecSplit[0];
-            String partitionColumnValue = columnSpecSplit[1].replace("'", "");
-            sb.append(partitionColumnName);
-            sb.append("=");
-            sb.append(partitionColumnValue);
-        }
-
-        return sb.toString();
+    for (String columnSpec : partitionSpecSplit) {
+      columnSpec = StringUtils.stripEnd(columnSpec, " \t\n");
+      columnSpec = StringUtils.stripStart(columnSpec, " \t\n");
+      // columnSpec should be something of the form ds='1'
+      String[] columnSpecSplit = columnSpec.split("=");
+      if (columnSpecSplit.length != 2) {
+        throw new RuntimeException("Unexpected column spec " + columnSpec);
+      }
+      String partitionColumnValue = columnSpecSplit[1].replace("'", "");
+      partitionValues.add(partitionColumnValue);
     }
+    return partitionValues;
+  }
 
 
-    private List<String> getPartitionValues(String partitionSpec) {
-        // Warning - incorrect for cases where there are commas in values and
-        // other corner cases.
-        String[] partitionSpecSplit = partitionSpec.split(",");
-        List<String> partitionValues = new ArrayList<>();
+  public HiveObjectSpec getExchangeFromSpec() {
+    return exchangeFromTableSpec;
+  }
 
-        for(String columnSpec : partitionSpecSplit) {
-            columnSpec = StringUtils.stripEnd(columnSpec, " \t\n");
-            columnSpec = StringUtils.stripStart(columnSpec, " \t\n");
-            // columnSpec should be something of the form ds='1'
-            String[] columnSpecSplit = columnSpec.split("=");
-            if (columnSpecSplit.length != 2) {
-                throw new RuntimeException("Unexpected column spec " +
-                        columnSpec);
-            }
-            String partitionColumnValue = columnSpecSplit[1].replace("'", "");
-            partitionValues.add(partitionColumnValue);
-        }
-        return partitionValues;
-    }
+  public HiveObjectSpec getExchangeToSpec() {
+    return exchangeToTableSpec;
+  }
 
+  public String getPartitionName() {
+    return partitionName;
+  }
 
-    public HiveObjectSpec getExchangeFromSpec() {
-        return exchangeFromTableSpec;
-    }
-
-    public HiveObjectSpec getExchangeToSpec() {
-        return exchangeToTableSpec;
-    }
-
-    public String getPartitionName() {
-        return partitionName;
-    }
-
-    public List<String> getPartitionValues() {
-        return partitionValues;
-    }
+  public List<String> getPartitionValues() {
+    return partitionValues;
+  }
 }

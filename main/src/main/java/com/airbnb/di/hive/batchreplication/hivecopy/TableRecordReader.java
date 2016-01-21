@@ -12,55 +12,54 @@ import java.util.List;
  * Record Reader return directory path.
  */
 public class TableRecordReader extends RecordReader<Text, Text> {
-    private List<String> tables;
-    private int index = 0;
-    private String[] cur;
+  private List<String> tables;
+  private int index = 0;
+  private String[] cur;
 
-    @Override
-    public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
-            throws IOException, InterruptedException {
-        if (!(inputSplit instanceof HiveTablesInputSplit)) {
-            throw new IOException("Invalid split class passed in.");
-        }
-
-        this.tables = ((HiveTablesInputSplit) inputSplit).getTables();
-        this.index = 0;
-        this.cur = null;
+  @Override
+  public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
+      throws IOException, InterruptedException {
+    if (!(inputSplit instanceof HiveTablesInputSplit)) {
+      throw new IOException("Invalid split class passed in.");
     }
 
-    @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException {
-        if (index < tables.size()) {
-            cur = tables.get(index++).split(":");
-            return true;
-        }
+    this.tables = ((HiveTablesInputSplit) inputSplit).getTables();
+    this.index = 0;
+    this.cur = null;
+  }
 
-        return false;
+  @Override
+  public boolean nextKeyValue() throws IOException, InterruptedException {
+    if (index < tables.size()) {
+      cur = tables.get(index++).split(":");
+      return true;
     }
 
-    @Override
-    public Text getCurrentKey() throws IOException, InterruptedException {
-        if (cur == null) {
-            return null;
-        }
+    return false;
+  }
 
-        return new Text(cur[0]);
+  @Override
+  public Text getCurrentKey() throws IOException, InterruptedException {
+    if (cur == null) {
+      return null;
     }
 
-    @Override
-    public Text getCurrentValue() throws IOException, InterruptedException {
-        if (cur == null) {
-            return null;
-        }
-        return new Text(cur[1]);
-    }
+    return new Text(cur[0]);
+  }
 
-    @Override
-    public float getProgress() throws IOException, InterruptedException {
-        return ((float) index) / tables.size();
+  @Override
+  public Text getCurrentValue() throws IOException, InterruptedException {
+    if (cur == null) {
+      return null;
     }
+    return new Text(cur[1]);
+  }
 
-    @Override
-    public void close() throws IOException {
-    }
+  @Override
+  public float getProgress() throws IOException, InterruptedException {
+    return ((float) index) / tables.size();
+  }
+
+  @Override
+  public void close() throws IOException {}
 }

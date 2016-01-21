@@ -16,107 +16,101 @@ import java.util.Optional;
 import java.util.Set;
 
 public class ReplicationJob extends Job {
-    private static final Log LOG = LogFactory.getLog(
-            ReplicationJob.class);
+  private static final Log LOG = LogFactory.getLog(ReplicationJob.class);
 
-    // The number of ms to sleep between retries if the replication task fails
-    private static long RETRY_SLEEP_TIME_MS = 60 * 1000;
+  // The number of ms to sleep between retries if the replication task fails
+  private static long RETRY_SLEEP_TIME_MS = 60 * 1000;
 
-    private ReplicationTask replicationTask;
-    private OnStateChangeHandler onStateChangeHandler;
-    private PersistedJobInfo persistedJobInfo;
+  private ReplicationTask replicationTask;
+  private OnStateChangeHandler onStateChangeHandler;
+  private PersistedJobInfo persistedJobInfo;
 
-    public ReplicationJob(ReplicationTask replicationTask,
-                          OnStateChangeHandler onStateChangeHandler,
-                          PersistedJobInfo persistedJobInfo) {
-        this.replicationTask = replicationTask;
-        this.onStateChangeHandler = onStateChangeHandler;
-        this.persistedJobInfo = persistedJobInfo;
-    }
+  public ReplicationJob(
+      ReplicationTask replicationTask,
+      OnStateChangeHandler onStateChangeHandler,
+      PersistedJobInfo persistedJobInfo) {
+    this.replicationTask = replicationTask;
+    this.onStateChangeHandler = onStateChangeHandler;
+    this.persistedJobInfo = persistedJobInfo;
+  }
 
-    public PersistedJobInfo getPersistedJobInfo() {
-        return persistedJobInfo;
-    }
+  public PersistedJobInfo getPersistedJobInfo() {
+    return persistedJobInfo;
+  }
 
-    @Override
-    public int run() {
-        int attempt = 0;
-        while (true) {
-            try {
-                onStateChangeHandler.onStart(this);
-                RunInfo runInfo = replicationTask.runTask();
-                LOG.info(String.format("Replication job id: %s finished " +
-                        "with status %s",
-                        persistedJobInfo.getId(),
-                        runInfo.getRunStatus()));
-                onStateChangeHandler.onComplete(runInfo, this);
+  @Override
+  public int run() {
+    int attempt = 0;
+    while (true) {
+      try {
+        onStateChangeHandler.onStart(this);
+        RunInfo runInfo = replicationTask.runTask();
+        LOG.info(String.format("Replication job id: %s finished " + "with status %s",
+            persistedJobInfo.getId(), runInfo.getRunStatus()));
+        onStateChangeHandler.onComplete(runInfo, this);
 
-                switch (runInfo.getRunStatus()) {
-                    case SUCCESSFUL:
-                    case NOT_COMPLETABLE:
-                        return 0;
-                    case FAILED:
-                        return -1;
-                    default:
-                        throw new RuntimeException("State not handled: " +
-                                runInfo.getRunStatus());
-                }
-            } catch (HiveMetastoreException e) {
-                LOG.error("Got an exception - will retry", e);
-            } catch (IOException e) {
-                LOG.error("Got an exception - will retry", e);
-            } catch (DistCpException e) {
-                LOG.error("Got an exception - will retry", e);
-            }
-            LOG.error("Because job id: " + getId() + " was not successful, " +
-                    "it will be retried after sleeping.");
-
-            try {
-                ReplicationUtils.exponentialSleep(attempt);
-            } catch (InterruptedException e) {
-                LOG.warn("Got interrupted", e);
-                return -1;
-            }
-
-            attempt++;
+        switch (runInfo.getRunStatus()) {
+          case SUCCESSFUL:
+          case NOT_COMPLETABLE:
+            return 0;
+          case FAILED:
+            return -1;
+          default:
+            throw new RuntimeException("State not handled: " + runInfo.getRunStatus());
         }
+      } catch (HiveMetastoreException e) {
+        LOG.error("Got an exception - will retry", e);
+      } catch (IOException e) {
+        LOG.error("Got an exception - will retry", e);
+      } catch (DistCpException e) {
+        LOG.error("Got an exception - will retry", e);
+      }
+      LOG.error("Because job id: " + getId() + " was not successful, "
+          + "it will be retried after sleeping.");
+
+      try {
+        ReplicationUtils.exponentialSleep(attempt);
+      } catch (InterruptedException e) {
+        LOG.warn("Got interrupted", e);
+        return -1;
+      }
+
+      attempt++;
+    }
+  }
+
+  @Override
+  public LockSet getRequiredLocks() {
+    return replicationTask.getRequiredLocks();
+  }
+
+  @Override
+  public String toString() {
+    return "ReplicationJob{" + "persistedJobInfo=" + persistedJobInfo + '}';
+  }
+
+  public long getId() {
+    return persistedJobInfo.getId();
+  }
+
+  public long getCreateTime() {
+    Optional<String> createTime = Optional.ofNullable(
+        getPersistedJobInfo().getExtras().get(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY));
+
+    return createTime.map(Long::parseLong).orElse(Long.valueOf(0));
+  }
+
+  public Collection<Long> getParentJobIds() {
+    Set<Job> parentJobs = getParentJobs();
+    List<Long> parentJobIds = new ArrayList<>();
+
+    for (Job parentJob : parentJobs) {
+      // Generally good to avoid casting, but done here since the getId()
+      // is not a part of the Job class.
+      ReplicationJob replicationJob = (ReplicationJob) parentJob;
+      parentJobIds.add(replicationJob.getId());
     }
 
-    @Override
-    public LockSet getRequiredLocks() {
-        return replicationTask.getRequiredLocks();
-    }
-
-    @Override
-    public String toString() {
-        return "ReplicationJob{" +
-                "persistedJobInfo=" + persistedJobInfo +
-                '}';
-    }
-
-    public long getId() {
-        return persistedJobInfo.getId();
-    }
-
-    public long getCreateTime() {
-        Optional<String> createTime = Optional.ofNullable(getPersistedJobInfo()
-                .getExtras()
-                .get(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY));
-
-        return createTime.map(Long::parseLong).orElse(Long.valueOf(0));
-    }
-
-    public Collection<Long> getParentJobIds() {
-        Set<Job> parentJobs = getParentJobs();
-        List<Long> parentJobIds = new ArrayList<>();
-
-        for (Job parentJob : parentJobs) {
-            // Generally good to avoid casting, but done here since the getId()
-            // is not a part of the Job class.
-            ReplicationJob replicationJob = (ReplicationJob)parentJob;
-            parentJobIds.add(replicationJob.getId());
-        }
-
-        return parentJobIds;
-    }
+    return parentJobIds;
+  }
 }
