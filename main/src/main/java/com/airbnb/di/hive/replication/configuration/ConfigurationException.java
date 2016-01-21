@@ -1,4 +1,4 @@
-package com.airbnb.di.hive.replication.deploy;
+package com.airbnb.di.hive.replication.configuration;
 
 public class ConfigurationException extends Exception {
     public ConfigurationException(String message) {

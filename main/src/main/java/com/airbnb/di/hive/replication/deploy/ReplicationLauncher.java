@@ -6,6 +6,9 @@ import com.airbnb.di.db.DbConnectionFactory;
 import com.airbnb.di.db.DbConnectionWatchdog;
 import com.airbnb.di.db.DbKeyValueStore;
 import com.airbnb.di.hive.replication.DirectoryCopier;
+import com.airbnb.di.hive.replication.configuration.ClusterFactory;
+import com.airbnb.di.hive.replication.configuration.ConfigurationException;
+import com.airbnb.di.hive.replication.configuration.ConfiguredClusterFactory;
 import com.airbnb.di.hive.replication.configuration.HardCodedCluster;
 import com.airbnb.di.hive.replication.PersistedJobInfoStore;
 import com.airbnb.di.hive.replication.filter.ReplicationFilter;
@@ -15,7 +18,6 @@ import com.airbnb.di.hive.replication.thrift.TReplicationService;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.logging.Log;
@@ -117,43 +119,11 @@ public class ReplicationLauncher {
             persistedJobInfoStore.abortRunnableFromDb();
         }
 
-        // Create the source cluster object
-        String srcClusterName = conf.get(
-                DeployConfigurationKeys.SRC_CLUSTER_NAME);
-        String srcMetastoreUrlString = conf.get(
-                DeployConfigurationKeys.SRC_CLUSTER_METASTORE_URL);
-        URI srcMetastoreUrl = makeURI(srcMetastoreUrlString);
-        String srcHdfsRoot = conf.get(
-                DeployConfigurationKeys.SRC_HDFS_ROOT);
-        String srcHdfsTmp = conf.get(
-                DeployConfigurationKeys.SRC_HDFS_TMP);
-        Cluster srcCluster = new HardCodedCluster(
-                srcClusterName,
-                srcMetastoreUrl.getHost(),
-                srcMetastoreUrl.getPort(),
-                null,
-                null,
-                new Path(srcHdfsRoot),
-                new Path(srcHdfsTmp));
+        ClusterFactory clusterFactory = new ConfiguredClusterFactory();
+        clusterFactory.setConf(conf);
 
-        // Create the dest cluster object
-        String destClusterName = conf.get(
-                DeployConfigurationKeys.DEST_CLUSTER_NAME);
-        String destMetastoreUrlString = conf.get(
-                DeployConfigurationKeys.DEST_CLUSTER_METASTORE_URL);
-        URI destMetastoreUrl = makeURI(destMetastoreUrlString);
-        String destHdfsRoot = conf.get(
-                DeployConfigurationKeys.DEST_HDFS_ROOT);
-        String destHdfsTmp = conf.get(
-                DeployConfigurationKeys.DEST_HDFS_TMP);
-        Cluster destCluster = new HardCodedCluster(
-                destClusterName,
-                destMetastoreUrl.getHost(),
-                destMetastoreUrl.getPort(),
-                null,
-                null,
-                new Path(destHdfsRoot),
-                new Path(destHdfsTmp));
+        Cluster srcCluster = clusterFactory.getSrcCluster();
+        Cluster destCluster = clusterFactory.getDestCluster();
 
         String objectFilterClassName = conf.get(
                 DeployConfigurationKeys.OBJECT_FILTER_CLASS);
