@@ -18,8 +18,8 @@
     </modules>
 
     <properties>
-      <checkstyle.config.location>config/google_checkstyle.xml</checkstyle.config.location>
-      <checkstyle.suppressions.location>config/checkstyle_suppressions.xml</checkstyle.suppressions.location>
+      <checkstyle.config.location>build-config/google_checkstyle.xml</checkstyle.config.location>
+      <checkstyle.suppressions.location>build-config/checkstyle_suppressions.xml</checkstyle.suppressions.location>
     </properties>
 
     <build>
