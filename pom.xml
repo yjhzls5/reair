@@ -19,6 +19,7 @@
 
     <properties>
       <checkstyle.config.location>config/google_checkstyle.xml</checkstyle.config.location>
+      <checkstyle.suppressions.location>config/checkstyle_suppressions.xml</checkstyle.suppressions.location>
     </properties>
 
     <build>
@@ -37,7 +38,6 @@
                     </execution>
                   </executions>
                   <configuration>
-                    <excludes>**/thrift/**/*</excludes>
                     <violationSeverity>warning</violationSeverity>
                     <consoleOutput>true</consoleOutput>
                   </configuration>
