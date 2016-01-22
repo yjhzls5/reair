@@ -249,8 +249,9 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         job.setReducerClass(PartitionCompareReducer.class);
 
         FileInputFormat.setInputPaths(job, new Path(input));
-        FileInputFormat.setMaxInputSplitSize(job, 6000L);
-
+        FileInputFormat.setMaxInputSplitSize(job,
+                this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
+        
         job.setOutputKeyClass(LongWritable.class);
         job.setOutputValueClass(Text.class);
 
@@ -272,7 +273,8 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         job.setReducerClass(Stage2FolderCopyReducer.class);
 
         FileInputFormat.setInputPaths(job, new Path(input));
-        FileInputFormat.setMaxInputSplitSize(job, 60000L);
+        FileInputFormat.setMaxInputSplitSize(job,
+                this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
 
         job.setOutputKeyClass(LongWritable.class);
         job.setOutputValueClass(Text.class);
@@ -298,7 +300,8 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         job.setOutputValueClass(Text.class);
 
         FileInputFormat.setInputPaths(job, new Path(input));
-        FileInputFormat.setMaxInputSplitSize(job, 60000L);
+        FileInputFormat.setMaxInputSplitSize(job,
+                this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
 
         FileOutputFormat.setOutputPath(job, new Path(output));
         FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
