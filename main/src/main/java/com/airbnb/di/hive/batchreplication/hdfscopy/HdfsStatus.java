@@ -1,6 +1,7 @@
 package com.airbnb.di.hive.batchreplication.hdfscopy;
 
-import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
+import static com.airbnb.di.hive.batchreplication.ReplicationUtils.genValue;
+
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -10,6 +11,8 @@ import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+
+import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -32,7 +35,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import javax.annotation.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -42,11 +44,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-
-import static com.airbnb.di.hive.batchreplication.ReplicationUtils.genValue;
+import javax.annotation.Nullable;
 
 /**
- *
  * A Map/Reduce job that takes in gzipped json log file (like the kind that are dumped out by flog),
  * splits them based on the key data.event_name and writes out the results to gzipped files split on
  * event name.
@@ -59,8 +59,8 @@ public class HdfsStatus extends Configured implements Tool {
   public static final String DIRECTORY_BLACKLIST_REGEX = "replication.folder.blacklist";
 
   private static final PathFilter hiddenFileFilter = new PathFilter() {
-    public boolean accept(Path p) {
-      String name = p.getName();
+    public boolean accept(Path path) {
+      String name = path.getName();
       return !name.startsWith("_") && !name.startsWith(".");
     }
   };
@@ -107,8 +107,8 @@ public class HdfsStatus extends Configured implements Tool {
 
         try {
           String relPath = getPathNoHostName(root.toString());
-          int rIndex = relPath.lastIndexOf('/');
-          String parentPath = rIndex == -1 ? "/" : relPath.substring(0, rIndex);
+          int relativeIndex = relPath.lastIndexOf('/');
+          String parentPath = relativeIndex == -1 ? "/" : relPath.substring(0, relativeIndex);
 
           context.write(new Text(parentPath),
               new Text(genValue(relPath, String.valueOf(folderStats[0]),
@@ -205,7 +205,7 @@ public class HdfsStatus extends Configured implements Tool {
   }
 
   /**
-   * Compare source1 + source2 with destination
+   * Compare source1 + source2 with destination.
    */
   public static class FolderCompareReducer extends Reducer<Text, FileStatus, Text, Text> {
     private String dstHost;
@@ -315,6 +315,14 @@ public class HdfsStatus extends Configured implements Tool {
     return gnuOptions;
   }
 
+  /**
+   * TODO.
+   *
+   * @param args TODO
+   * @return TODO
+   *
+   * @throws Exception TODO
+   */
   public int run(String[] args) throws Exception {
     final CommandLineParser cmdLineGnuParser = new GnuParser();
 
@@ -322,8 +330,7 @@ public class HdfsStatus extends Configured implements Tool {
     CommandLine commandLine;
     try {
       commandLine = cmdLineGnuParser.parse(gnuOptions, args);
-    } catch (ParseException parseException) // checked exception
-    {
+    } catch (ParseException parseException) { // checked exception
       System.err.println(
           "Encountered exception while parsing using GnuParser:\n" + parseException.getMessage());
       System.err.println("Usage: hadoop jar ReplicationJob-0.1.jar <in> <out>");
@@ -374,8 +381,8 @@ public class HdfsStatus extends Configured implements Tool {
     return Joiner.on(",")
         .join(Lists.transform(Arrays.asList(srcfolders), new Function<String, String>() {
           @Override
-          public String apply(String s) {
-            return getHostName(s);
+          public String apply(String str) {
+            return getHostName(str);
           }
         }));
   }

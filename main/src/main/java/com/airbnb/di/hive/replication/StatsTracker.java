@@ -7,19 +7,24 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * Periodically prints stats for the replication process to the log
+ * Periodically prints stats for the replication process to the log.
  */
 public class StatsTracker {
 
   private static final Log LOG = LogFactory.getLog(StatsTracker.class);
 
   // By default print the stats every 10 seconds
-  private long PRINT_TIME_INTERVAL = 10 * 1000;
+  private static final long PRINT_TIME_INTERVAL = 10 * 1000;
 
   private ReplicationJobRegistry jobRegistry;
   private Timer timer = new Timer(true);
   private volatile long lastCalculatedLag = 0;
 
+  /**
+   * TODO.
+   *
+   * @param jobRegistry TODO
+   */
   public StatsTracker(ReplicationJobRegistry jobRegistry) {
     this.jobRegistry = jobRegistry;
     // this.setDaemon(true);
@@ -27,6 +32,9 @@ public class StatsTracker {
     // timer.se
   }
 
+  /**
+   * TODO.
+   */
   public void start() {
     timer.scheduleAtFixedRate(new TimerTask() {
       @Override

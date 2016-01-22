@@ -1,11 +1,11 @@
 package com.airbnb.di.hive.replication.primitives;
 
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
-import com.airbnb.di.hive.common.HiveParameterKeys;
 import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.di.hive.common.HiveParameterKeys;
 import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.multiprocessing.Lock;
 import com.airbnb.di.multiprocessing.LockSet;
 import org.apache.commons.logging.Log;
@@ -22,6 +22,14 @@ public class DropPartitionTask implements ReplicationTask {
   private HiveObjectSpec spec;
   private Optional<String> srcTldt;
 
+  /**
+   * TODO.
+   *
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param spec TODO
+   * @param srcTldt TODO
+   */
   public DropPartitionTask(
       Cluster srcCluster,
       Cluster destCluster,
@@ -35,7 +43,6 @@ public class DropPartitionTask implements ReplicationTask {
 
   @Override
   public RunInfo runTask() throws HiveMetastoreException {
-    HiveMetastoreClient ms = destCluster.getMetastoreClient();
     LOG.debug("Looking to drop: " + spec);
     LOG.debug("Source object TLDT is: " + srcTldt);
 
@@ -45,6 +52,7 @@ public class DropPartitionTask implements ReplicationTask {
     }
     String expectedTldt = srcTldt.get();
 
+    HiveMetastoreClient ms = destCluster.getMetastoreClient();
     Partition destPartition =
         ms.getPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName());
 

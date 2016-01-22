@@ -1,12 +1,12 @@
 package com.airbnb.di.hive.replication.configuration;
 
-import com.airbnb.di.hive.common.ThriftHiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.ThriftHiveMetastoreClient;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import org.apache.hadoop.fs.Path;
 
 /**
- * A cluster defined with manual hard coded values
+ * A cluster defined with manual hard coded values.
  */
 public class HardCodedCluster implements Cluster {
 
@@ -18,6 +18,17 @@ public class HardCodedCluster implements Cluster {
   private Path hdfsRoot;
   private Path tmpDir;
 
+  /**
+   * TODO.
+   *
+   * @param name TODO
+   * @param metastoreHost TODO
+   * @param metastorePort TODO
+   * @param jobtrackerHost TODO
+   * @param jobtrackerPort TODO
+   * @param hdfsRoot TODO
+   * @param tmpDir TODO
+   */
   public HardCodedCluster(
       String name,
       String metastoreHost,

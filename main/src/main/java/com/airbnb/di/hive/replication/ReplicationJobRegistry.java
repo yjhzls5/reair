@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Keeps track of a set of jobs
+ * Keeps track of a set of jobs.
  */
 public class ReplicationJobRegistry {
 
@@ -21,15 +21,20 @@ public class ReplicationJobRegistry {
 
   public ReplicationJobRegistry() {}
 
-  synchronized public void registerJob(ReplicationJob job) {
+  public synchronized void registerJob(ReplicationJob job) {
     idToReplicationJob.put(job.getId(), job);
   }
 
-  synchronized public ReplicationJob getJob(long id) {
+  public synchronized ReplicationJob getJob(long id) {
     return idToReplicationJob.get(id);
   }
 
-  synchronized public ReplicationJob getJobWithSmallestId() {
+  /**
+   * TODO.
+   *
+   * @return TODO
+   */
+  public synchronized ReplicationJob getJobWithSmallestId() {
     if (idToReplicationJob.size() == 0) {
       return null;
     } else {
@@ -43,11 +48,17 @@ public class ReplicationJobRegistry {
    * @return a collection containing all the active replication jobs. The jobs are returned ordered
    *         by id ascending.
    */
-  synchronized public Collection<ReplicationJob> getActiveJobs() {
+  public synchronized Collection<ReplicationJob> getActiveJobs() {
     return new ArrayList<>(idToReplicationJob.values());
   }
 
-  synchronized public boolean retireJob(ReplicationJob job) {
+  /**
+   * TODO.
+   *
+   * @param job TODO
+   * @return TODO
+   */
+  public synchronized boolean retireJob(ReplicationJob job) {
     ReplicationJob removedJob = idToReplicationJob.remove(job.getId());
 
     if (removedJob == null) {
@@ -65,7 +76,7 @@ public class ReplicationJobRegistry {
     return true;
   }
 
-  synchronized public Collection<ReplicationJob> getRetiredJobs() {
+  public synchronized Collection<ReplicationJob> getRetiredJobs() {
     return new ArrayList<>(retiredJobs);
   }
 

@@ -19,15 +19,18 @@ import java.util.Set;
 public class AuditLogHookUtils {
   /**
    * In the MySQL DB, setup the DB and the tables for the audit log to work properly.
-   * 
-   * @param connectionFactory
-   * @param dbName
-   * @param auditLogTableName
-   * @param objectsTableName
-   * @throws java.sql.SQLException
+   *
+   * @param connectionFactory TODO
+   * @param dbName TODO
+   * @param auditLogTableName TODO
+   * @param objectsTableName TODO
+   * @throws java.sql.SQLException TODO
    */
-  public static void setupAuditLogTables(DbConnectionFactory connectionFactory, String dbName,
-      String auditLogTableName, String objectsTableName) throws SQLException {
+  public static void setupAuditLogTables(
+      DbConnectionFactory connectionFactory,
+      String dbName,
+      String auditLogTableName,
+      String objectsTableName) throws SQLException {
 
     // Define the SQL that will do the creation
     String createDbSql = String.format("CREATE DATABASE %s", dbName);
@@ -71,6 +74,23 @@ public class AuditLogHookUtils {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param mySqlDb TODO
+   * @param auditLogHook TODO
+   * @param operation TODO
+   * @param command TODO
+   * @param inputTables TODO
+   * @param inputPartitions TODO
+   * @param outputTables TODO
+   * @param outputPartitions TODO
+   * @param dbName TODO
+   * @param auditLogTableName TODO
+   * @param outputObjectsTableName TODO
+   *
+   * @throws Exception TODO
+   */
   public static void insertAuditLogEntry(
       EmbeddedMySqlDb mySqlDb,
       AuditLogHook auditLogHook,

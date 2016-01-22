@@ -1,5 +1,8 @@
 package com.airbnb.di.hive.replication.webserver;
 
+import static spark.Spark.get;
+import static spark.Spark.port;
+
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -13,14 +16,17 @@ import spark.ModelAndView;
 import java.util.HashMap;
 import java.util.Map;
 
-import static spark.Spark.get;
-import static spark.Spark.port;
-
 public class WebServer {
 
   private static Logger LOG = LoggerFactory.getLogger(WebServer.class);
 
-  // Warning suppression needed for the OptionBuilder API
+  /**
+   * TODO. Warning suppression needed for the OptionBuilder API
+   *
+   * @param argv TODO
+   *
+   * @throws Exception TODO
+   */
   @SuppressWarnings("static-access")
   public static void main(final String[] argv) throws Exception {
     Options options = new Options();

@@ -26,6 +26,14 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
   private TTransport transport;
   private ThriftHiveMetastore.Client client;
 
+  /**
+   * TODO.
+   *
+   * @param host TODO
+   * @param port TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
   public ThriftHiveMetastoreClient(String host, int port) throws HiveMetastoreException {
     this.host = host;
     this.port = port;
@@ -34,6 +42,11 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
     connect();
   }
 
+  /**
+   * TODO.
+   *
+   * @throws HiveMetastoreException TODO
+   */
   private void connect() throws HiveMetastoreException {
 
     transport = new TSocket(host, port, 1000 * clientSocketTimeout);
@@ -47,19 +60,39 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
     }
   }
 
+  /**
+   * TODO.
+   */
   public void close() {
     transport.close();
   }
 
-  synchronized public Partition addPartition(Partition p) throws HiveMetastoreException {
+  /**
+   * TODO.
+   *
+   * @param partition TODO
+   * @return TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
+  public synchronized Partition addPartition(Partition partition) throws HiveMetastoreException {
     try {
-      return client.add_partition(p);
+      return client.add_partition(partition);
     } catch (TException e) {
       throw new HiveMetastoreException(e);
     }
   }
 
-  synchronized public Table getTable(String dbName, String tableName)
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @return TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
+  public synchronized Table getTable(String dbName, String tableName)
       throws HiveMetastoreException {
 
     try {
@@ -71,7 +104,17 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
     }
   }
 
-  synchronized public Partition getPartition(String dbName, String tableName, String partitionName)
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @param partitionName TODO
+   * @return TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
+  public synchronized Partition getPartition(String dbName, String tableName, String partitionName)
       throws HiveMetastoreException {
 
     try {
@@ -94,48 +137,110 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
     }
   }
 
-  synchronized public void alterPartition(String dbName, String tableName, Partition p)
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @param partition TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
+  public synchronized void alterPartition(String dbName, String tableName, Partition partition)
       throws HiveMetastoreException {
     try {
-      client.alter_partition(dbName, tableName, p);
+      client.alter_partition(dbName, tableName, partition);
     } catch (TException e) {
       throw new HiveMetastoreException(e);
     }
   }
 
-  synchronized public void alterTable(String dbName, String tableName, Table t)
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @param table TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
+  public synchronized void alterTable(String dbName, String tableName, Table table)
       throws HiveMetastoreException {
     try {
-      client.alter_table(dbName, tableName, t);
+      client.alter_table(dbName, tableName, table);
     } catch (TException e) {
       throw new HiveMetastoreException(e);
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @return TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
   public boolean isPartitioned(String dbName, String tableName) throws HiveMetastoreException {
-    Table t = getTable(dbName, tableName);
-    return t != null && t.getPartitionKeys().size() > 0;
+    Table table = getTable(dbName, tableName);
+    return table != null && table.getPartitionKeys().size() > 0;
   }
 
-  synchronized public boolean existsPartition(String dbName, String tableName, String partitionName)
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @param partitionName TODO
+   * @return TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
+  public synchronized boolean existsPartition(String dbName, String tableName, String partitionName)
       throws HiveMetastoreException {
     return getPartition(dbName, tableName, partitionName) != null;
   }
 
-  synchronized public boolean existsTable(String dbName, String tableName)
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @return TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
+  public synchronized boolean existsTable(String dbName, String tableName)
       throws HiveMetastoreException {
     return getTable(dbName, tableName) != null;
   }
 
-  synchronized public void createTable(Table t) throws HiveMetastoreException {
+  /**
+   * TODO.
+   *
+   * @param table TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
+  public synchronized void createTable(Table table) throws HiveMetastoreException {
     try {
-      client.create_table(t);
+      client.create_table(table);
     } catch (TException e) {
       throw new HiveMetastoreException(e);
     }
   }
 
-  synchronized public void dropTable(String dbName, String tableName, boolean deleteData)
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @param deleteData TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
+  public synchronized void dropTable(String dbName, String tableName, boolean deleteData)
       throws HiveMetastoreException {
     try {
       client.drop_table(dbName, tableName, deleteData);
@@ -144,7 +249,17 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
     }
   }
 
-  synchronized public void dropPartition(String dbName, String tableName, String partitionName,
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @param partitionName TODO
+   * @param deleteData TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
+  public synchronized void dropPartition(String dbName, String tableName, String partitionName,
       boolean deleteData) throws HiveMetastoreException {
     try {
       client.drop_partition_by_name(dbName, tableName, partitionName, deleteData);
@@ -153,7 +268,13 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
     }
   }
 
-  synchronized public Map<String, String> partitionNameToMap(String partitionName)
+  /**
+   * TODO.
+   *
+   * @param partitionName TODO
+   * @return TODO
+   */
+  public synchronized Map<String, String> partitionNameToMap(String partitionName)
       throws HiveMetastoreException {
     try {
       return client.partition_name_to_spec(partitionName);
@@ -163,7 +284,7 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
   }
 
   @Override
-  synchronized public void createDatabase(Database db) throws HiveMetastoreException {
+  public synchronized void createDatabase(Database db) throws HiveMetastoreException {
     try {
       client.create_database(db);
     } catch (TException e) {
@@ -172,7 +293,7 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
   }
 
   @Override
-  synchronized public Database getDatabase(String dbName) throws HiveMetastoreException {
+  public synchronized Database getDatabase(String dbName) throws HiveMetastoreException {
     try {
       return client.get_database(dbName);
     } catch (NoSuchObjectException e) {
@@ -183,12 +304,12 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
   }
 
   @Override
-  synchronized public boolean existsDb(String dbName) throws HiveMetastoreException {
+  public synchronized boolean existsDb(String dbName) throws HiveMetastoreException {
     return getDatabase(dbName) != null;
   }
 
   @Override
-  synchronized public List<String> getPartitionNames(String dbName, String tableName)
+  public synchronized List<String> getPartitionNames(String dbName, String tableName)
       throws HiveMetastoreException {
     try {
       return client.get_partition_names(dbName, tableName, (short) -1);
@@ -198,7 +319,7 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
   }
 
   @Override
-  synchronized public List<String> getTables(String dbName, String tableName)
+  public synchronized List<String> getTables(String dbName, String tableName)
       throws HiveMetastoreException {
     try {
       return client.get_tables(dbName, tableName);
@@ -208,8 +329,11 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
   }
 
   @Override
-  synchronized public Partition exchangePartition(Map<String, String> partitionSpecs,
-      String sourceDb, String sourceTable, String destDb, String destinationTableName)
+  public synchronized Partition exchangePartition(
+      Map<String, String> partitionSpecs,
+      String sourceDb, String sourceTable,
+      String destDb,
+      String destinationTableName)
           throws HiveMetastoreException {
     try {
       return client.exchange_partition(partitionSpecs, sourceDb, sourceTable, destDb,
@@ -220,15 +344,24 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
   }
 
   @Override
-  public void renamePartition(String db, String table, List<String> partitionValues, Partition p)
+  public void renamePartition(
+      String db,
+      String table,
+      List<String> partitionValues,
+      Partition partition)
       throws HiveMetastoreException {
     try {
-      client.rename_partition(db, table, partitionValues, p);
+      client.rename_partition(db, table, partitionValues, partition);
     } catch (TException e) {
       throw new HiveMetastoreException(e);
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   */
   public List<String> getAllDatabases() throws HiveMetastoreException {
     try {
       return client.get_all_databases();
@@ -237,9 +370,15 @@ public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
     }
   }
 
-  public List<String> getAllTables(String db_name) throws HiveMetastoreException {
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @return TODO
+   */
+  public List<String> getAllTables(String dbName) throws HiveMetastoreException {
     try {
-      return client.get_all_tables(db_name);
+      return client.get_all_tables(dbName);
     } catch (TException e) {
       throw new HiveMetastoreException(e);
     }

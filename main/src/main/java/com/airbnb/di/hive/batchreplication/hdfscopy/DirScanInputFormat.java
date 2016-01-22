@@ -2,6 +2,7 @@ package com.airbnb.di.hive.batchreplication.hdfscopy;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -17,7 +18,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.InvalidInputException;
 
-import javax.annotation.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 
 /**
  * InputFormat that scan directories bread first. It will stop at a level when it gets enough
@@ -38,8 +39,8 @@ import java.util.concurrent.Future;
 public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
   private static final Log LOG = LogFactory.getLog(DirScanInputFormat.class);
   private static final PathFilter hiddenFileFilter = new PathFilter() {
-    public boolean accept(Path p) {
-      String name = p.getName();
+    public boolean accept(Path path) {
+      String name = path.getName();
       return !name.startsWith("_") && !name.startsWith(".");
     }
   };
@@ -65,14 +66,15 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
       ArrayList errors = new ArrayList();
 
       for (int i = 0; i < dirs.length; ++i) {
-        Path p = dirs[i];
+        Path path = dirs[i];
         Configuration conf = job.getConfiguration();
-        FileSystem fs = p.getFileSystem(conf);
-        FileStatus[] matches = nofilter ? fs.globStatus(p) : fs.globStatus(p, hiddenFileFilter);
+        FileSystem fs = path.getFileSystem(conf);
+        FileStatus[] matches = nofilter ? fs.globStatus(path)
+                                        : fs.globStatus(path, hiddenFileFilter);
         if (matches == null) {
-          errors.add(new IOException("Input path does not exist: " + p));
+          errors.add(new IOException("Input path does not exist: " + path));
         } else if (matches.length == 0) {
-          errors.add(new IOException("Input Pattern " + p + " matches 0 files"));
+          errors.add(new IOException("Input Pattern " + path + " matches 0 files"));
         } else {
           for (FileStatus globStat : matches) {
             if (globStat.isDir()) {

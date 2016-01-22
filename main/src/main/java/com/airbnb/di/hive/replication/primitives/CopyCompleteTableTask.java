@@ -1,13 +1,13 @@
 package com.airbnb.di.hive.replication.primitives;
 
 import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveUtils;
-import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.multiprocessing.Lock;
@@ -46,6 +46,19 @@ public class CopyCompleteTableTask implements ReplicationTask {
   private ParallelJobExecutor copyPartitionsExecutor;
   private DirectoryCopier directoryCopier;
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param objectModifier TODO
+   * @param objectConflictHandler TODO
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param spec TODO
+   * @param tableLocation TODO
+   * @param copyPartitionsExecutor TODO
+   * @param directoryCopier TODO
+   */
   public CopyCompleteTableTask(
       Configuration conf,
       DestinationObjectFactory objectModifier,
@@ -67,6 +80,13 @@ public class CopyCompleteTableTask implements ReplicationTask {
     this.directoryCopier = directoryCopier;
   }
 
+  /**
+   * TODO.
+   *
+   * @throws DistCpException TODO
+   * @throws HiveMetastoreException TODO
+   * @throws IOException TODO
+   */
   public RunInfo runTask() throws DistCpException, HiveMetastoreException, IOException {
     LOG.debug("Copying " + spec);
 

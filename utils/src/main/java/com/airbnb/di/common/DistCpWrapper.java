@@ -27,6 +27,15 @@ public class DistCpWrapper {
     this.conf = conf;
   }
 
+  /**
+   * TODO.
+   *
+   * @param options TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   * @throws DistCpException TODO
+   */
   public long copy(DistCpWrapperOptions options) throws IOException, DistCpException {
 
     if (Thread.currentThread().isInterrupted()) {
@@ -195,12 +204,12 @@ public class DistCpWrapper {
   /**
    * Run distcp in a separate thread, but kill the thread if runtime exceeds timeout.
    *
-   * @param distCp
-   * @param options
-   * @param timeout
-   * @param pollInterval
-   * @return
-   * @throws InterruptedException
+   * @param distCp TODO
+   * @param options TODO
+   * @param timeout TODO
+   * @param pollInterval TODO
+   * @return TODO
+   * @throws InterruptedException TODO
    */
   private int runDistCp(final DistCp distCp, final List<String> options, long timeout,
       long pollInterval) throws DistCpException {

@@ -7,7 +7,7 @@ import org.apache.hadoop.fs.Path;
 
 /**
  * Encapsulates information about a cluster - generally a HDFS, MR, and a Hive metastore that are
- * considered as a unit
+ * considered as a unit.
  */
 public interface Cluster {
   public HiveMetastoreClient getMetastoreClient() throws HiveMetastoreException;

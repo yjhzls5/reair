@@ -32,6 +32,14 @@ public class DistCpWrapperOptions {
   // Poll for the progress of DistCp every N ms
   private long distCpPollInterval = 2500;
 
+  /**
+   * TODO.
+   *
+   * @param srcDir TODO
+   * @param destDir TODO
+   * @param distCpTmpDir TODO
+   * @param distCpLogDir TODO
+   */
   public DistCpWrapperOptions(Path srcDir, Path destDir, Path distCpTmpDir, Path distCpLogDir) {
     this.srcDir = srcDir;
     this.destDir = destDir;

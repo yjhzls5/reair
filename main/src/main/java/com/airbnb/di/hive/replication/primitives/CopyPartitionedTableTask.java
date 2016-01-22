@@ -1,14 +1,14 @@
 package com.airbnb.di.hive.replication.primitives;
 
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveUtils;
-import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
-import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.multiprocessing.Lock;
 import com.airbnb.di.multiprocessing.LockSet;
 import org.apache.commons.logging.Log;
@@ -31,6 +31,17 @@ public class CopyPartitionedTableTask implements ReplicationTask {
   private HiveObjectSpec spec;
   private Optional<Path> srcPath;
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param destObjectFactory TODO
+   * @param objectConflictHandler TODO
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param spec TODO
+   * @param srcPath TODO
+   */
   public CopyPartitionedTableTask(
       Configuration conf,
       DestinationObjectFactory destObjectFactory,
@@ -48,6 +59,11 @@ public class CopyPartitionedTableTask implements ReplicationTask {
     this.srcPath = srcPath;
   }
 
+  /**
+   * TODO.
+   *
+   * @throws HiveMetastoreException TODO
+   */
   public RunInfo runTask() throws HiveMetastoreException {
     LOG.debug("Copying " + spec);
     HiveMetastoreClient destMs = destCluster.getMetastoreClient();

@@ -6,11 +6,11 @@ public class ProcessRunException extends Exception {
     super(message);
   }
 
-  public ProcessRunException(Exception e) {
-    super(e);
+  public ProcessRunException(Exception exception) {
+    super(exception);
   }
 
-  public ProcessRunException(String message, Exception e) {
-    super(message, e);
+  public ProcessRunException(String message, Exception exception) {
+    super(message, exception);
   }
 }

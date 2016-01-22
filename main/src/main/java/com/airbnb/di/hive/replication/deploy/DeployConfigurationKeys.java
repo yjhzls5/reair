@@ -1,7 +1,7 @@
 package com.airbnb.di.hive.replication.deploy;
 
 /**
- * Keys used in the configuration for deploying the replication server
+ * Keys used in the configuration for deploying the replication server.
  */
 public class DeployConfigurationKeys {
   public static final String AUDIT_LOG_JDBC_URL = "airbnb.reair.audit_log.db.jdbc";

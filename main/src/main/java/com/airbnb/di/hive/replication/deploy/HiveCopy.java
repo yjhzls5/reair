@@ -1,15 +1,15 @@
 package com.airbnb.di.hive.replication.deploy;
 
 import com.airbnb.di.common.ArgumentException;
-import com.airbnb.di.common.CLIUtils;
+import com.airbnb.di.common.CliUtils;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.ThriftHiveMetastoreClient;
 import com.airbnb.di.hive.replication.DirectoryCopier;
-import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.HardCodedCluster;
+import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
@@ -31,7 +31,14 @@ public class HiveCopy {
 
   private static final Log LOG = LogFactory.getLog(HiveCopy.class);
 
-  // Warning suppression needed for the OptionBuilder API
+  /**
+   * TODO. Warning suppression needed for the OptionBuilder API
+   *
+   * @param args TODO
+   * @return TODO
+   *
+   * @throws Exception TODO
+   */
   @SuppressWarnings("static-access")
   public static int main(String[] args) throws Exception {
     Options options = new Options();
@@ -64,7 +71,7 @@ public class HiveCopy {
     String op = null;
 
     if (cl.hasOption("help")) {
-      CLIUtils.printHelp("<command>", options);
+      CliUtils.printHelp("<command>", options);
     }
 
     if (cl.hasOption("config-file")) {

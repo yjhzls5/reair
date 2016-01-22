@@ -1,17 +1,20 @@
 package com.airbnb.di.hive.hooks;
 
+import com.airbnb.di.db.DbCredentials;
 import com.airbnb.di.utils.RetryableTask;
 import com.airbnb.di.utils.RetryingTaskRunner;
-import com.airbnb.di.db.DbCredentials;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.ql.hooks.*;
+import org.apache.hadoop.hive.ql.hooks.Entity;
+import org.apache.hadoop.hive.ql.hooks.LineageInfo;
+import org.apache.hadoop.hive.ql.hooks.PostExecute;
+import org.apache.hadoop.hive.ql.hooks.ReadEntity;
+import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.session.SessionState;
-
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TSerializer;
@@ -209,8 +212,8 @@ public class AuditLogHook implements PostExecute {
 
         for (org.apache.hadoop.hive.ql.metadata.Table t : tableForPartition) {
           // Using DDL_NO_LOCK but the value shouldn't matter
-          WriteEntity e = new WriteEntity(t, WriteEntity.WriteType.DDL_NO_LOCK);
-          addToObjectsTable(outputObjPs, auditLogId, ObjectCategory.REFERENCE_TABLE, e);
+          WriteEntity entity = new WriteEntity(t, WriteEntity.WriteType.DDL_NO_LOCK);
+          addToObjectsTable(outputObjPs, auditLogId, ObjectCategory.REFERENCE_TABLE, entity);
         }
         connection.commit();
       }
@@ -221,25 +224,25 @@ public class AuditLogHook implements PostExecute {
   }
 
   /**
-   * Insert the given entity into the objects table using the given {@code ps}
-   * 
-   * @param ps
-   * @param auditLogId
-   * @param category
-   * @param e
-   * @throws Exception
+   * Insert the given entity into the objects table using the given {@code ps}.
+   *
+   * @param ps TODO
+   * @param auditLogId TODO
+   * @param category TODO
+   * @param e TODO
+   * @throws Exception TODO
    */
   private static void addToObjectsTable(
       PreparedStatement ps,
       long auditLogId,
       ObjectCategory category,
-      Entity e) throws Exception {
+      Entity entity) throws Exception {
     int outputObjPsIndex = 1;
     ps.setLong(outputObjPsIndex++, auditLogId);
     ps.setString(outputObjPsIndex++, category.toString());
-    ps.setString(outputObjPsIndex++, e.getType().toString());
-    ps.setString(outputObjPsIndex++, toIdentifierString(e));
-    ps.setString(outputObjPsIndex++, toJson(e));
+    ps.setString(outputObjPsIndex++, entity.getType().toString());
+    ps.setString(outputObjPsIndex++, toIdentifierString(entity));
+    ps.setString(outputObjPsIndex++, toJson(entity));
     ps.executeUpdate();
   }
 
@@ -247,75 +250,81 @@ public class AuditLogHook implements PostExecute {
    * Convert the given entity into a string that can be used to identify the object in the audit log
    * table.
    *
-   * @param e
+   * @param entity TODO
    * @return a string representing {@code e}
-   * @throws Exception
+   * @throws Exception TODO
    */
-  private static String toIdentifierString(Entity e) throws Exception {
-    switch (e.getType()) {
+  private static String toIdentifierString(Entity entity) throws Exception {
+    switch (entity.getType()) {
       case DATABASE:
-        return e.getDatabase().getName();
+        return entity.getDatabase().getName();
       case TABLE:
-        return String.format("%s.%s", e.getTable().getDbName(), e.getTable().getTableName());
+        return String.format(
+            "%s.%s",
+            entity.getTable().getDbName(),
+            entity.getTable().getTableName());
       case PARTITION:
       case DUMMYPARTITION:
-        return String.format("%s.%s/%s", e.getPartition().getTPartition().getDbName(),
-            e.getPartition().getTPartition().getTableName(), e.getPartition().getName());
+        return String.format("%s.%s/%s", entity.getPartition().getTPartition().getDbName(),
+            entity.getPartition().getTPartition().getTableName(), entity.getPartition().getName());
       case LOCAL_DIR:
       case DFS_DIR:
-        return e.getLocation().toString();
+        return entity.getLocation().toString();
       default:
-        throw new UnhandledTypeExecption("Unhandled type: " + e.getType() + " entity: " + e);
+        throw new UnhandledTypeExecption(
+            "Unhandled type: " + entity.getType() + " entity: " + entity);
     }
   }
 
   /**
-   * Converts the object that the entity represents into a JSON string
-   * 
+   * Converts the object that the entity represents into a JSON string.
+   *
    * @param e the entity to convert
    *
    * @return a JSON representation of {@code e}
-   * @throws Exception@
+   * @throws Exception@ TODO
    */
-  private static String toJson(Entity e) throws Exception {
+  private static String toJson(Entity entity) throws Exception {
     TSerializer serializer = new TSerializer(new TJSONProtocol.Factory());
-    switch (e.getType()) {
+    switch (entity.getType()) {
       case DATABASE:
-        Database db = e.getDatabase();
+        Database db = entity.getDatabase();
         return serializer.toString(db);
       case TABLE:
-        Table tableWithLocation = new Table(e.getTable().getTTable());
-        URI dataLocation = e.getLocation();
+        Table tableWithLocation = new Table(entity.getTable().getTTable());
+        URI dataLocation = entity.getLocation();
         tableWithLocation.getSd()
             .setLocation(dataLocation == null ? null : dataLocation.toString());
-        return serializer.toString(e.getTable().getTTable());
+        return serializer.toString(entity.getTable().getTTable());
       case PARTITION:
       case DUMMYPARTITION:
-        Partition partitionWithLocation = new Partition(e.getPartition().getTPartition());
-        partitionWithLocation.getSd().setLocation(e.getPartition().getDataLocation().toString());
-        return serializer.toString(e.getPartition().getTPartition());
+        Partition partitionWithLocation = new Partition(entity.getPartition().getTPartition());
+        partitionWithLocation.getSd().setLocation(
+            entity.getPartition().getDataLocation().toString());
+        return serializer.toString(entity.getPartition().getTPartition());
       case LOCAL_DIR:
       case DFS_DIR:
-        return e.getLocation().toString();
+        return entity.getLocation().toString();
       default:
-        throw new UnhandledTypeExecption("Unhandled type: " + e.getType() + " entity: " + e);
+        throw new UnhandledTypeExecption(
+            "Unhandled type: " + entity.getType() + " entity: " + entity);
     }
   }
 
   /**
    * Converts the entities into a JSON object. Resulting object will look like:
    *
-   * { "tables": [t1, t2...], "partitions": [p1, p2...], "dummy_partitions": [p1, p2...],
+   * <p>{ "tables": [t1, t2...], "partitions": [p1, p2...], "dummy_partitions": [p1, p2...],
    * "local_directories": [d1, d2...], "dfs_directories": [d1, d2...] }
    *
-   * Where t1... and p1... objects are JSON objects that represent the thrift metadata object. If
+   * <p>Where t1... and p1... objects are JSON objects that represent the thrift metadata object. If
    * identifierOnly is true, then only a short string representation of the object will be used
-   * instead. e.g. "default.my_table" or "default.my_partitioned_table/ds=1"
+   * instead. e.g. "default.my_table" or "default.my_partitioned_table/ds=1".
    *
-   * @param entities
-   * @param identifierOnly
-   * @return
-   * @throws Exception
+   * @param entities TODO
+   * @param identifierOnly TODO
+   * @return TODO
+   * @throws Exception TODO
    */
   private static String toJson(Collection<? extends Entity> entities, boolean identifierOnly)
       throws Exception {
@@ -375,8 +384,8 @@ public class AuditLogHook implements PostExecute {
 
     for (Database db : databases) {
       if (identifierOnly) {
-        String i = String.format("%s", db.getName());
-        jsonDatabases.put(i);
+        String jsonDb = String.format("%s", db.getName());
+        jsonDatabases.put(jsonDb);
       } else {
         jsonDatabases.put(new JSONObject(serializer.toString(db)));
       }
@@ -384,8 +393,8 @@ public class AuditLogHook implements PostExecute {
 
     for (Table t : tables) {
       if (identifierOnly) {
-        String i = String.format("%s.%s", t.getDbName(), t.getTableName());
-        jsonTables.put(i);
+        String jsonTable = String.format("%s.%s", t.getDbName(), t.getTableName());
+        jsonTables.put(jsonTable);
       } else {
         jsonTables.put(new JSONObject(serializer.toString(t)));
       }
@@ -393,9 +402,9 @@ public class AuditLogHook implements PostExecute {
 
     for (Partition p : partitions) {
       if (identifierOnly) {
-        String i =
+        String jsonPartition =
             String.format("%s.%s/%s", p.getDbName(), p.getTableName(), partitionNames.get(p));
-        jsonPartitions.put(i);
+        jsonPartitions.put(jsonPartition);
       } else {
         jsonPartitions.put(new JSONObject(serializer.toString(p)));
       }
@@ -403,9 +412,9 @@ public class AuditLogHook implements PostExecute {
 
     for (Partition p : dummyPartitions) {
       if (identifierOnly) {
-        String i =
+        String dummyJsonPartition =
             String.format("%s.%s/%s", p.getDbName(), p.getTableName(), partitionNames.get(p));
-        jsonDummyPartitions.put(i);
+        jsonDummyPartitions.put(dummyJsonPartition);
       } else {
         jsonDummyPartitions.put(new JSONObject(serializer.toString(p)));
       }

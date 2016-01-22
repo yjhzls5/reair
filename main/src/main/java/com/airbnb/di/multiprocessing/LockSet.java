@@ -11,12 +11,20 @@ public class LockSet {
   private Set<String> exclusiveLockNames;
   private Set<String> sharedLockNames;
 
+  /**
+   * TODO.
+   */
   public LockSet() {
     allLocks = new HashSet<>();
     exclusiveLockNames = new HashSet<>();
     sharedLockNames = new HashSet<>();
   }
 
+  /**
+   * TODO.
+   *
+   * @param lock TODO
+   */
   public void add(Lock lock) {
     allLocks.add(lock);
     if (lock.getType() == Lock.Type.SHARED) {
@@ -28,6 +36,12 @@ public class LockSet {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param lockName TODO
+   * @return TODO
+   */
   public Lock.Type getType(String lockName) {
     if (sharedLockNames.contains(lockName)) {
       return Lock.Type.SHARED;

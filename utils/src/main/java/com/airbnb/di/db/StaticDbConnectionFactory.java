@@ -20,6 +20,13 @@ public class StaticDbConnectionFactory implements DbConnectionFactory {
   private Connection connection;
   private RetryingTaskRunner retryingTaskRunner;
 
+  /**
+   * TODO.
+   *
+   * @param jdbcUrl TODO
+   * @param username TODO
+   * @param password TODO
+   */
   public StaticDbConnectionFactory(String jdbcUrl, String username, String password) {
     this.jdbcUrl = jdbcUrl;
     this.username = username;

@@ -22,6 +22,9 @@ public class EmbeddedMySqlDb {
   private String password;
   private MysqldResource mysqldResource;
 
+  /**
+   * TODO.
+   */
   public EmbeddedMySqlDb() {
     databaseDir = System.getProperty("java.io.tmpdir");
     databaseName = "test_db_" + System.nanoTime();
@@ -32,6 +35,9 @@ public class EmbeddedMySqlDb {
     password = "";
   }
 
+  /**
+   * TODO.
+   */
   public void startDb() {
     Map<String, String> databaseOptions = new HashMap<>();
     databaseOptions.put(MysqldResourceI.PORT, Integer.toString(port));

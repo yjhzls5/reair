@@ -1,16 +1,16 @@
 package com.airbnb.di.hive.replication.primitives;
 
-import com.airbnb.di.common.FsUtils;
 import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.di.common.FsUtils;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.DirectoryCopier;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
-import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.multiprocessing.Lock;
 import com.airbnb.di.multiprocessing.LockSet;
 import org.apache.commons.lang.StringUtils;
@@ -30,7 +30,7 @@ import java.util.Optional;
  * exist on the destination, then it's possible that multiple copy partition jobs try to create the
  * same partitioned table.
  *
- * This can result in a failure, but should be corrected on a retry.
+ * <p>This can result in a failure, but should be corrected on a retry.
  */
 
 public class CopyPartitionTask implements ReplicationTask {
@@ -49,6 +49,20 @@ public class CopyPartitionTask implements ReplicationTask {
   private boolean allowDataCopy;
 
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param destObjectFactory TODO
+   * @param objectConflictHandler TODO
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param spec TODO
+   * @param partitionLocation TODO
+   * @param optimisticCopyRoot TODO
+   * @param directoryCopier TODO
+   * @param allowDataCopy TODO
+   */
   public CopyPartitionTask(
       Configuration conf,
       DestinationObjectFactory destObjectFactory,
@@ -72,6 +86,9 @@ public class CopyPartitionTask implements ReplicationTask {
     this.allowDataCopy = allowDataCopy;
   }
 
+  /**
+   * TODO.
+   */
   public RunInfo runTask() throws HiveMetastoreException, DistCpException, IOException {
     LOG.debug("Copying " + spec);
 

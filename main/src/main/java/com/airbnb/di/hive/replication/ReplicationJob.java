@@ -25,6 +25,13 @@ public class ReplicationJob extends Job {
   private OnStateChangeHandler onStateChangeHandler;
   private PersistedJobInfo persistedJobInfo;
 
+  /**
+   * TODO.
+   *
+   * @param replicationTask TODO
+   * @param onStateChangeHandler TODO
+   * @param persistedJobInfo TODO
+   */
   public ReplicationJob(
       ReplicationTask replicationTask,
       OnStateChangeHandler onStateChangeHandler,
@@ -86,13 +93,23 @@ public class ReplicationJob extends Job {
 
   @Override
   public String toString() {
-    return "ReplicationJob{" + "persistedJobInfo=" + persistedJobInfo + '}';
+    return "ReplicationJob{" + "persistedJobInfo=" + persistedJobInfo + "}";
   }
 
+  /**
+   * TODO
+   *
+   * @return TODO.
+   */
   public long getId() {
     return persistedJobInfo.getId();
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   */
   public long getCreateTime() {
     Optional<String> createTime = Optional.ofNullable(
         getPersistedJobInfo().getExtras().get(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY));
@@ -100,6 +117,11 @@ public class ReplicationJob extends Job {
     return createTime.map(Long::parseLong).orElse(Long.valueOf(0));
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   */
   public Collection<Long> getParentJobIds() {
     Set<Job> parentJobs = getParentJobs();
     List<Long> parentJobIds = new ArrayList<>();

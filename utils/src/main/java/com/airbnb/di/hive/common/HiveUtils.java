@@ -9,23 +9,34 @@ import java.util.Map;
 
 public class HiveUtils {
   /**
+   * TODO.
    *
-   * @param t
+   * @param table TODO
    * @return true if the given table is partitioned.
    */
-  public static boolean isPartitioned(Table t) {
-    return t.getPartitionKeys().size() > 0;
+  public static boolean isPartitioned(Table table) {
+    return table.getPartitionKeys().size() > 0;
   }
 
   /**
+   * TODO.
    *
-   * @param t
+   * @param table TODO
    * @return true if the given table is a view.
    */
-  public static boolean isView(Table t) {
-    return TableType.VIRTUAL_VIEW.name().equals(t.getTableType());
+  public static boolean isView(Table table) {
+    return TableType.VIRTUAL_VIEW.name().equals(table.getTableType());
   }
 
+  /**
+   * TODO.
+   *
+   * @param ms TODO
+   * @param partitionName TODO
+   * @return TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
   public static List<String> partitionNameToValues(HiveMetastoreClient ms, String partitionName)
       throws HiveMetastoreException {
     // Convert the name to a key-value map

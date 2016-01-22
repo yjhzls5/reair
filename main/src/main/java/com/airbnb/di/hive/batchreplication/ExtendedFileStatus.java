@@ -11,6 +11,13 @@ public class ExtendedFileStatus {
   private final long modificationTime;
   private final String[] fileNameParts;
 
+  /**
+   * TODO.
+   *
+   * @param path TODO
+   * @param fileSize TODO
+   * @param modificationTime TODO
+   */
   public ExtendedFileStatus(String path, long fileSize, long modificationTime) {
     this.fileSize = fileSize;
     this.modificationTime = modificationTime;

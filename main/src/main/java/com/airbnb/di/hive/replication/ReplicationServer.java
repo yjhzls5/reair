@@ -1,5 +1,6 @@
 package com.airbnb.di.hive.replication;
 
+import com.airbnb.di.db.DbKeyValueStore;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.auditlog.AuditLogEntry;
 import com.airbnb.di.hive.replication.auditlog.AuditLogReader;
@@ -7,7 +8,6 @@ import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.filter.ReplicationFilter;
-import com.airbnb.di.db.DbKeyValueStore;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionsTask;
@@ -38,7 +38,7 @@ public class ReplicationServer implements TReplicationService.Iface {
 
   private static final Log LOG = LogFactory.getLog(ReplicationServer.class);
 
-  private final long POLL_WAIT_TIME_MS = 10 * 1000;
+  private static final long POLL_WAIT_TIME_MS = 10 * 1000;
 
   // If there is a need to wait to poll, wait this many ms
   private long pollWaitTimeMs = POLL_WAIT_TIME_MS;
@@ -129,6 +129,21 @@ public class ReplicationServer implements TReplicationService.Iface {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param auditLogReader TODO
+   * @param keyValueStore TODO
+   * @param jobInfoStore TODO
+   * @param replicationFilter TODO
+   * @param directoryCopier TODO
+   * @param numWorkers TODO
+   * @param maxJobsInMemory TODO
+   * @param startAfterAuditLogId TODO
+   */
   public ReplicationServer(
       Configuration conf,
       Cluster srcCluster,
@@ -183,6 +198,12 @@ public class ReplicationServer implements TReplicationService.Iface {
 
   }
 
+  /**
+   * TODO.
+   *
+   * @param persistedJobInfo TODO
+   * @return TODO
+   */
   private ReplicationJob restoreReplicationJob(PersistedJobInfo persistedJobInfo) {
     ReplicationTask replicationTask = null;
 
@@ -238,8 +259,7 @@ public class ReplicationServer implements TReplicationService.Iface {
             persistedJobInfo.getSrcPath(), persistedJobInfo.getRenameToPath(),
             persistedJobInfo.getSrcObjectTldt(), copyPartitionJobExecutor, directoryCopier);
         break;
-      case RENAME_PARTITION:
-        // TODO: Handle rename partition
+      case RENAME_PARTITION: // TODO: Handle rename partition
       default:
         throw new UnsupportedOperationException(
             "Unhandled operation:" + persistedJobInfo.getOperation());
@@ -248,11 +268,24 @@ public class ReplicationServer implements TReplicationService.Iface {
     return new ReplicationJob(replicationTask, onStateChangeHandler, persistedJobInfo);
   }
 
+  /**
+   * TODO.
+   *
+   * @param job TODO
+   */
   public void queueJobForExecution(ReplicationJob job) {
     jobExecutor.add(job);
     counters.incrementCounter(ReplicationCounters.Type.EXECUTION_SUBMITTED_TASKS);
   }
 
+  /**
+   * TODO.
+   *
+   * @param jobsToComplete TODO
+   *
+   * @throws IOException TODO
+   * @throws SQLException TODO
+   */
   public void run(long jobsToComplete) throws IOException, SQLException {
 
     // Clear the counters so that we can accurate stats for this run
@@ -389,7 +422,7 @@ public class ReplicationServer implements TReplicationService.Iface {
   }
 
   /**
-   * Resets the counters - for testing purposes
+   * Resets the counters - for testing purposes.
    */
   public void clearCounters() {
     counters.clear();
@@ -407,15 +440,15 @@ public class ReplicationServer implements TReplicationService.Iface {
 
       if (job.getId() > afterId) {
         count++;
-        TReplicationJob tJob = ThriftObjectUtils.convert(job);
-        jobsToReturn.add(tJob);
+        TReplicationJob jobThrift = ThriftObjectUtils.convert(job);
+        jobsToReturn.add(jobThrift);
       }
     }
     return jobsToReturn;
   }
 
   @Override
-  synchronized public void pause() throws TException {
+  public synchronized void pause() throws TException {
     LOG.debug("Paused requested");
     if (pauseRequested) {
       LOG.warn("Server is already paused!");
@@ -432,7 +465,7 @@ public class ReplicationServer implements TReplicationService.Iface {
   }
 
   @Override
-  synchronized public void resume() throws TException {
+  public synchronized void resume() throws TException {
     LOG.debug("Resume requested");
     if (!pauseRequested) {
       LOG.warn("Server is already resumed!");
@@ -465,8 +498,8 @@ public class ReplicationServer implements TReplicationService.Iface {
 
       if (job.getId() > afterId) {
         count++;
-        TReplicationJob tJob = ThriftObjectUtils.convert(job);
-        jobsToReturn.add(tJob);
+        TReplicationJob jobThrift = ThriftObjectUtils.convert(job);
+        jobsToReturn.add(jobThrift);
       }
     }
     return jobsToReturn;

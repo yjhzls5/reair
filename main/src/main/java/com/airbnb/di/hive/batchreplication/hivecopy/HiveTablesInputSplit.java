@@ -1,6 +1,7 @@
 package com.airbnb.di.hive.batchreplication.hivecopy;
 
 import com.google.common.base.Joiner;
+
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -12,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * InputSplit for a direcotry
+ * InputSplit for a direcotry.
  */
 public class HiveTablesInputSplit extends InputSplit implements Writable {
   private List<String> tables;

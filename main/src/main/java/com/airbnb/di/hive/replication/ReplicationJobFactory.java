@@ -3,10 +3,10 @@ package com.airbnb.di.hive.replication;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveUtils;
 import com.airbnb.di.hive.common.NamedPartition;
+import com.airbnb.di.hive.hooks.HiveOperation;
 import com.airbnb.di.hive.replication.auditlog.AuditLogEntry;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.hooks.HiveOperation;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.filter.ReplicationFilter;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
@@ -53,6 +53,19 @@ public class ReplicationJobFactory {
   private ParallelJobExecutor copyPartitionJobExecutor;
   private DirectoryCopier directoryCopier;
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param jobInfoStore TODO
+   * @param destinationObjectFactory TODO
+   * @param onStateChangeHandler TODO
+   * @param objectConflictHandler TODO
+   * @param copyPartitionJobExecutor TODO
+   * @param directoryCopier TODO
+   */
   public ReplicationJobFactory(
       Configuration conf,
       Cluster srcCluster,
@@ -74,12 +87,23 @@ public class ReplicationJobFactory {
     this.directoryCopier = directoryCopier;
   }
 
+  /**
+   * TODO.
+   *
+   * @param auditLogId TODO
+   * @param auditLogEntryCreateTime TODO
+   * @param table TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   * @throws SQLException TODO
+   */
   public ReplicationJob createJobForCopyTable(
       long auditLogId,
       long auditLogEntryCreateTime,
-      Table t) throws IOException, SQLException {
+      Table table) throws IOException, SQLException {
     ReplicationOperation replicationOperation =
-        HiveUtils.isPartitioned(t) ? ReplicationOperation.COPY_PARTITIONED_TABLE
+        HiveUtils.isPartitioned(table) ? ReplicationOperation.COPY_PARTITIONED_TABLE
             : ReplicationOperation.COPY_UNPARTITIONED_TABLE;
 
     Map<String, String> extras = new HashMap<>();
@@ -88,12 +112,12 @@ public class ReplicationJobFactory {
         Long.toString(auditLogEntryCreateTime));
 
     PersistedJobInfo persistedJobInfo = jobInfoStore.resilientCreate(replicationOperation,
-        ReplicationStatus.PENDING, ReplicationUtils.getLocation(t), srcCluster.getName(),
-        new HiveObjectSpec(t), Collections.emptyList(), ReplicationUtils.getTldt(t),
+        ReplicationStatus.PENDING, ReplicationUtils.getLocation(table), srcCluster.getName(),
+        new HiveObjectSpec(table), Collections.emptyList(), ReplicationUtils.getTldt(table),
         Optional.empty(), Optional.empty(), extras);
 
-    HiveObjectSpec spec = new HiveObjectSpec(t);
-    Optional<Path> tableLocation = ReplicationUtils.getLocation(t);
+    HiveObjectSpec spec = new HiveObjectSpec(table);
+    Optional<Path> tableLocation = ReplicationUtils.getLocation(table);
 
     switch (replicationOperation) {
       case COPY_UNPARTITIONED_TABLE:
@@ -111,11 +135,18 @@ public class ReplicationJobFactory {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param auditLogId TODO
+   * @param auditLogEntryCreateTime TODO
+   * @param spec TODO
+   * @return TODO
+   */
   public ReplicationJob createJobForCopyPartition(
       long auditLogId,
       long auditLogEntryCreateTime,
       HiveObjectSpec spec) {
-    ReplicationOperation replicationOperation = ReplicationOperation.COPY_PARTITION;
 
     Map<String, String> extras = new HashMap<>();
     extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY, Long.toString(auditLogId));
@@ -124,6 +155,7 @@ public class ReplicationJobFactory {
 
     List<String> partitionNames = new ArrayList<>();
     partitionNames.add(spec.getPartitionName());
+    ReplicationOperation replicationOperation = ReplicationOperation.COPY_PARTITION;
 
     PersistedJobInfo persistedJobInfo = jobInfoStore.resilientCreate(replicationOperation,
         ReplicationStatus.PENDING, Optional.empty(), srcCluster.getName(), spec, partitionNames,
@@ -136,12 +168,22 @@ public class ReplicationJobFactory {
     return new ReplicationJob(replicationTask, onStateChangeHandler, persistedJobInfo);
   }
 
+  /**
+   * TODO.
+   *
+   * @param auditLogId TODO
+   * @param auditLogEntryCreateTime TODO
+   * @param namedPartition TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   * @throws SQLException TODO
+   */
   public ReplicationJob createJobForCopyPartition(
       long auditLogId,
       long auditLogEntryCreateTime,
       NamedPartition namedPartition) throws IOException, SQLException {
     String partitionName = namedPartition.getName();
-    Partition partition = namedPartition.getPartition();
     List<String> partitionNames = new ArrayList<>();
     partitionNames.add(partitionName);
 
@@ -152,6 +194,7 @@ public class ReplicationJobFactory {
     extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
         Long.toString(auditLogEntryCreateTime));
 
+    Partition partition = namedPartition.getPartition();
     HiveObjectSpec spec = new HiveObjectSpec(namedPartition);
     PersistedJobInfo persistedJobInfo =
         jobInfoStore.resilientCreate(replicationOperation, ReplicationStatus.PENDING,
@@ -165,9 +208,21 @@ public class ReplicationJobFactory {
     return new ReplicationJob(replicationTask, onStateChangeHandler, persistedJobInfo);
   }
 
-  public ReplicationJob createJobForCopyDynamicPartitions(long auditLogId,
-      long auditLogEntryCreateTime, List<NamedPartition> namedPartition)
-          throws IOException, SQLException {
+  /**
+   * TODO.
+   *
+   * @param auditLogId TODO
+   * @param auditLogEntryCreateTime TODO
+   * @param namedPartition TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   * @throws SQLException TODO
+   */
+  public ReplicationJob createJobForCopyDynamicPartitions(
+      long auditLogId,
+      long auditLogEntryCreateTime,
+      List<NamedPartition> namedPartition) throws IOException, SQLException {
 
     ReplicationOperation replicationOperation = ReplicationOperation.COPY_PARTITIONS;
 
@@ -198,6 +253,12 @@ public class ReplicationJobFactory {
     return new ReplicationJob(replicationTask, onStateChangeHandler, persistedJobInfo);
   }
 
+  /**
+   * TODO.
+   *
+   * @param tables TODO
+   * @return TODO
+   */
   private Map<HiveObjectSpec, Table> createTableLookupMap(List<Table> tables) {
     // Create a map from the table spec to the table object. We'll need this
     // for getting the table that a partition belongs to
@@ -209,6 +270,17 @@ public class ReplicationJobFactory {
     return specToTable;
   }
 
+  /**
+   * TODO.
+   *
+   * @param auditLogId TODO
+   * @param auditLogEntryCreateTime TODO
+   * @param table TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   * @throws SQLException TODO
+   */
   public ReplicationJob createJobForDropTable(
       long auditLogId,
       long auditLogEntryCreateTime,
@@ -232,17 +304,27 @@ public class ReplicationJobFactory {
         onStateChangeHandler, persistedJobInfo);
   }
 
+  /**
+   * TODO.
+   *
+   * @param auditLogId TODO
+   * @param auditLogEntryCreateTime TODO
+   * @param namedPartition TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   * @throws SQLException TODO
+   */
   public ReplicationJob createJobForDropPartition(
       long auditLogId,
       long auditLogEntryCreateTime,
       NamedPartition namedPartition) throws IOException, SQLException {
-    ReplicationOperation replicationOperation = ReplicationOperation.DROP_PARTITION;
-
     Map<String, String> extras = new HashMap<>();
     extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY, Long.toString(auditLogId));
     extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
         Long.toString(auditLogEntryCreateTime));
 
+    ReplicationOperation replicationOperation = ReplicationOperation.DROP_PARTITION;
     HiveObjectSpec partitionSpec = new HiveObjectSpec(namedPartition);
     List<String> partitionNames = new ArrayList<>();
     partitionNames.add(namedPartition.getName());
@@ -257,6 +339,18 @@ public class ReplicationJobFactory {
         onStateChangeHandler, persistedJobInfo);
   }
 
+  /**
+   * TODO.
+   *
+   * @param auditLogId TODO
+   * @param auditLogEntryCreateTime TODO
+   * @param renameFromTable TODO
+   * @param renameToTable TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   * @throws SQLException TODO
+   */
   public ReplicationJob createJobForRenameTable(
       long auditLogId,
       long auditLogEntryCreateTime,
@@ -285,9 +379,23 @@ public class ReplicationJobFactory {
         copyPartitionJobExecutor, directoryCopier), onStateChangeHandler, persistedJobInfo);
   }
 
-  public ReplicationJob createJobForRenamePartition(long auditLogId, long auditLogEntryCreateTime,
-      NamedPartition renameFromPartition, NamedPartition renameToPartition)
-          throws IOException, SQLException {
+  /**
+   * TODO.
+   *
+   * @param auditLogId TODO
+   * @param auditLogEntryCreateTime TODO
+   * @param renameFromPartition TODO
+   * @param renameToPartition TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   * @throws SQLException TODO
+   */
+  public ReplicationJob createJobForRenamePartition(
+      long auditLogId,
+      long auditLogEntryCreateTime,
+      NamedPartition renameFromPartition,
+      NamedPartition renameToPartition) throws IOException, SQLException {
     ReplicationOperation replicationOperation = ReplicationOperation.RENAME_PARTITION;
 
     Map<String, String> extras = new HashMap<>();
@@ -320,9 +428,9 @@ public class ReplicationJobFactory {
    * Converts the audit log entry into a set of replication jobs that have the persisted elements
    * properly set.
    *
-   * @param auditLogEntry
-   * @throws IOException
-   * @throws SQLException
+   * @param auditLogEntry TODO
+   * @throws IOException TODO
+   * @throws SQLException TODO
    */
   public List<ReplicationJob> createReplicationJobs(
       AuditLogEntry auditLogEntry,
@@ -482,9 +590,9 @@ public class ReplicationJobFactory {
   /**
    * Based on the supplied filter, remove tables and partitions that should not be replicated.
    *
-   * @param filter
-   * @param tables
-   * @param partitions
+   * @param filter TODO
+   * @param tables TODO
+   * @param partitions TODO
    */
   private void filterObjects(
       ReplicationFilter filter,
@@ -497,8 +605,9 @@ public class ReplicationJobFactory {
     // but is needed for running the filter.
     Set<HiveObjectSpec> tablesToNotReplicate = new HashSet<>();
     for (NamedPartition pwn : partitions) {
-      Partition p = pwn.getPartition();
-      HiveObjectSpec tableSpec = new HiveObjectSpec(p.getDbName(), p.getTableName());
+      Partition partition = pwn.getPartition();
+      HiveObjectSpec tableSpec = new HiveObjectSpec(
+          partition.getDbName(), partition.getTableName());
       tablesToNotReplicate.add(tableSpec);
     }
 

@@ -28,7 +28,7 @@ import java.util.Queue;
 import java.util.Set;
 
 /**
- * Utility methods related to the file system
+ * Utility methods related to the file system.
  */
 public class FsUtils {
 
@@ -48,28 +48,30 @@ public class FsUtils {
         && StringUtils.areStringsEqual(p1.toUri().getAuthority(), p2.toUri().getAuthority());
   }
 
-  public static long getSize(Configuration conf, Path p) throws IOException {
-    return getSize(conf, p, Optional.empty());
+  public static long getSize(Configuration conf, Path path) throws IOException {
+    return getSize(conf, path, Optional.empty());
   }
 
   /**
-   * @param conf
-   * @param p
+   * TODO.
+   *
+   * @param conf TODO
+   * @param path TODO
    * @param filter use this to filter out files and directories
    * @return the size of the given location in bytes, including the size of any subdirectories.
-   * @throws java.io.IOException
+   * @throws java.io.IOException TODO
    */
-  public static long getSize(Configuration conf, Path p, Optional<PathFilter> filter)
+  public static long getSize(Configuration conf, Path path, Optional<PathFilter> filter)
       throws IOException {
     long totalSize = 0;
     /*
      * // This approach is simpler, but not as memory efficient for (FileStatus s :
      * getFileStatusesRecursive(conf, p, skipPrefix)) { totalSize += s.getLen(); } return totalSize;
      */
-    FileSystem fs = FileSystem.get(p.toUri(), conf);
+    FileSystem fs = FileSystem.get(path.toUri(), conf);
 
     Queue<Path> pathsToCheck = new LinkedList<>();
-    pathsToCheck.add(p);
+    pathsToCheck.add(path);
 
     // Traverse the directory tree and find all the paths
     // Use this instead of listFiles() as there seems to be more errors
@@ -92,12 +94,23 @@ public class FsUtils {
     return totalSize;
   }
 
-  public static boolean exceedsSize(Configuration conf, Path p, long maxSize) throws IOException {
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param path TODO
+   * @param maxSize TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   */
+  public static boolean exceedsSize(Configuration conf, Path path, long maxSize)
+      throws IOException {
     long totalSize = 0;
-    FileSystem fs = FileSystem.get(p.toUri(), conf);
+    FileSystem fs = FileSystem.get(path.toUri(), conf);
 
     Queue<Path> pathsToCheck = new LinkedList<>();
-    pathsToCheck.add(p);
+    pathsToCheck.add(path);
 
     // Traverse the directory tree and find all the paths
     // Use this instead of listFiles() as there seems to be more errors
@@ -120,19 +133,22 @@ public class FsUtils {
   }
 
   /**
+   * TODO.
    *
-   * @param conf
-   * @param p
+   * @param conf TODO
+   * @param path TODO
    * @return Fetches the FileStatus of all the files in the supplied path, including subdirectories
-   * @throws IOException
+   * @throws IOException TODO
    */
-  public static Set<FileStatus> getFileStatusesRecursive(Configuration conf, Path p,
+  public static Set<FileStatus> getFileStatusesRecursive(
+      Configuration conf,
+      Path path,
       Optional<PathFilter> filter) throws IOException {
-    FileSystem fs = FileSystem.get(p.toUri(), conf);
+    FileSystem fs = FileSystem.get(path.toUri(), conf);
     Set<FileStatus> fileStatuses = new HashSet<>();
 
     Queue<Path> pathsToCheck = new LinkedList<>();
-    pathsToCheck.add(p);
+    pathsToCheck.add(path);
 
     // Traverse the directory tree and find all the paths
     // Use this instead of listFiles() as there seems to be more errors
@@ -156,8 +172,9 @@ public class FsUtils {
   }
 
   /**
+   * TODO.
    *
-   * @param root
+   * @param root TODO
    * @param statuses a set of statuses for all the files in the root directory
    * @return a map from the path to a file relative to the root (e.g. a/b.txt) to the associated
    *         file size
@@ -172,8 +189,9 @@ public class FsUtils {
   }
 
   /**
+   * TODO.
    *
-   * @param root
+   * @param root TODO
    * @param statuses a set of statuses for all the files in the root directory
    * @return a map from the path to a file relative to the root (e.g. a/b.txt) to the associated
    *         modification time
@@ -188,9 +206,10 @@ public class FsUtils {
   }
 
   /**
+   * TODO.
    *
-   * @param root
-   * @param child
+   * @param root TODO
+   * @param child TODO
    * @return The relative path of the child given the root. For example, if the root was '/a' and
    *         the file was '/a/b/c.txt', the relative path would be 'b/c.txt'
    */
@@ -203,6 +222,8 @@ public class FsUtils {
   }
 
   /**
+   * TODO.
+
    *
    * @param relPathToSize a map from the relative path to a file to the file size
    * @return the total size of the files described in the map
@@ -219,13 +240,13 @@ public class FsUtils {
    * Checks to see if filenames exist on a destination directory that don't exist in the source
    * directory. Mainly used for checking if a distcp -update can work.
    *
-   * @param conf
-   * @param src
-   * @param dest
+   * @param conf TODO
+   * @param src TODO
+   * @param dest TODO
    * @param filter filter to use when traversing through the directories
    * @return true if there are any file names on the destination directory that are not in the
    *         source directory
-   * @throws IOException
+   * @throws IOException TODO
    */
   public static boolean filesExistOnDestButNotSrc(Configuration conf, Path src, Path dest,
       Optional<PathFilter> filter) throws IOException {
@@ -256,20 +277,33 @@ public class FsUtils {
   }
 
   /**
+   * TODO
    *
-   * @param conf
-   * @param src
-   * @param dest
+   * @param conf TODO
+   * @param src TODO
+   * @param dest TODO
    * @param filter files or directories starting with this name are not checked
    * @return true if the files in the source and the destination are the 'same'. 'same' is defined
    *         as having the same set of files with matching sizes.
-   * @throws IOException
+   * @throws IOException TODO
    */
   public static boolean equalDirs(Configuration conf, Path src, Path dest,
       Optional<PathFilter> filter) throws IOException {
     return equalDirs(conf, src, dest, filter, false);
   }
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param src TODO
+   * @param dest TODO
+   * @param filter TODO
+   * @param compareModificationTimes TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   */
   public static boolean equalDirs(Configuration conf, Path src, Path dest,
       Optional<PathFilter> filter, boolean compareModificationTimes) throws IOException {
     boolean srcExists = src.getFileSystem(conf).exists(src);
@@ -348,6 +382,16 @@ public class FsUtils {
     return true;
   }
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param src TODO
+   * @param dest TODO
+   * @param filter TODO
+   *
+   * @throws IOException TODO
+   */
   public static void syncModificationTimes(Configuration conf, Path src, Path dest,
       Optional<PathFilter> filter) throws IOException {
     Set<FileStatus> srcFileStatuses = getFileStatusesRecursive(conf, src, filter);
@@ -370,11 +414,11 @@ public class FsUtils {
   /**
    * Moves the directory from the src to dest, creating the parent directory for the dest if one
    * does not exist.
-   * 
-   * @param conf
-   * @param src
-   * @param dest
-   * @throws IOException
+   *
+   * @param conf TODO
+   * @param src TODO
+   * @param dest TODO
+   * @throws IOException TODO
    */
   public static void moveDir(Configuration conf, Path src, Path dest) throws IOException {
     FileSystem srcFs = FileSystem.get(src.toUri(), conf);
@@ -401,47 +445,62 @@ public class FsUtils {
   }
 
   /**
+   * TODO.
    *
-   * @param conf
-   * @param p
+   * @param conf TODO
+   * @param path TODO
    * @return true if the path specifies a directory that exists
-   * @throws IOException
+   * @throws IOException TODO
    */
-  public static boolean dirExists(Configuration conf, Path p) throws IOException {
-    FileSystem fs = FileSystem.get(p.toUri(), conf);
-    return fs.exists(p) && fs.isDirectory(p);
+  public static boolean dirExists(Configuration conf, Path path) throws IOException {
+    FileSystem fs = FileSystem.get(path.toUri(), conf);
+    return fs.exists(path) && fs.isDirectory(path);
   }
 
   /**
    * Delete the specified directory.
    *
-   * @throws IOException
+   * @param conf TODO
+   * @param path TODO
+   *
+   * @throws IOException TODO
    */
-  public static void deleteDirectory(Configuration conf, Path p) throws IOException {
+  public static void deleteDirectory(Configuration conf, Path path) throws IOException {
 
     Trash trash = new Trash(conf);
     try {
-      boolean removed = trash.moveToTrash(p);
+      boolean removed = trash.moveToTrash(path);
       if (removed) {
-        LOG.debug("Moved to trash: " + p);
+        LOG.debug("Moved to trash: " + path);
       } else {
-        LOG.error("Error moving to trash: " + p);
+        LOG.error("Error moving to trash: " + path);
       }
     } catch (FileNotFoundException e) {
-      LOG.debug("Attempting to delete non-existent directory " + p);
+      LOG.debug("Attempting to delete non-existent directory " + path);
       return;
     }
   }
 
   /**
-   * @param p1
-   * @param p2
+   * TODO.
+   *
+   * @param p1 TODO
+   * @param p2 TODO
    * @return true if p2 is a subdirectory of p1
    */
   public static boolean isSubDirectory(Path p1, Path p2) {
     return p2.toString().startsWith(p1.toString() + "/");
   }
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param src TODO
+   * @param dest TODO
+   *
+   * @throws IOException TODO
+   */
   public static void replaceDirectory(Configuration conf, Path src, Path dest) throws IOException {
     FileSystem fs = dest.getFileSystem(conf);
     if (fs.exists(dest)) {

@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
  * Parses exchange partition query commands. Since it uses a regex, there are cases that won't be
  * handled properly. See warnings below for details.
  *
- * TODO: Deprecate once HIVE-12865 is resolved
+ * <p>TODO: Deprecate once HIVE-12865 is resolved
  */
 public class ExchangePartitionParser {
 
@@ -26,16 +26,22 @@ public class ExchangePartitionParser {
   private String partitionName;
   private List<String> partitionValues;
 
+  /**
+   * TODO.
+   *
+   * @param query TODO
+   * @return TODO
+   */
   public boolean parse(String query) {
-    Matcher m = Pattern.compile(EXCHANGE_REGEX, Pattern.CASE_INSENSITIVE).matcher(query);
+    Matcher matcher = Pattern.compile(EXCHANGE_REGEX, Pattern.CASE_INSENSITIVE).matcher(query);
 
-    if (!m.matches()) {
+    if (!matcher.matches()) {
       return false;
     }
 
-    String exchangeFromTable = m.group("exchangeFromTable");
-    String exchangeToTable = m.group("exchangeToTable");
-    String partitionSpec = m.group("partitionSpec");
+    String exchangeFromTable = matcher.group("exchangeFromTable");
+    String exchangeToTable = matcher.group("exchangeToTable");
+    String partitionSpec = matcher.group("partitionSpec");
 
     exchangeFromTableSpec = getSpec(exchangeFromTable);
     exchangeToTableSpec = getSpec(exchangeToTable);
@@ -45,9 +51,10 @@ public class ExchangePartitionParser {
   }
 
   /**
+   * TODO.
    *
    * @param spec table specification in the form "db.table"
-   * @return
+   * @return TODO
    */
   private HiveObjectSpec getSpec(String spec) {
     String[] specSplit = spec.split("\\.");
@@ -62,13 +69,17 @@ public class ExchangePartitionParser {
     }
   }
 
+  public String getPartitionName() {
+    return partitionName;
+  }
+
   /**
+   * TODO.
    *
-   * param partitionSpec a partition specification in the form "ds=1, hr=2"
-   * 
+   * @param partitionSpec a partition specification in the form "ds=1, hr=2"
+   *
    * @return the partition spec converted to that name
    */
-
   private String getPartitionName(String partitionSpec) {
     // Warning - incorrect for cases where there are commas in values and
     // other corner cases.
@@ -97,6 +108,9 @@ public class ExchangePartitionParser {
     return sb.toString();
   }
 
+  public List<String> getPartitionValues() {
+    return partitionValues;
+  }
 
   private List<String> getPartitionValues(String partitionSpec) {
     // Warning - incorrect for cases where there are commas in values and
@@ -118,20 +132,11 @@ public class ExchangePartitionParser {
     return partitionValues;
   }
 
-
   public HiveObjectSpec getExchangeFromSpec() {
     return exchangeFromTableSpec;
   }
 
   public HiveObjectSpec getExchangeToSpec() {
     return exchangeToTableSpec;
-  }
-
-  public String getPartitionName() {
-    return partitionName;
-  }
-
-  public List<String> getPartitionValues() {
-    return partitionValues;
   }
 }

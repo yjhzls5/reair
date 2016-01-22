@@ -1,16 +1,32 @@
 package com.airbnb.di.hive.batchreplication.hdfscopy;
 
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
+import com.google.common.hash.Hashing;
+
 import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
 import com.airbnb.di.hive.batchreplication.ReplicationUtils;
-import com.google.common.base.*;
-import com.google.common.collect.*;
-import com.google.common.hash.*;
-import org.apache.commons.cli.*;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -24,15 +40,19 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import javax.annotation.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /**
- *
  * A Map/Reduce job that takes in gzipped json log file (like the kind that are dumped out by flog),
  * splits them based on the key data.event_name and writes out the results to gzipped files split on
  * event name.
@@ -45,8 +65,8 @@ public class ReplicationJob extends Configured implements Tool {
   public static final String DIRECTORY_BLACKLIST_REGEX = "replication.folder.blacklist";
 
   private static final PathFilter hiddenFileFilter = new PathFilter() {
-    public boolean accept(Path p) {
-      String name = p.getName();
+    public boolean accept(Path path) {
+      String name = path.getName();
       return !name.startsWith("_") && !name.startsWith(".");
     }
   };
@@ -169,7 +189,7 @@ public class ReplicationJob extends Configured implements Tool {
   }
 
   /**
-   * Compare source1 + source2 with destination
+   * Compare source1 + source2 with destination.
    */
   public static class FolderCompareReducer extends Reducer<Text, FileStatus, Text, Text> {
     private String dstHost;
@@ -350,6 +370,14 @@ public class ReplicationJob extends Configured implements Tool {
     return gnuOptions;
   }
 
+  /**
+   * TODO.
+   *
+   * @param args TODO
+   * @return TODO
+   *
+   * @throws Exception TODO
+   */
   public int run(String[] args) throws Exception {
     final CommandLineParser cmdLineGnuParser = new GnuParser();
 
@@ -357,8 +385,7 @@ public class ReplicationJob extends Configured implements Tool {
     CommandLine commandLine;
     try {
       commandLine = cmdLineGnuParser.parse(gnuOptions, args);
-    } catch (ParseException parseException) // checked exception
-    {
+    } catch (ParseException parseException) { // checked exception
       System.err.println(
           "Encountered exception while parsing using GnuParser:\n" + parseException.getMessage());
       System.err.println("Usage: hadoop jar ReplicationJob-0.1.jar <in> <out>");
@@ -453,8 +480,8 @@ public class ReplicationJob extends Configured implements Tool {
     return Joiner.on(",")
         .join(Lists.transform(Arrays.asList(srcfolders), new Function<String, String>() {
           @Override
-          public String apply(String s) {
-            return getHostName(s);
+          public String apply(String str) {
+            return getHostName(str);
           }
         }));
   }

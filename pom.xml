@@ -37,6 +37,7 @@
                     </execution>
                   </executions>
                   <configuration>
+                    <excludes>**/thrift/**/*</excludes>
                     <violationSeverity>warning</violationSeverity>
                     <consoleOutput>true</consoleOutput>
                   </configuration>

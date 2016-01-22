@@ -1,7 +1,7 @@
 package com.airbnb.di.hive.common;
 
 /**
- * Exception thrown when there is an issue with the Hive metastore
+ * Exception thrown when there is an issue with the Hive metastore.
  */
 public class HiveMetastoreException extends Exception {
 

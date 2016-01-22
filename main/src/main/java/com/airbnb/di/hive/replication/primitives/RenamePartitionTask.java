@@ -5,12 +5,12 @@ import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveUtils;
-import com.airbnb.di.hive.replication.configuration.Cluster;
-import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.DirectoryCopier;
-import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
+import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.multiprocessing.Lock;
 import com.airbnb.di.multiprocessing.LockSet;
 import org.apache.commons.logging.Log;
@@ -40,6 +40,21 @@ public class RenamePartitionTask implements ReplicationTask {
   private Optional<String> renameFromPartitionTdlt;
   private DirectoryCopier directoryCopier;
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param destObjectFactory TODO
+   * @param objectConflictHandler TODO
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param renameFromSpec TODO
+   * @param renameToSpec TODO
+   * @param renameFromPath TODO
+   * @param renameToPath TODO
+   * @param renameFromPartitionTdlt TODO
+   * @param directoryCopier TODO
+   */
   public RenamePartitionTask(
       Configuration conf,
       DestinationObjectFactory destObjectFactory,
@@ -67,7 +82,7 @@ public class RenamePartitionTask implements ReplicationTask {
 
   enum HandleRenameAction {
     RENAME_PARTITION, EXCHANGE_PARTITION, COPY_PARTITION, NO_OP
-  };
+  }
 
   @Override
   public RunInfo runTask() throws HiveMetastoreException, DistCpException, IOException {

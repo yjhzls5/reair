@@ -18,6 +18,8 @@ import java.util.Optional;
 /**
  * Creates the Hive thrift object that should be created on the destination cluster. Note that only
  * the Thrift object is generated - it's not actually created in the metastore.
+ *
+ * @version
  */
 public class DestinationObjectFactory implements Configurable {
 
@@ -34,12 +36,12 @@ public class DestinationObjectFactory implements Configurable {
   }
 
   /**
-   * For objects with a location, transform the location through this method
-   * 
-   * @param srcCluster
-   * @param destCluster
-   * @param srcLocation
-   * @return
+   * For objects with a location, transform the location through this method.
+   *
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param srcLocation TODO
+   * @return TODO
    */
   public String modifyLocation(Cluster srcCluster, Cluster destCluster, String srcLocation) {
     Path srcPath = new Path(srcLocation);
@@ -69,9 +71,10 @@ public class DestinationObjectFactory implements Configurable {
   }
 
   /**
+   * TODO.
    *
-   * @param srcCluster
-   * @param destCluster
+   * @param srcCluster TODO
+   * @param destCluster TODO
    * @param srcTable Table object from the source
    * @param existingDestTable Table object from the destination, if one already exists
    * @return the table to create or overwrite with on the destination.
@@ -105,9 +108,10 @@ public class DestinationObjectFactory implements Configurable {
   }
 
   /**
+   * TODO.
    *
-   * @param srcCluster
-   * @param destCluster
+   * @param srcCluster TODO
+   * @param destCluster TODO
    * @param srcPartition Partition object from the source
    * @param existingDestPartition Partition object on the destination, if one already exists
    * @return Partition object to create or overwrite with on the destination
@@ -138,6 +142,12 @@ public class DestinationObjectFactory implements Configurable {
     return destPartition;
   }
 
+  /**
+   * TODO.
+   *
+   * @param srcLocation TODO
+   * @return TODO
+   */
   public boolean shouldCopyData(String srcLocation) {
     if (srcLocation.startsWith("s3n://") || srcLocation.startsWith("s3a://")) {
       return false;

@@ -1,12 +1,11 @@
 package com.airbnb.di.hive.batchreplication.hivecopy;
 
-import com.airbnb.di.hive.common.HiveMetastoreClient;
-import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.replication.configuration.Cluster;
-import com.airbnb.di.hive.replication.configuration.ClusterFactory;
-import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+
+import com.airbnb.di.hive.common.HiveMetastoreClient;
+import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.ThriftHiveMetastoreClient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.Text;
@@ -16,7 +15,6 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +24,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 
 /**
  * InputFormat that scan directories bread first. It will stop at a level when it gets enough
@@ -136,8 +135,8 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
       for (final String db : candidates) {
         tables.addAll(Lists.transform(client.getAllTables(db), new Function<String, String>() {
           @Override
-          public String apply(String s) {
-            return db + ":" + s;
+          public String apply(String str) {
+            return db + ":" + str;
           }
         }));
       }

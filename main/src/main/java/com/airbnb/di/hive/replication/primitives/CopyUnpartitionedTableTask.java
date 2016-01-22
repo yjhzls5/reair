@@ -1,16 +1,16 @@
 package com.airbnb.di.hive.replication.primitives;
 
 import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveUtils;
-import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.DirectoryCopier;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
-import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.multiprocessing.Lock;
 import com.airbnb.di.multiprocessing.LockSet;
 import org.apache.commons.logging.Log;
@@ -40,6 +40,19 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
   private DirectoryCopier directoryCopier;
   private boolean allowDataCopy;
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param destObjectFactory TODO
+   * @param objectConflictHandler TODO
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param spec TODO
+   * @param tableLocation TODO
+   * @param directoryCopier TODO
+   * @param allowDataCopy TODO
+   */
   public CopyUnpartitionedTableTask(
       Configuration conf,
       DestinationObjectFactory destObjectFactory,
@@ -60,6 +73,9 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
     this.allowDataCopy = allowDataCopy;
   }
 
+  /**
+   * TODO.
+   */
   public RunInfo runTask() throws HiveMetastoreException, DistCpException, IOException {
     LOG.debug("Copying " + spec);
 
@@ -150,6 +166,9 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
       case NOOP:
         LOG.debug("Destination table is up to date - not doing " + "anything for " + spec);
         break;
+
+      default:
+        // TODO throw an exception
     }
 
     return new RunInfo(RunInfo.RunStatus.SUCCESSFUL, bytesCopied);

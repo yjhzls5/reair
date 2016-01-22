@@ -1,8 +1,8 @@
 package com.airbnb.di.hive.replication;
 
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveParameterKeys;
 
 import org.apache.commons.cli.Option;
@@ -38,13 +38,25 @@ public class ReplicationUtils {
   // For doing exponential backoff, the maximum number of seconds to use
   private static final int DEFAULT_MAX_WAIT_TIME = 3600;
 
-  public static void checkSpecMatch(HiveObjectSpec spec, Table t) {
-    if (t != null && (!spec.getDbName().equals(t.getDbName())
-        || !spec.getTableName().equals(t.getTableName()))) {
+  /**
+   * TODO.
+   *
+   * @param spec TODO
+   * @param table TODO
+   */
+  public static void checkSpecMatch(HiveObjectSpec spec, Table table) {
+    if (table != null && (!spec.getDbName().equals(table.getDbName())
+        || !spec.getTableName().equals(table.getTableName()))) {
       throw new RuntimeException("Mismatch between spec and Thrift " + "object");
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param table TODO
+   * @return TODO
+   */
   public static Table stripNonComparables(Table table) {
     Table newTable = new Table(table);
     newTable.setCreateTime(0);
@@ -52,6 +64,12 @@ public class ReplicationUtils {
     return newTable;
   }
 
+  /**
+   * TODO.
+   *
+   * @param partition TODO
+   * @return TODO
+   */
   public static Partition stripNonComparables(Partition partition) {
     Partition newPartition = new Partition(partition);
     newPartition.setCreateTime(0);
@@ -59,6 +77,15 @@ public class ReplicationUtils {
     return newPartition;
   }
 
+  /**
+   * TODO.
+   *
+   * @param serializedObject TODO
+   * @param obj TODO
+   * @return TODO
+   *
+   * @throws MetadataException TODO
+   */
   public static <T extends TBase> T deserializeObject(String serializedObject, T obj)
       throws MetadataException {
     TDeserializer deserializer = new TDeserializer(new TJSONProtocol.Factory());
@@ -71,6 +98,15 @@ public class ReplicationUtils {
     }
   }
 
+  /**
+   * TODO
+   *
+   * @param srcMs TODO
+   * @param destMs TODO
+   * @param dbName TODO
+   *
+   * @throws HiveMetastoreException TODO.
+   */
   public static void createDbIfNecessary(HiveMetastoreClient srcMs, HiveMetastoreClient destMs,
       String dbName) throws HiveMetastoreException {
     if (destMs.existsDb(dbName)) {
@@ -88,6 +124,15 @@ public class ReplicationUtils {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param ms TODO
+   * @param spec TODO
+   * @return TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
   public static boolean exists(HiveMetastoreClient ms, HiveObjectSpec spec)
       throws HiveMetastoreException {
     if (spec.isPartition()) {
@@ -97,42 +142,90 @@ public class ReplicationUtils {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param srcTable TODO
+   * @param destTable TODO
+   * @return TODO
+   */
   public static boolean schemasMatch(Table srcTable, Table destTable) {
     return srcTable.getSd().getCols().equals(destTable.getSd().getCols())
         && srcTable.getPartitionKeys().equals(destTable.getPartitionKeys());
   }
 
+  /**
+   * TODO.
+   *
+   * @param srcTable TODO
+   * @param destTable TODO
+   * @return TODO
+   */
   public static boolean similarEnough(Table srcTable, Table destTable) {
     return ReplicationUtils.stripNonComparables(srcTable)
         .equals(ReplicationUtils.stripNonComparables(destTable));
   }
 
-  public static boolean transientLastDdlTimesMatch(String expectedTldt, Table b) {
-    return StringUtils.equals(expectedTldt, b.getParameters().get(HiveParameterKeys.TLDT));
+  /**
+   * TODO.
+   *
+   * @param expectedTldt TODO
+   * @param table TODO
+   * @return TODO
+   */
+  public static boolean transientLastDdlTimesMatch(String expectedTldt, Table table) {
+    return StringUtils.equals(expectedTldt, table.getParameters().get(HiveParameterKeys.TLDT));
   }
 
-  public static boolean transientLastDdlTimesMatch(String expectedTldt, Partition b) {
-    return StringUtils.equals(expectedTldt, b.getParameters().get(HiveParameterKeys.TLDT));
+  /**
+   * TODO.
+   *
+   * @param expectedTldt TODO
+   * @param partition TODO
+   * @return TODO
+   */
+  public static boolean transientLastDdlTimesMatch(String expectedTldt, Partition partition) {
+    return StringUtils.equals(expectedTldt, partition.getParameters().get(HiveParameterKeys.TLDT));
   }
 
-  public static boolean transientLastDdlTimesMatch(Table a, Table b) {
-    if (a == null || b == null) {
+  /**
+   * TODO.
+   *
+   * @param table1 TODO
+   * @param table2 TODO
+   * @return TODO
+   */
+  public static boolean transientLastDdlTimesMatch(Table table1, Table table2) {
+    if (table1 == null || table2 == null) {
       return false;
     }
 
-    return StringUtils.equals(a.getParameters().get(HiveParameterKeys.TLDT),
-        b.getParameters().get(HiveParameterKeys.TLDT));
+    return StringUtils.equals(table1.getParameters().get(HiveParameterKeys.TLDT),
+        table2.getParameters().get(HiveParameterKeys.TLDT));
   }
 
-  public static boolean transientLastDdlTimesMatch(Partition a, Partition b) {
-    if (a == null || b == null) {
+  /**
+   * TODO.
+   *
+   * @param partition1 TODO
+   * @param partition2 TODO
+   * @return TODO
+   */
+  public static boolean transientLastDdlTimesMatch(Partition partition1, Partition partition2) {
+    if (partition1 == null || partition2 == null) {
       return false;
     }
 
-    return StringUtils.equals(a.getParameters().get(HiveParameterKeys.TLDT),
-        b.getParameters().get(HiveParameterKeys.TLDT));
+    return StringUtils.equals(partition1.getParameters().get(HiveParameterKeys.TLDT),
+        partition2.getParameters().get(HiveParameterKeys.TLDT));
   }
 
+  /**
+   * TODO.
+   *
+   * @param json TODO
+   * @return TODO
+   */
   public static List<String> convertToList(String json) {
     try {
       ObjectMapper om = new ObjectMapper();
@@ -142,6 +235,12 @@ public class ReplicationUtils {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param json TODO
+   * @return TODO
+   */
   public static Map<String, String> convertToMap(String json) {
     try {
       ObjectMapper om = new ObjectMapper();
@@ -151,6 +250,14 @@ public class ReplicationUtils {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param list TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   */
   public static String convertToJson(List<String> list) throws IOException {
     // writerWithDefaultPrettyPrinter() bundled in with CDH is not present,
     // so using this deprecated method.
@@ -159,6 +266,14 @@ public class ReplicationUtils {
     return ow.writeValueAsString(list);
   }
 
+  /**
+   * TODO.
+   *
+   * @param map TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   */
   public static String convertToJson(Map<String, String> map) throws IOException {
     // writerWithDefaultPrettyPrinter() bundled in with CDH is not present,
     // so using this deprecated method.
@@ -167,6 +282,12 @@ public class ReplicationUtils {
     return ow.writeValueAsString(map);
   }
 
+  /**
+   * TODO.
+   *
+   * @param table TODO
+   * @return TODO
+   */
   public static Optional<Path> getLocation(Table table) {
     if (table == null || table.getSd() == null || table.getSd().getLocation() == null) {
       return Optional.empty();
@@ -175,27 +296,51 @@ public class ReplicationUtils {
     }
   }
 
-  public static Optional<Path> getLocation(Partition p) {
-    if (p == null || p.getSd() == null || p.getSd().getLocation() == null) {
+  /**
+   * TODO.
+   *
+   * @param partition TODO
+   * @return TODO
+   */
+  public static Optional<Path> getLocation(Partition partition) {
+    if (partition == null || partition.getSd() == null || partition.getSd().getLocation() == null) {
       return Optional.empty();
     }
-    return Optional.ofNullable(new Path(p.getSd().getLocation()));
+    return Optional.ofNullable(new Path(partition.getSd().getLocation()));
   }
 
-  public static Optional<String> getTldt(Table t) {
-    if (t == null || t.getParameters() == null) {
+  /**
+   * TODO.
+   *
+   * @param table TODO
+   * @return TODO
+   */
+  public static Optional<String> getTldt(Table table) {
+    if (table == null || table.getParameters() == null) {
       return Optional.empty();
     }
-    return Optional.ofNullable(t.getParameters().get(HiveParameterKeys.TLDT));
+    return Optional.ofNullable(table.getParameters().get(HiveParameterKeys.TLDT));
   }
 
-  public static Optional<String> getTldt(Partition p) {
-    if (p == null || p.getParameters() == null) {
+  /**
+   * TODO.
+   *
+   * @param partition TODO
+   * @return TODO
+   */
+  public static Optional<String> getTldt(Partition partition) {
+    if (partition == null || partition.getParameters() == null) {
       return Optional.empty();
     }
-    return Optional.ofNullable(p.getParameters().get(HiveParameterKeys.TLDT));
+    return Optional.ofNullable(partition.getParameters().get(HiveParameterKeys.TLDT));
   }
 
+  /**
+   * TODO.
+   *
+   * @param runStatus TODO
+   * @return TODO
+   */
   public static ReplicationStatus toReplicationStatus(RunInfo.RunStatus runStatus) {
     switch (runStatus) {
       case SUCCESSFUL:
@@ -209,6 +354,11 @@ public class ReplicationUtils {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param sleepTime TODO
+   */
   public static void sleep(long sleepTime) {
     try {
       Thread.sleep(sleepTime);
@@ -217,6 +367,12 @@ public class ReplicationUtils {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param partitions TODO
+   * @return TODO
+   */
   public static boolean fromSameTable(Collection<Partition> partitions) {
     if (partitions.size() == 0) {
       return false;
@@ -240,6 +396,12 @@ public class ReplicationUtils {
     return true;
   }
 
+  /**
+   * TODO.
+   *
+   * @param dirs TODO
+   * @return TODO
+   */
   public static Optional<Path> getCommonDirectory(Set<Path> dirs) {
     if (dirs.size() == 0) {
       return Optional.empty();
@@ -280,8 +442,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * @param dir1
-   * @param dir2
+   * TODO.
+   *
+   * @param dir1 TODO
+   * @param dir2 TODO
    * @return the most specific directory that contains both dir1 and dir2. e.g /a/b/c, /a/d/e => /a
    */
   public static String commonDir(String dir1, String dir2) {
@@ -289,18 +453,24 @@ public class ReplicationUtils {
     String[] path2Elements = dir2.split("/");
     List<String> commonPath = new ArrayList<>();
 
-    int i = 0;
-    while (i < path1Elements.length && i < path2Elements.length) {
-      if (path1Elements[i].equals(path2Elements[i])) {
-        commonPath.add(path1Elements[i]);
+    int pathIndex = 0;
+    while (pathIndex < path1Elements.length && pathIndex < path2Elements.length) {
+      if (path1Elements[pathIndex].equals(path2Elements[pathIndex])) {
+        commonPath.add(path1Elements[pathIndex]);
       } else {
         break;
       }
-      i++;
+      pathIndex++;
     }
     return org.apache.commons.lang.StringUtils.join(commonPath, "/");
   }
 
+  /**
+   * TODO.
+   *
+   * @param partitions TODO
+   * @return TODO
+   */
   public static Set<Path> getLocations(Collection<Partition> partitions) {
     Set<Path> paths = new HashSet<>();
     for (Partition p : partitions) {
@@ -316,17 +486,42 @@ public class ReplicationUtils {
     exponentialSleep(attempt, DEFAULT_WAIT_TIME_BASE, DEFAULT_MAX_WAIT_TIME);
   }
 
+  /**
+   * TODO.
+   *
+   * @param attempt TODO
+   * @param base TODO
+   * @param max TODO
+   *
+   * @throws InterruptedException TODO
+   */
   public static void exponentialSleep(int attempt, int base, int max) throws InterruptedException {
     long sleepSeconds = (long) Math.min(max, Math.pow(base, attempt));
     LOG.debug(String.format("Attempt %d: sleeping for %d seconds", attempt, sleepSeconds));
     Thread.sleep(1000 * sleepSeconds);
   }
 
-  public static boolean equalLocations(Table a, Table b) {
-    return StringUtils.equals(getLocation(a).toString(), getLocation(b).toString());
+  /**
+   * TODO.
+   *
+   * @param table1 TODO
+   * @param table2 TODO
+   * @return TODO
+   */
+  public static boolean equalLocations(Table table1, Table table2) {
+    return StringUtils.equals(getLocation(table1).toString(), getLocation(table2).toString());
   }
 
-  public static boolean equalLocations(Partition a, Partition b) {
-    return StringUtils.equals(getLocation(a).toString(), getLocation(b).toString());
+  /**
+   * TODO.
+   *
+   * @param partition1 TODO
+   * @param partition2 TODO
+   * @return TODO
+   */
+  public static boolean equalLocations(Partition partition1, Partition partition2) {
+    return StringUtils.equals(
+        getLocation(partition1).toString(),
+        getLocation(partition2).toString());
   }
 }

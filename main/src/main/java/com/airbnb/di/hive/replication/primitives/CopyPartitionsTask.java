@@ -1,18 +1,18 @@
 package com.airbnb.di.hive.replication.primitives;
 
+import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.common.FsUtils;
 import com.airbnb.di.common.PathBuilder;
-import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveUtils;
-import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.DirectoryCopier;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
-import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.multiprocessing.Lock;
 import com.airbnb.di.multiprocessing.LockSet;
 import com.airbnb.di.multiprocessing.ParallelJobExecutor;
@@ -53,6 +53,20 @@ public class CopyPartitionsTask implements ReplicationTask {
   private ParallelJobExecutor copyPartitionsExecutor;
   private DirectoryCopier directoryCopier;
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param objectModifier TODO
+   * @param objectConflictHandler TODO
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param srcTableSpec TODO
+   * @param partitionNames TODO
+   * @param commonDirectory TODO
+   * @param copyPartitionsExecutor TODO
+   * @param directoryCopier TODO
+   */
   public CopyPartitionsTask(
       Configuration conf,
       DestinationObjectFactory objectModifier,
@@ -76,6 +90,13 @@ public class CopyPartitionsTask implements ReplicationTask {
     this.directoryCopier = directoryCopier;
   }
 
+  /**
+   * TODO.
+   *
+   * @param srcTableSpec TODO
+   * @param specToPartition TODO
+   * @return TODO
+   */
   public static Optional<Path> findCommonDirectory(
       HiveObjectSpec srcTableSpec,
       Map<HiveObjectSpec, Partition> specToPartition) {
@@ -107,6 +128,9 @@ public class CopyPartitionsTask implements ReplicationTask {
     return commonDirectory;
   }
 
+  /**
+   * TODO.
+   */
   public RunInfo runTask()
       throws HiveMetastoreException, DistCpException, IOException, HiveMetastoreException {
     LOG.debug("Copying partitions from " + srcTableSpec);
@@ -148,10 +172,12 @@ public class CopyPartitionsTask implements ReplicationTask {
 
       long sizeOfPartitionsInCommonDirectory = 0;
       for (String partitionName : partitionNames) {
-        Partition p = srcMs.getPartition(srcTableSpec.getDbName(), srcTableSpec.getTableName(),
+        Partition partition = srcMs.getPartition(
+            srcTableSpec.getDbName(),
+            srcTableSpec.getTableName(),
             partitionName);
-        if (p != null && p.getSd().getLocation() != null) {
-          Path partitionLocation = new Path(p.getSd().getLocation());
+        if (partition != null && partition.getSd().getLocation() != null) {
+          Path partitionLocation = new Path(partition.getSd().getLocation());
           if (FsUtils.isSubDirectory(commonDir, partitionLocation)
               && FsUtils.dirExists(conf, partitionLocation)) {
             sizeOfPartitionsInCommonDirectory +=
@@ -195,12 +221,12 @@ public class CopyPartitionsTask implements ReplicationTask {
         Random random = new Random();
         long randomLong = random.nextLong();
 
-        Path p =
+        Path path =
             new PathBuilder(destCluster.getTmpDir()).add("distcp_tmp").add(srcCluster.getName())
                 .add("optimistic_copy").add(Long.toString(randomLong)).toPath();
-        optimisticCopyDir = Optional.of(p);
+        optimisticCopyDir = Optional.of(path);
 
-        bytesCopied += copyWithStructure(commonDir, p);
+        bytesCopied += copyWithStructure(commonDir, path);
       }
     }
 
@@ -256,10 +282,10 @@ public class CopyPartitionsTask implements ReplicationTask {
    * copying /a/b/c to the destination directory /d, then /d/a/b/c will be created and contain files
    * from /a/b/c.
    *
-   * @param srcPath
+   * @param srcPath TODO
    * @return total number of bytes copied
-   * @throws IOException
-   * @throws DistCpException
+   * @throws IOException TODO
+   * @throws DistCpException TODO
    */
   private long copyWithStructure(Path srcPath, Path destDir) throws IOException, DistCpException {
 

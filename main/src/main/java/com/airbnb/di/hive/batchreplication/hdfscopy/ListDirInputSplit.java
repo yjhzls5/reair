@@ -1,6 +1,7 @@
 package com.airbnb.di.hive.batchreplication.hdfscopy;
 
 import com.google.common.base.Joiner;
+
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * List directory input split
+ * List directory input split.
  */
 public class ListDirInputSplit extends InputSplit implements Writable {
   private List<InputSplit> splits;

@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Runs a process while streaming stdout and stderr to log4j
+ * Runs a process while streaming stdout and stderr to log4j.
  */
 public class ProcessRunner {
 
@@ -21,6 +21,13 @@ public class ProcessRunner {
     this.args = args;
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   *
+   * @throws ProcessRunException TODO
+   */
   public RunResult run() throws ProcessRunException {
     try {
       LOG.debug("Running: " + Arrays.asList(args));
@@ -51,9 +58,9 @@ public class ProcessRunner {
     // There's no legit way to get the PID
     if (process.getClass().getName().equals("java.lang.UNIXProcess")) {
       try {
-        Field f = process.getClass().getDeclaredField("pid");
-        f.setAccessible(true);
-        long pid = f.getInt(process);
+        Field field = process.getClass().getDeclaredField("pid");
+        field.setAccessible(true);
+        long pid = field.getInt(process);
         LOG.debug("PID is " + pid);
       } catch (Throwable e) {
         LOG.error("Unable to get PID!");

@@ -33,12 +33,23 @@ public class ParallelJobExecutor {
 
   private String workerName = "Worker";
 
+  /**
+   * TODO.
+   *
+   * @param numWorkers TODO
+   */
   public ParallelJobExecutor(int numWorkers) {
     dagManager = new JobDagManager();
     jobsToRun = new LinkedBlockingQueue<Job>();
     this.numWorkers = numWorkers;
   }
 
+  /**
+   * TODO.
+   *
+   * @param workerName TODO
+   * @param numWorkers TODO
+   */
   public ParallelJobExecutor(String workerName, int numWorkers) {
     this.workerName = workerName;
     dagManager = new JobDagManager();
@@ -46,7 +57,12 @@ public class ParallelJobExecutor {
     this.numWorkers = numWorkers;
   }
 
-  synchronized public void add(Job job) {
+  /**
+   * TODO.
+   *
+   * @param job TODO
+   */
+  public synchronized void add(Job job) {
     boolean canRunImmediately = dagManager.addJob(job);
     if (canRunImmediately) {
       LOG.debug("Job " + job + " is ready to run.");
@@ -59,8 +75,8 @@ public class ParallelJobExecutor {
   /**
    * Should be called by the workers to indicate that a job has finished running. This removes the
    * job from the DAG so that other jobs that depended on the finished job can now be run.
-   * 
-   * @param doneJob
+   *
+   * @param doneJob TODO
    */
   public synchronized void notifyDone(Job doneJob) {
     LOG.debug("Done notification received for " + doneJob);
@@ -105,6 +121,11 @@ public class ParallelJobExecutor {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   */
   public long getNotDoneJobCount() {
     countLock.lock();
     try {
@@ -131,7 +152,7 @@ public class ParallelJobExecutor {
   /**
    * Kick off the worker threads that run a job.
    */
-  synchronized public void start() {
+  public synchronized void start() {
     if (workers.size() > 0) {
       throw new RuntimeException("Start called while there are workers" + " still running");
     }
@@ -151,7 +172,12 @@ public class ParallelJobExecutor {
     }
   }
 
-  synchronized public void stop() throws InterruptedException {
+  /**
+   * TODO.
+   *
+   * @throws InterruptedException TODO
+   */
+  public synchronized void stop() throws InterruptedException {
     for (Worker w : workers) {
       w.interrupt();
     }

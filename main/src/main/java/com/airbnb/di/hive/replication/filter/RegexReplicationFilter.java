@@ -10,7 +10,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 /**
- * Filters out objects from the audit log using regular expressions specified in the configuration
+ * Filters out objects from the audit log using regular expressions specified in the configuration.
  */
 public class RegexReplicationFilter implements ReplicationFilter {
 
@@ -42,6 +42,14 @@ public class RegexReplicationFilter implements ReplicationFilter {
         partition == null ? null : partition.getName());
   }
 
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @param partitionName TODO
+   * @return TODO
+   */
   public boolean accept(String dbName, String tableName, String partitionName) {
     HiveObjectSpec spec = new HiveObjectSpec(dbName, tableName, partitionName);
     String objectName = spec.toString();

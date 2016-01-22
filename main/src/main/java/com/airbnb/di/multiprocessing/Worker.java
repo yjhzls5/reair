@@ -20,6 +20,12 @@ public class Worker<T extends Job> extends Thread {
   private ParallelJobExecutor parallelJobExecutor;
   private Job job = null;
 
+  /**
+   * TODO.
+   *
+   * @param inputQueue TODO
+   * @param parallelJobExecutor TODO
+   */
   public Worker(BlockingQueue<T> inputQueue, ParallelJobExecutor parallelJobExecutor) {
     this.inputQueue = inputQueue;
     this.workerId = nextWorkerId++;
@@ -28,6 +34,13 @@ public class Worker<T extends Job> extends Thread {
     setDaemon(true);
   }
 
+  /**
+   * TODO.
+   *
+   * @param workerNamePrefix TODO
+   * @param inputQueue TODO
+   * @param parallelJobExecutor TODO
+   */
   public Worker(
       String workerNamePrefix,
       BlockingQueue<T> inputQueue,

@@ -24,12 +24,25 @@ public class HiveObjectSpec {
   private String tableName = null;
   private String partitionName = null;
 
-  public HiveObjectSpec(Table t) {
-    this(t.getDbName(), t.getTableName());
+  /**
+   * TODO.
+   *
+   * @param table TODO
+   */
+  public HiveObjectSpec(Table table) {
+    this(table.getDbName(), table.getTableName());
   }
 
-  public HiveObjectSpec(NamedPartition p) {
-    this(p.getPartition().getDbName(), p.getPartition().getTableName(), p.getName());
+  /**
+   * TODO.
+   *
+   * @param namedPartition TODO
+   */
+  public HiveObjectSpec(NamedPartition namedPartition) {
+    this(
+        namedPartition.getPartition().getDbName(),
+        namedPartition.getPartition().getTableName(),
+        namedPartition.getName());
   }
 
   public HiveObjectSpec(String dbName, String tableName) {
@@ -37,6 +50,13 @@ public class HiveObjectSpec {
     this.tableName = tableName;
   }
 
+  /**
+   * TODO.
+   *
+   * @param dbName TODO
+   * @param tableName TODO
+   * @param partitionName TODO
+   */
   public HiveObjectSpec(String dbName, String tableName, String partitionName) {
     this.dbName = dbName;
     this.tableName = tableName;
@@ -47,6 +67,11 @@ public class HiveObjectSpec {
     return this.partitionName != null;
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   */
   public String toString() {
     if (partitionName == null) {
       return String.format("%s.%s", dbName, tableName);
@@ -55,6 +80,11 @@ public class HiveObjectSpec {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   */
   public HiveObjectSpec getTableSpec() {
     if (!isPartition()) {
       throw new RuntimeException("Should only be called for " + "partition specs!");
@@ -64,21 +94,26 @@ public class HiveObjectSpec {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o)
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
-    if (o == null || getClass() != o.getClass())
+    }
+    if (obj == null || getClass() != obj.getClass()) {
       return false;
+    }
 
-    HiveObjectSpec that = (HiveObjectSpec) o;
+    HiveObjectSpec that = (HiveObjectSpec) obj;
 
-    if (!dbName.equals(that.dbName))
+    if (!dbName.equals(that.dbName)) {
       return false;
+    }
     if (partitionName != null ? !partitionName.equals(that.partitionName)
-        : that.partitionName != null)
+        : that.partitionName != null) {
       return false;
-    if (!tableName.equals(that.tableName))
+    }
+    if (!tableName.equals(that.tableName)) {
       return false;
+    }
 
     return true;
   }

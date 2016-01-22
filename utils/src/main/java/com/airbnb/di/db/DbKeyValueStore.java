@@ -20,6 +20,14 @@ public class DbKeyValueStore {
   private String dbTableName;
   private RetryingTaskRunner retryingTaskRunner = new RetryingTaskRunner();
 
+  /**
+   * TODO.
+   *
+   * @param dbConnectionFactory TODO
+   * @param dbTableName TODO
+   *
+   * @throws SQLException TODO
+   */
   public DbKeyValueStore(DbConnectionFactory dbConnectionFactory, String dbTableName)
       throws SQLException {
 
@@ -27,6 +35,12 @@ public class DbKeyValueStore {
     this.dbConnectionFactory = dbConnectionFactory;
   }
 
+  /**
+   * TODO.
+   *
+   * @param tableName TODO
+   * @return TODO
+   */
   public static String getCreateTableSql(String tableName) {
     return String.format("CREATE TABLE `%s` (\n" + "  `update_time` timestamp NOT NULL DEFAULT "
         + "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
@@ -35,6 +49,14 @@ public class DbKeyValueStore {
         + ") ENGINE=InnoDB", tableName);
   }
 
+  /**
+   * TODO.
+   *
+   * @param value TODO
+   * @return TODO
+   *
+   * @throws SQLException TODO
+   */
   public Optional<String> resilientGet(final String value) throws SQLException {
     final Container<Optional<String>> ret = new Container<>();
     retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
@@ -46,6 +68,14 @@ public class DbKeyValueStore {
     return ret.get();
   }
 
+  /**
+   * TODO.
+   *
+   * @param value TODO
+   * @return TODO
+   *
+   * @throws SQLException TODO
+   */
   public Optional<String> get(String value) throws SQLException {
     Connection connection = dbConnectionFactory.getConnection();
     String query =
@@ -65,6 +95,12 @@ public class DbKeyValueStore {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param key TODO
+   * @param value TODO
+   */
   public void resilientSet(final String key, final String value) {
     retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
       @Override
@@ -74,6 +110,14 @@ public class DbKeyValueStore {
     });
   }
 
+  /**
+   * TODO.
+   *
+   * @param key TODO
+   * @param value TODO
+   *
+   * @throws SQLException TODO
+   */
   public void set(String key, String value) throws SQLException {
     LOG.debug("Setting " + key + " to " + value);
     Connection connection = dbConnectionFactory.getConnection();
@@ -97,10 +141,10 @@ public class DbKeyValueStore {
    * "jdbc:mysql://pinkybrain-hive.cqmqbyzxdwlk." +
    * "us-east-1.rds.amazonaws.com:3306/hive_replication"; String dbUser =
    * DbCredentials.getUsername(); String dbPass = DbCredentials.getPassword();
-   * 
+   *
    * DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(jdbcUrl, dbUser,
    * dbPass); DbKeyValueStore kvStore = new DbKeyValueStore(dbConnectionFactory, "key_value");
-   * 
+   *
    * kvStore.set("foo", "bar"); System.out.println("fruit is " + kvStore.get("fruit"));
    * System.out.println("vegetable is " + kvStore.get("vegetable")); System.out.println("foo is " +
    * kvStore.get("foo")); System.out.println("bar is " + kvStore.get("bar")); return 0; }

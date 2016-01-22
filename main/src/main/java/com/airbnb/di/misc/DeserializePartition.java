@@ -7,12 +7,19 @@ import org.apache.thrift.protocol.TJSONProtocol;
 
 public class DeserializePartition {
 
+  /**
+   * TODO.
+   *
+   * @param argv TODO
+   *
+   * @throws Exception TODO
+   */
   public static void main(String[] argv) throws Exception {
     String json = argv[0];
     TDeserializer deserializer = new TDeserializer(new TJSONProtocol.Factory());
 
-    Partition p = new Partition();
-    deserializer.deserialize(p, json, "UTF-8");
-    System.out.println("Object is " + p);
+    Partition partition = new Partition();
+    deserializer.deserialize(partition, json, "UTF-8");
+    System.out.println("Object is " + partition);
   }
 }

@@ -1,7 +1,7 @@
 package com.airbnb.di.common;
 
 /**
- * Result object passed from running a process
+ * Result object passed from running a process.
  */
 public class RunResult {
 

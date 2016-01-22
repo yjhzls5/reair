@@ -10,7 +10,12 @@ import java.util.Optional;
  */
 public class TaskEstimate {
   public enum TaskType {
-    COPY_UNPARTITIONED_TABLE, COPY_PARTITIONED_TABLE, COPY_PARTITION, DROP_TABLE, DROP_PARTITION, NO_OP,
+    COPY_UNPARTITIONED_TABLE,
+    COPY_PARTITIONED_TABLE,
+    COPY_PARTITION,
+    DROP_TABLE,
+    DROP_PARTITION,
+    NO_OP,
   }
 
   private TaskType taskType;
@@ -19,6 +24,15 @@ public class TaskEstimate {
   private Optional<Path> srcPath;
   private Optional<Path> destPath;
 
+  /**
+   * TODO.
+   *
+   * @param taskType TODO
+   * @param updateMetadata TODO
+   * @param updateData TODO
+   * @param srcPath TODO
+   * @param destPath TODO
+   */
   public TaskEstimate(
       TaskType taskType,
       boolean updateMetadata,

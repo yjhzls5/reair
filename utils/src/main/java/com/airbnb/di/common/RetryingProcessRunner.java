@@ -23,6 +23,14 @@ public class RetryingProcessRunner {
     this.retries = retries;
   }
 
+  /**
+   * TODO.
+   *
+   * @param args TODO
+   * @return TODO
+   *
+   * @throws ProcessRunException TODO
+   */
   public RunResult run(List<String> args) throws ProcessRunException {
 
     for (int i = 0; i < retries; i++) {

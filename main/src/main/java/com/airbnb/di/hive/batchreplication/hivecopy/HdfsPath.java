@@ -4,7 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * helper class to handle hdfs path
+ * Helper class to handle hdfs path.
  */
 public class HdfsPath {
   private static final String FILE_LOCATION_PATTERN = "(([\\w]+)://([^/]*))?(/.*)";
@@ -14,6 +14,11 @@ public class HdfsPath {
   private final String host;
   private final String path;
 
+  /**
+   * TODO.
+   *
+   * @param fullPath TODO
+   */
   public HdfsPath(String fullPath) {
     Matcher matcher = locationPattern.matcher(fullPath.trim());
 

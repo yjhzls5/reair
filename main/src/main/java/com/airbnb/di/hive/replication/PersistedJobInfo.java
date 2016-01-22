@@ -54,6 +54,25 @@ public class PersistedJobInfo {
 
   }
 
+  /**
+   * TODO.
+   *
+   * @param id TODO
+   * @param createTime TODO
+   * @param operation TODO
+   * @param status TODO
+   * @param srcPath TODO
+   * @param srcClusterName TODO
+   * @param srcDbName TODO
+   * @param srcTableName TODO
+   * @param srcPartitionNames TODO
+   * @param srcObjectTldt TODO
+   * @param renameToDb TODO
+   * @param renameToTable TODO
+   * @param renameToPartition TODO
+   * @param renameToPath TODO
+   * @param extras TODO
+   */
   public PersistedJobInfo(
       Long id,
       Long createTime,
@@ -97,21 +116,26 @@ public class PersistedJobInfo {
     }
   }
 
-  public void copy(PersistedJobInfo o) {
-    this.id = o.id;
-    this.createTime = o.createTime;
-    this.operation = o.operation;
-    this.status = o.status;
-    this.srcPath = o.srcPath;
-    this.srcClusterName = o.srcClusterName;
-    this.srcDbName = o.srcDbName;
-    this.srcTableName = o.srcDbName;
-    this.srcPartitionNames = o.srcPartitionNames;
-    this.srcObjectTldt = o.srcObjectTldt;
-    this.renameToDb = o.renameToDb;
-    this.renameToTable = o.renameToTable;
-    this.renameToPartition = o.renameToPartition;
-    this.renameToPath = o.renameToPath;
+  /**
+   * TODO.
+   *
+   * @param persistedJobInfo TODO
+   */
+  public void copy(PersistedJobInfo persistedJobInfo) {
+    this.id = persistedJobInfo.id;
+    this.createTime = persistedJobInfo.createTime;
+    this.operation = persistedJobInfo.operation;
+    this.status = persistedJobInfo.status;
+    this.srcPath = persistedJobInfo.srcPath;
+    this.srcClusterName = persistedJobInfo.srcClusterName;
+    this.srcDbName = persistedJobInfo.srcDbName;
+    this.srcTableName = persistedJobInfo.srcDbName;
+    this.srcPartitionNames = persistedJobInfo.srcPartitionNames;
+    this.srcObjectTldt = persistedJobInfo.srcObjectTldt;
+    this.renameToDb = persistedJobInfo.renameToDb;
+    this.renameToTable = persistedJobInfo.renameToTable;
+    this.renameToPartition = persistedJobInfo.renameToPartition;
+    this.renameToPath = persistedJobInfo.renameToPath;
     this.extras = extras == null ? null : new HashMap<>(extras);
   }
 
@@ -195,49 +219,68 @@ public class PersistedJobInfo {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o)
+  public boolean equals(Object obj) {
+    if (this == obj) {
       return true;
-    if (o == null || getClass() != o.getClass())
+    }
+    if (obj == null || getClass() != obj.getClass()) {
       return false;
+    }
 
-    PersistedJobInfo that = (PersistedJobInfo) o;
+    PersistedJobInfo that = (PersistedJobInfo) obj;
 
-    if (createTime != that.createTime)
+    if (createTime != that.createTime) {
       return false;
-    if (extras != null ? !extras.equals(that.extras) : that.extras != null)
+    }
+    if (extras != null ? !extras.equals(that.extras) : that.extras != null) {
       return false;
-    if (id != null ? !id.equals(that.id) : that.id != null)
+    }
+    if (id != null ? !id.equals(that.id) : that.id != null) {
       return false;
-    if (operation != that.operation)
+    }
+    if (operation != that.operation) {
       return false;
-    if (renameToDb != null ? !renameToDb.equals(that.renameToDb) : that.renameToDb != null)
+    }
+    if (renameToDb != null ? !renameToDb.equals(that.renameToDb) : that.renameToDb != null) {
       return false;
+    }
     if (renameToPartition != null ? !renameToPartition.equals(that.renameToPartition)
-        : that.renameToPartition != null)
+        : that.renameToPartition != null) {
       return false;
-    if (renameToPath != null ? !renameToPath.equals(that.renameToPath) : that.renameToPath != null)
+    }
+    if (renameToPath != null ? !renameToPath.equals(that.renameToPath)
+                             : that.renameToPath != null) {
       return false;
+    }
     if (renameToTable != null ? !renameToTable.equals(that.renameToTable)
-        : that.renameToTable != null)
+        : that.renameToTable != null) {
       return false;
+    }
     if (srcClusterName != null ? !srcClusterName.equals(that.srcClusterName)
-        : that.srcClusterName != null)
+        : that.srcClusterName != null) {
       return false;
-    if (srcDbName != null ? !srcDbName.equals(that.srcDbName) : that.srcDbName != null)
+    }
+    if (srcDbName != null ? !srcDbName.equals(that.srcDbName) : that.srcDbName != null) {
       return false;
+    }
     if (srcObjectTldt != null ? !srcObjectTldt.equals(that.srcObjectTldt)
-        : that.srcObjectTldt != null)
+        : that.srcObjectTldt != null) {
       return false;
+    }
     if (srcPartitionNames != null ? !srcPartitionNames.equals(that.srcPartitionNames)
-        : that.srcPartitionNames != null)
+        : that.srcPartitionNames != null) {
       return false;
-    if (srcPath != null ? !srcPath.equals(that.srcPath) : that.srcPath != null)
+    }
+    if (srcPath != null ? !srcPath.equals(that.srcPath) : that.srcPath != null) {
       return false;
-    if (srcTableName != null ? !srcTableName.equals(that.srcTableName) : that.srcTableName != null)
+    }
+    if (srcTableName != null ? !srcTableName.equals(that.srcTableName)
+                             : that.srcTableName != null) {
       return false;
-    if (status != that.status)
+    }
+    if (status != that.status) {
       return false;
+    }
 
     return true;
   }

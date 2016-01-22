@@ -15,14 +15,13 @@
 
 package com.airbnb.di.hive.replication.webserver;
 
-import java.util.Map;
-
 import org.thymeleaf.context.Context;
 import org.thymeleaf.resourceresolver.ClassLoaderResourceResolver;
 import org.thymeleaf.templateresolver.TemplateResolver;
-
 import spark.ModelAndView;
 import spark.TemplateEngine;
+
+import java.util.Map;
 
 /**
  * Note: Pulled from Thymeleaf examples.
@@ -71,7 +70,7 @@ public class ThymeleafTemplateEngine extends TemplateEngine {
   }
 
   /**
-   * Initializes and sets the template resolver
+   * Initializes and sets the template resolver.
    */
   private void initialize(TemplateResolver templateResolver) {
     templateEngine = new org.thymeleaf.TemplateEngine();

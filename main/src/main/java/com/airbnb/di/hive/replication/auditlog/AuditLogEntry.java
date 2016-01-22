@@ -1,8 +1,8 @@
 package com.airbnb.di.hive.replication.auditlog;
 
 import com.airbnb.di.hive.common.HiveObjectSpec;
-import com.airbnb.di.hive.hooks.HiveOperation;
 import com.airbnb.di.hive.common.NamedPartition;
+import com.airbnb.di.hive.hooks.HiveOperation;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 import java.sql.Timestamp;
@@ -28,6 +28,20 @@ public class AuditLogEntry {
 
   }
 
+  /**
+   * TODO.
+   *
+   * @param id TODO
+   * @param createTime TODO
+   * @param commandType TODO
+   * @param command TODO
+   * @param outputDirectories TODO
+   * @param referenceTables TODO
+   * @param outputTables TODO
+   * @param outputPartitions TODO
+   * @param renameFromTable TODO
+   * @param renameFromPartition TODO
+   */
   public AuditLogEntry(
       long id,
       Timestamp createTime,
@@ -63,6 +77,9 @@ public class AuditLogEntry {
     return commandType;
   }
 
+  /**
+   * TODO.
+   */
   public String toString() {
 
     List<String> outputTableStrings = new ArrayList<>();
@@ -85,6 +102,11 @@ public class AuditLogEntry {
         + renameFromPartition + '}';
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   */
   public String toDetailedString() {
     return "AuditLogEntry{" + "id=" + id + ", createTime=" + createTime + ", commandType="
         + commandType + ", outputDirectories=" + outputDirectories + ", referenceTables="

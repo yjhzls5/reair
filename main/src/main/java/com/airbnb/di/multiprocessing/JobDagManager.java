@@ -15,9 +15,9 @@ import java.util.Set;
  * DAG of jobs. For example, job 1 needs lock a, job 2 needs lock b and job 3 needs lock a and lock
  * b. The DAG would look like:
  *
- * (job 1, job 2) -> job 3
+ * <p>(job 1, job 2) -> job 3
  *
- * job 1 and job 2 would run in parallel, and once those 2 are done, job 3 can run.
+ * <p>job 1 and job 2 would run in parallel, and once those 2 are done, job 3 can run.
  */
 public class JobDagManager {
 
@@ -68,6 +68,12 @@ public class JobDagManager {
     return true;
   }
 
+  /**
+   * TODO.
+   *
+   * @param lock TODO
+   * @param job TODO
+   */
   private void addLockToJobsNeedingLock(String lock, Job job) {
     ArrayList<Job> jobs = lockToJobsNeedingLock.get(lock);
     if (jobs == null) {
@@ -77,6 +83,13 @@ public class JobDagManager {
     jobs.add(job);
   }
 
+  /**
+   * TODO.
+   *
+   * @param lock TODO
+   * @param job TODO
+   * @param shouldBeAtHead TODO
+   */
   private void removeLockToJobsNeedingLock(String lock, Job job, boolean shouldBeAtHead) {
     ArrayList<Job> jobs = lockToJobsNeedingLock.get(lock);
     if (shouldBeAtHead && jobs.get(0) != job) {
@@ -112,11 +125,12 @@ public class JobDagManager {
   }
 
   /**
+   * TODO.
    *
-   * @param jobToAdd
+   * @param jobToAdd TODO
    * @return true if the job that was added can be run immediately.
    */
-  synchronized public boolean addJob(Job jobToAdd) {
+  public synchronized boolean addJob(Job jobToAdd) {
     LOG.debug("Adding job " + jobToAdd + " requiring locks " + jobToAdd.getRequiredLocks());
 
     LockSet lockSet = jobToAdd.getRequiredLocks();
@@ -251,7 +265,7 @@ public class JobDagManager {
    * @param job The job to remove from the DAG
    * @return A set of jobs that can now run since the specified job was removed.
    */
-  synchronized public Set<Job> removeJob(Job job) {
+  public synchronized Set<Job> removeJob(Job job) {
     if (!jobsWithAllRequiredLocks.contains(job)) {
       throw new RuntimeException("Trying to remove job without " + "having all the locks");
     }

@@ -23,6 +23,11 @@ public class ReplicationCounters {
     counters = new HashMap<>();
   }
 
+  /**
+   * TODO.
+   *
+   * @param type TODO
+   */
   public synchronized void incrementCounter(Type type) {
     long currentCount = 0;
     if (counters.get(type) != null) {
@@ -31,6 +36,12 @@ public class ReplicationCounters {
     counters.put(type, currentCount + 1);
   }
 
+  /**
+   * TODO.
+   *
+   * @param type TODO
+   * @return TODO
+   */
   public synchronized long getCounter(Type type) {
     long currentCount = 0;
     if (counters.get(type) != null) {

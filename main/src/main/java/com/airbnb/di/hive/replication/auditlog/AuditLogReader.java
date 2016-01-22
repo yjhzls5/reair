@@ -1,10 +1,10 @@
 package com.airbnb.di.hive.replication.auditlog;
 
 import com.airbnb.di.common.Container;
-import com.airbnb.di.hive.replication.MetadataException;
 import com.airbnb.di.db.DbConnectionFactory;
-import com.airbnb.di.hive.hooks.HiveOperation;
 import com.airbnb.di.hive.common.NamedPartition;
+import com.airbnb.di.hive.hooks.HiveOperation;
+import com.airbnb.di.hive.replication.MetadataException;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.utils.RetryableTask;
 import com.airbnb.di.utils.RetryingTaskRunner;
@@ -40,6 +40,16 @@ public class AuditLogReader {
   private Queue<AuditLogEntry> auditLogEntries;
   private RetryingTaskRunner retryingTaskRunner;
 
+  /**
+   * TODO.
+   *
+   * @param dbConnectionFactory TODO
+   * @param auditLogTableName TODO
+   * @param outputObjectsTableName TODO
+   * @param getIdsAfter TODO
+   *
+   * @throws SQLException TODO
+   */
   public AuditLogReader(
       DbConnectionFactory dbConnectionFactory,
       String auditLogTableName,
@@ -53,6 +63,15 @@ public class AuditLogReader {
     this.retryingTaskRunner = new RetryingTaskRunner();
   }
 
+  /**
+   * TODO.
+   *
+   * @param dbConnectionFactory TODO
+   * @param auditLogTableName TODO
+   * @param outputObjectsTableName TODO
+   *
+   * @throws SQLException TODO
+   */
   public AuditLogReader(DbConnectionFactory dbConnectionFactory, String auditLogTableName,
       String outputObjectsTableName) throws SQLException {
     this.dbConnectionFactory = dbConnectionFactory;
@@ -62,6 +81,13 @@ public class AuditLogReader {
     auditLogEntries = new LinkedList<>();
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   *
+   * @throws SQLException TODO
+   */
   public synchronized Optional<AuditLogEntry> resilientNext() throws SQLException {
     final Container<Optional<AuditLogEntry>> ret = new Container<>();
     retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
@@ -74,6 +100,14 @@ public class AuditLogReader {
     return ret.get();
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   *
+   * @throws SQLException TODO
+   * @throws AuditLogEntryException TODO
+   */
   public synchronized Optional<AuditLogEntry> next() throws SQLException, AuditLogEntryException {
     if (auditLogEntries.size() > 0) {
       return Optional.of(auditLogEntries.remove());
@@ -92,9 +126,9 @@ public class AuditLogReader {
 
   /**
    * From the output column in the audit log table, return the partition name. An example is
-   * "default.table/ds=1" => "ds=1"
-   * 
-   * @param outputCol
+   * "default.table/ds=1" => "ds=1".
+   *
+   * @param outputCol TODO
    * @return the partition name
    */
   private String getPartitionNameFromOutputCol(String outputCol) {
@@ -119,14 +153,15 @@ public class AuditLogReader {
 
   /**
    * Given that we start reading after lastReadId and need to get ROW_FETCH_SIZE rows from the audit
-   * log, figure out the min and max row ID's to read
+   * log, figure out the min and max row ID's to read.
    *
-   * @throws SQLException
+   * @throws SQLException TODO
    */
   private LongRange getIdsToRead() throws SQLException {
     String queryFormatString =
         "SELECT MIN(id) min_id, MAX(id) max_id " + "FROM (SELECT id FROM %s WHERE id > %s "
-            + "AND (command_type IS NULL OR command_type NOT IN('SHOWTABLES', 'SHOWPARTITIONS', 'SWITCHDATABASE')) "
+            + "AND (command_type IS NULL OR command_type NOT IN('SHOWTABLES', 'SHOWPARTITIONS', "
+            + "'SWITCHDATABASE')) "
             + "LIMIT %s)" + " subquery";
     String query = String.format(queryFormatString, auditLogTableName, lastReadId, ROW_FETCH_SIZE);
     Connection connection = dbConnectionFactory.getConnection();
@@ -236,31 +271,31 @@ public class AuditLogReader {
       if ("DIRECTORY".equals(objectType)) {
         outputDirectories.add(objectName);
       } else if ("TABLE".equals(objectType)) {
-        Table t = new Table();
+        Table table = new Table();
         try {
-          ReplicationUtils.deserializeObject(objectSerialized, t);
+          ReplicationUtils.deserializeObject(objectSerialized, table);
         } catch (MetadataException e) {
           throw new AuditLogEntryException(e);
         }
         if ("OUTPUT".equals(objectCategory)) {
-          outputTables.add(t);
+          outputTables.add(table);
         } else if ("REFERENCE_TABLE".equals(objectCategory)) {
-          referenceTables.add(t);
+          referenceTables.add(table);
         } else if ("RENAME_FROM".equals(objectCategory)) {
-          renameFromTable = t;
+          renameFromTable = table;
         } else {
           throw new RuntimeException("Unhandled category: " + objectCategory);
         }
       } else if ("PARTITION".equals(objectType)) {
-        Partition p = new Partition();
+        Partition partition = new Partition();
 
         try {
-          ReplicationUtils.deserializeObject(objectSerialized, p);
+          ReplicationUtils.deserializeObject(objectSerialized, partition);
         } catch (MetadataException e) {
           throw new AuditLogEntryException(e);
         }
         String partitionName = getPartitionNameFromOutputCol(objectName);
-        NamedPartition namedPartition = new NamedPartition(partitionName, p);
+        NamedPartition namedPartition = new NamedPartition(partitionName, partition);
 
         if ("OUTPUT".equals(objectCategory)) {
           outputPartitions.add(namedPartition);
@@ -301,9 +336,9 @@ public class AuditLogReader {
   }
 
   /**
-   * Change the reader to start reading entries after this ID
-   * 
-   * @param lastReadId
+   * Change the reader to start reading entries after this ID.
+   *
+   * @param lastReadId TODO
    */
   public synchronized void setReadAfterId(long lastReadId) {
     this.lastReadId = lastReadId;
@@ -313,6 +348,13 @@ public class AuditLogReader {
     auditLogEntries.clear();
   }
 
+  /**
+   * TODO.
+   *
+   * @return TODO
+   *
+   * @throws SQLException TODO
+   */
   public synchronized Optional<Long> getMaxId() throws SQLException {
     String query = String.format("SELECT MAX(id) FROM %s", auditLogTableName);
     Connection connection = dbConnectionFactory.getConnection();

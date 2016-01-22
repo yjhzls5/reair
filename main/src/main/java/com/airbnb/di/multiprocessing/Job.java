@@ -15,7 +15,7 @@ public abstract class Job {
    */
   public enum LockType {
     SHARED, EXCLUSIVE
-  };
+  }
 
   // A list of jobs in progress that need to finish before this job can run.
   private Set<Job> parentJobs = new HashSet<>();
@@ -23,7 +23,7 @@ public abstract class Job {
   private Set<Job> childJobs = new HashSet<>();
 
   // Method that gets called when this job should run
-  abstract public int run();
+  public abstract int run();
 
   // // A set of locks that the job needs to get before running
   // abstract public Set<String> getRequiredExclusiveLocks();
@@ -31,18 +31,18 @@ public abstract class Job {
   // abstract public Set<String> getRequiredSharedLocks();
 
   /**
-   * Add the specified job as a parent job
-   * 
-   * @param parentJob
+   * Add the specified job as a parent job.
+   *
+   * @param parentJob TODO
    */
   public void addParent(Job parentJob) {
     parentJobs.add(parentJob);
   }
 
   /**
-   * Add the specified job as a child job
-   * 
-   * @param childJob
+   * Add the specified job as a child job.
+   *
+   * @param childJob TODO
    */
   public void addChild(Job childJob) {
     childJobs.add(childJob);
@@ -65,8 +65,8 @@ public abstract class Job {
   /**
    * Removes a parent job from this job's set of parent jobs. This should be called when the parent
    * job has finished running.
-   * 
-   * @param parentJob
+   *
+   * @param parentJob TODO
    */
   public void removeParentJob(Job parentJob) {
     if (!parentJobs.contains(parentJob)) {
@@ -81,8 +81,8 @@ public abstract class Job {
   /**
    * Removes a child job from this job's set of child jobs. This should be called when the this job
    * has finished running and is being removed from the DAG.
-   * 
-   * @param childJob
+   *
+   * @param childJob TODO
    */
   public void removeChildJob(Job childJob) {
     if (!childJobs.contains(childJob)) {

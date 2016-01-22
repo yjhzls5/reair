@@ -23,6 +23,11 @@ public class DbConnectionWatchdog extends Thread {
   private long lastSuccessfulConnectionTime = 0;
   private DbConnectionFactory dbConnectionFactory;
 
+  /**
+   * TODO.
+   *
+   * @param dbConnectionFactory TODO
+   */
   public DbConnectionWatchdog(DbConnectionFactory dbConnectionFactory) {
     this.dbConnectionFactory = dbConnectionFactory;
     this.setDaemon(true);

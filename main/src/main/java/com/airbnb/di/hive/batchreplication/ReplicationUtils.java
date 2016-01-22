@@ -1,8 +1,8 @@
 package com.airbnb.di.hive.batchreplication;
 
-import com.airbnb.di.hive.batchreplication.hivecopy.HdfsPath;
 import com.google.common.base.Joiner;
-import java.io.IOException;
+
+import com.airbnb.di.hive.batchreplication.hivecopy.HdfsPath;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -15,11 +15,26 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Progressable;
 
+import java.io.IOException;
+
 public class ReplicationUtils {
   private static final Log LOG = LogFactory.getLog(ReplicationUtils.class);
 
   public ReplicationUtils() {}
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param srcFileStatus TODO
+   * @param srcFs TODO
+   * @param dstFolderPath TODO
+   * @param dstFs TODO
+   * @param progressable TODO
+   * @param forceUpdate TODO
+   * @param identifier TODO
+   * @return TODO
+   */
   public static String doCopyFileAction(
       Configuration conf,
       ExtendedFileStatus srcFileStatus,
@@ -41,7 +56,7 @@ public class ReplicationUtils {
         }
         FileStatus srcStatus = srcFs.getFileStatus(srcPath);
 
-        FSDataInputStream inputStream = srcFs.open(srcPath);
+        final FSDataInputStream inputStream = srcFs.open(srcPath);
         Path dstPath = new Path(dstFolderPath + "/" + srcFileStatus.getFileName());
         // if dst already exists.
         if (dstFs.exists(dstPath)) {
@@ -94,6 +109,12 @@ public class ReplicationUtils {
     return Joiner.on("\t").useForNull("NULL").join(columns);
   }
 
+  /**
+   * TODO.
+   *
+   * @param path TODO
+   * @return TODO
+   */
   public static String getClusterName(HdfsPath path) {
     if (path.getHost().matches("airfs-silver")) {
       return "silver";
@@ -109,6 +130,14 @@ public class ReplicationUtils {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param path TODO
+   * @param conf TODO
+   *
+   * @throws IOException TODO
+   */
   public static void removeOutputDirectory(String path, Configuration conf) throws IOException {
     Path outputPath = new Path(path);
     FileSystem fs = outputPath.getFileSystem(conf);

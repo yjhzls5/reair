@@ -38,11 +38,18 @@ public class RetryingTaskRunner {
     this(DEFAULT_NUM_ATTEMPTS, DEFAULT_BASE_SLEEP_INTERVAL, DEFAULT_MAX_SLEEP_INTERVAL);
   }
 
-  public void runWithRetries(RetryableTask q) throws Exception {
+  /**
+   * TODO.
+   *
+   * @param task TODO
+   *
+   * @throws Exception TODO
+   */
+  public void runWithRetries(RetryableTask task) throws Exception {
     boolean maxSleepIntervalHit = false;
     for (int i = 0; i < numAttempts; i++) {
       try {
-        q.run();
+        task.run();
         return;
       } catch (Exception e) {
         if (i == numAttempts - 1) {
@@ -68,12 +75,17 @@ public class RetryingTaskRunner {
     }
   }
 
-  public void runUntilSuccessful(RetryableTask q) {
+  /**
+   * TODO.
+   *
+   * @param task TODO
+   */
+  public void runUntilSuccessful(RetryableTask task) {
     boolean maxSleepIntervalHit = false;
-    int i = 0;
+    int numAttempts = 0;
     while (true) {
       try {
-        q.run();
+        task.run();
         return;
       } catch (Exception e) {
         // Otherwise, retry after a little bit
@@ -81,7 +93,7 @@ public class RetryingTaskRunner {
         if (maxSleepIntervalHit) {
           sleepTime = maxSleepInterval;
         } else {
-          sleepTime = baseSleepInterval * (int) Math.pow(2, i);
+          sleepTime = baseSleepInterval * (int) Math.pow(2, numAttempts);
           if (sleepTime > maxSleepInterval) {
             sleepTime = maxSleepInterval;
             maxSleepIntervalHit = true;
@@ -95,7 +107,7 @@ public class RetryingTaskRunner {
           LOG.error("Unexpected interruption!", ie);
         }
       }
-      i++;
+      numAttempts++;
     }
   }
 }

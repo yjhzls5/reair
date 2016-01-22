@@ -50,6 +50,12 @@ public class ThriftObjectUtils {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param job TODO
+   * @return TODO
+   */
   public static TReplicationJob convert(ReplicationJob job) {
     PersistedJobInfo jobInfo = job.getPersistedJobInfo();
     List<Long> parentJobIds = new ArrayList<>(job.getParentJobIds());

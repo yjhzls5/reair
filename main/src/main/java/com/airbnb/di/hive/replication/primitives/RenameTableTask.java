@@ -1,15 +1,15 @@
 package com.airbnb.di.hive.replication.primitives;
 
 import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.DirectoryCopier;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
-import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.multiprocessing.Lock;
 import com.airbnb.di.multiprocessing.LockSet;
 import com.airbnb.di.multiprocessing.ParallelJobExecutor;
@@ -40,6 +40,22 @@ public class RenameTableTask implements ReplicationTask {
   private ParallelJobExecutor copyPartitionsExecutor;
   private DirectoryCopier directoryCopier;
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param destObjectFactory TODO
+   * @param objectConflictHandler TODO
+   * @param renameFromSpec TODO
+   * @param renameToSpec TODO
+   * @param renameFromPath TODO
+   * @param renameToPath TODO
+   * @param renameFromTableTldt TODO
+   * @param copyPartitionsExecutor TODO
+   * @param directoryCopier TODO
+   */
   public RenameTableTask(
       Configuration conf,
       Cluster srcCluster,
@@ -70,7 +86,7 @@ public class RenameTableTask implements ReplicationTask {
 
   enum HandleRenameAction {
     RENAME_TABLE, COPY_TABLE, NO_OP
-  };
+  }
 
   @Override
   public RunInfo runTask() throws DistCpException, HiveMetastoreException, IOException {
@@ -137,9 +153,10 @@ public class RenameTableTask implements ReplicationTask {
         destMs.alterTable(renameFromSpec.getDbName(), renameFromSpec.getTableName(),
             newTableOnDestination);
         LOG.debug(StringUtils.format("Renamed %s to %s", renameFromSpec, renameToSpec));
-        // After a rename, the table should be re-copied to get the
-        // correct modified time changes. With a proper rename, this
-        // should be a mostly no-op. Fall through to the next case.
+      // After a rename, the table should be re-copied to get the
+      // correct modified time changes. With a proper rename, this
+      // should be a mostly no-op. Fall through to the next case.
+      // fallthrough
 
       case COPY_TABLE:
         CopyCompleteTableTask task =

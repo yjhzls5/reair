@@ -19,6 +19,13 @@ public class DirectoryCopier {
   private Path tmpDir;
   private boolean checkFileModificationTimes;
 
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @param tmpDir TODO
+   * @param checkFileModificationTimes TODO
+   */
   public DirectoryCopier(Configuration conf, Path tmpDir, boolean checkFileModificationTimes) {
     this.conf = conf;
     this.tmpDir = tmpDir;
@@ -28,12 +35,12 @@ public class DirectoryCopier {
   /**
    * Copy the source directory to the destination directory.
    *
-   * @param srcDir
-   * @param destDir
+   * @param srcDir TODO
+   * @param destDir TODO
    * @param copyAttributes a list of attributes to use when creating the tmp directory. Doesn't
    *        really matter, but it can make it easier to manually inspect the tmp directory.
-   * @return
-   * @throws IOException
+   * @return TODO
+   * @throws IOException TODO
    */
   public long copy(Path srcDir, Path destDir, List<String> copyAttributes) throws IOException {
     Random random = new Random();
@@ -67,6 +74,15 @@ public class DirectoryCopier {
     }
   }
 
+  /**
+   * TODO.
+   *
+   * @param srcDir TODO
+   * @param destDir TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   */
   public boolean equalDirs(Path srcDir, Path destDir) throws IOException {
     return FsUtils.equalDirs(conf, srcDir, destDir, Optional.empty(), checkFileModificationTimes);
   }

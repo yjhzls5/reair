@@ -1,9 +1,9 @@
 package com.airbnb.di.hive.replication.configuration;
 
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
-import com.airbnb.di.hive.common.HiveParameterKeys;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.di.hive.common.HiveParameterKeys;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 
 import org.apache.commons.logging.Log;
@@ -34,6 +34,17 @@ public class ObjectConflictHandler implements Configurable {
     return conf.orElse(null);
   }
 
+  /**
+   * TODO.
+   *
+   * @param srcCluster TODO
+   * @param destCluster TODO
+   * @param srcTable TODO
+   * @param existingDestTable TODO
+   * @return TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
   public boolean handleCopyConflict(
       Cluster srcCluster,
       Cluster destCluster,

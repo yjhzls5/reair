@@ -9,7 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- * Thread that reads from a stream and writes what it read to log4j
+ * Thread that reads from a stream and writes what it read to log4j.
  */
 public class StreamLogger extends Thread {
 
@@ -20,8 +20,9 @@ public class StreamLogger extends Thread {
   private String streamAsString;
 
   /**
+   * TODO.
    *
-   * @param inputStream
+   * @param inputStream TODO
    * @param saveToString whether to return the entire output from the input stream as a single
    *        string.
    */
