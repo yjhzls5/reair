@@ -259,28 +259,28 @@ public class PersistedJobInfoStore {
     try {
       int queryParamIndex = 1;
       ps.setTimestamp(queryParamIndex++, new Timestamp(currentTime));
-      ps.setString(queryParamIndex, operation.toString());
-      ps.setString(queryParamIndex, status.toString());
-      ps.setString(queryParamIndex, srcPath.map(Path::toString).orElse(null));
-      ps.setString(queryParamIndex, srcClusterName);
-      ps.setString(queryParamIndex, srcTableSpec.getDbName());
-      ps.setString(queryParamIndex, srcTableSpec.getTableName());
-      ps.setString(queryParamIndex, ReplicationUtils.convertToJson(srcPartitionNames));
-      ps.setString(queryParamIndex, srcTldt.orElse(null));
+      ps.setString(queryParamIndex++, operation.toString());
+      ps.setString(queryParamIndex++, status.toString());
+      ps.setString(queryParamIndex++, srcPath.map(Path::toString).orElse(null));
+      ps.setString(queryParamIndex++, srcClusterName);
+      ps.setString(queryParamIndex++, srcTableSpec.getDbName());
+      ps.setString(queryParamIndex++, srcTableSpec.getTableName());
+      ps.setString(queryParamIndex++, ReplicationUtils.convertToJson(srcPartitionNames));
+      ps.setString(queryParamIndex++, srcTldt.orElse(null));
       if (!renameToObject.isPresent()) {
-        ps.setString(queryParamIndex, null);
-        ps.setString(queryParamIndex, null);
-        ps.setString(queryParamIndex, null);
-        ps.setString(queryParamIndex, null);
+        ps.setString(queryParamIndex++, null);
+        ps.setString(queryParamIndex++, null);
+        ps.setString(queryParamIndex++, null);
+        ps.setString(queryParamIndex++, null);
       } else {
-        ps.setString(queryParamIndex, renameToObject.map(HiveObjectSpec::getDbName).orElse(null));
-        ps.setString(queryParamIndex,
+        ps.setString(queryParamIndex++, renameToObject.map(HiveObjectSpec::getDbName).orElse(null));
+        ps.setString(queryParamIndex++,
             renameToObject.map(HiveObjectSpec::getTableName).orElse(null));
-        ps.setString(queryParamIndex,
+        ps.setString(queryParamIndex++,
             renameToObject.map(HiveObjectSpec::getPartitionName).orElse(null));
-        ps.setString(queryParamIndex, renameToPath.map(Path::toString).orElse(null));
+        ps.setString(queryParamIndex++, renameToPath.map(Path::toString).orElse(null));
       }
-      ps.setString(queryParamIndex, ReplicationUtils.convertToJson(extras));
+      ps.setString(queryParamIndex++, ReplicationUtils.convertToJson(extras));
 
       ps.execute();
       ResultSet rs = ps.getGeneratedKeys();
@@ -332,37 +332,37 @@ public class PersistedJobInfoStore {
     PreparedStatement ps = connection.prepareStatement(query);
     try {
       int queryParamIndex = 1;
-      ps.setLong(queryParamIndex, job.getId());
-      ps.setTimestamp(queryParamIndex, new Timestamp(job.getCreateTime()));
-      ps.setString(queryParamIndex, job.getOperation().toString());
-      ps.setString(queryParamIndex, job.getStatus().toString());
-      ps.setString(queryParamIndex, job.getSrcPath().map(Path::toString).orElse(null));
-      ps.setString(queryParamIndex, job.getSrcClusterName());
-      ps.setString(queryParamIndex, job.getSrcDbName());
-      ps.setString(queryParamIndex, job.getSrcTableName());
-      ps.setString(queryParamIndex, ReplicationUtils.convertToJson(job.getSrcPartitionNames()));
-      ps.setString(queryParamIndex, job.getSrcObjectTldt().orElse(null));
-      ps.setString(queryParamIndex, job.getRenameToDb().orElse(null));
-      ps.setString(queryParamIndex, job.getRenameToTable().orElse(null));
-      ps.setString(queryParamIndex, job.getRenameToPartition().orElse(null));
-      ps.setString(queryParamIndex, job.getRenameToPath().map(Path::toString).orElse(null));
-      ps.setString(queryParamIndex, ReplicationUtils.convertToJson(job.getExtras()));
+      ps.setLong(queryParamIndex++, job.getId());
+      ps.setTimestamp(queryParamIndex++, new Timestamp(job.getCreateTime()));
+      ps.setString(queryParamIndex++, job.getOperation().toString());
+      ps.setString(queryParamIndex++, job.getStatus().toString());
+      ps.setString(queryParamIndex++, job.getSrcPath().map(Path::toString).orElse(null));
+      ps.setString(queryParamIndex++, job.getSrcClusterName());
+      ps.setString(queryParamIndex++, job.getSrcDbName());
+      ps.setString(queryParamIndex++, job.getSrcTableName());
+      ps.setString(queryParamIndex++, ReplicationUtils.convertToJson(job.getSrcPartitionNames()));
+      ps.setString(queryParamIndex++, job.getSrcObjectTldt().orElse(null));
+      ps.setString(queryParamIndex++, job.getRenameToDb().orElse(null));
+      ps.setString(queryParamIndex++, job.getRenameToTable().orElse(null));
+      ps.setString(queryParamIndex++, job.getRenameToPartition().orElse(null));
+      ps.setString(queryParamIndex++, job.getRenameToPath().map(Path::toString).orElse(null));
+      ps.setString(queryParamIndex++, ReplicationUtils.convertToJson(job.getExtras()));
 
       // Handle the update case
-      ps.setTimestamp(queryParamIndex, new Timestamp(job.getCreateTime()));
-      ps.setString(queryParamIndex, job.getOperation().toString());
-      ps.setString(queryParamIndex, job.getStatus().toString());
-      ps.setString(queryParamIndex, job.getSrcPath().map(Path::toString).orElse(null));
-      ps.setString(queryParamIndex, job.getSrcClusterName());
-      ps.setString(queryParamIndex, job.getSrcDbName());
-      ps.setString(queryParamIndex, job.getSrcTableName());
-      ps.setString(queryParamIndex, ReplicationUtils.convertToJson(job.getSrcPartitionNames()));
-      ps.setString(queryParamIndex, job.getSrcObjectTldt().orElse(null));
-      ps.setString(queryParamIndex, job.getRenameToDb().orElse(null));
-      ps.setString(queryParamIndex, job.getRenameToTable().orElse(null));
-      ps.setString(queryParamIndex, job.getRenameToPartition().orElse(null));
-      ps.setString(queryParamIndex, job.getRenameToPath().map(Path::toString).orElse(null));
-      ps.setString(queryParamIndex, ReplicationUtils.convertToJson(job.getExtras()));
+      ps.setTimestamp(queryParamIndex++, new Timestamp(job.getCreateTime()));
+      ps.setString(queryParamIndex++, job.getOperation().toString());
+      ps.setString(queryParamIndex++, job.getStatus().toString());
+      ps.setString(queryParamIndex++, job.getSrcPath().map(Path::toString).orElse(null));
+      ps.setString(queryParamIndex++, job.getSrcClusterName());
+      ps.setString(queryParamIndex++, job.getSrcDbName());
+      ps.setString(queryParamIndex++, job.getSrcTableName());
+      ps.setString(queryParamIndex++, ReplicationUtils.convertToJson(job.getSrcPartitionNames()));
+      ps.setString(queryParamIndex++, job.getSrcObjectTldt().orElse(null));
+      ps.setString(queryParamIndex++, job.getRenameToDb().orElse(null));
+      ps.setString(queryParamIndex++, job.getRenameToTable().orElse(null));
+      ps.setString(queryParamIndex++, job.getRenameToPartition().orElse(null));
+      ps.setString(queryParamIndex++, job.getRenameToPath().map(Path::toString).orElse(null));
+      ps.setString(queryParamIndex++, ReplicationUtils.convertToJson(job.getExtras()));
 
       ps.execute();
     } finally {
