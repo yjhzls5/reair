@@ -1,5 +1,6 @@
 package com.airbnb.di.hive.replication.configuration;
 
+import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 
 import org.apache.hadoop.conf.Configuration;
@@ -90,5 +91,17 @@ public class ConfiguredClusterFactory implements ClusterFactory {
         null,
         new Path(srcHdfsRoot),
         new Path(srcHdfsTmp));
+  }
+
+  @Override
+  public DirectoryCopier getDirectoryCopier() throws ConfigurationException{
+    if (!optionalConf.isPresent()) {
+      throw new ConfigurationException("Configuration not set!");
+    }
+
+    Configuration conf = optionalConf.get();
+    String srcHdfsTmp = conf.get(
+            DeployConfigurationKeys.SRC_HDFS_TMP);
+    return new DirectoryCopier(conf, new Path(srcHdfsTmp), true);
   }
 }

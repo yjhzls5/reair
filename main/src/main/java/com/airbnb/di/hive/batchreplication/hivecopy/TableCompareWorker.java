@@ -5,9 +5,12 @@ import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.replication.configuration.ClusterFactory;
+import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.deploy.ConfigurationException;
+import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
+import com.airbnb.di.hive.replication.primitives.CopyPartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.TaskEstimate;
 import com.airbnb.di.hive.replication.primitives.TaskEstimator;
 import com.google.common.base.Function;
@@ -16,6 +19,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapreduce.Mapper;
 
@@ -58,7 +62,7 @@ public class TableCompareWorker {
         }
     }
 
-    private static final DestinationObjectFactory destinationObjectFactory = new DestinationObjectFactory();
+    private static final DestinationObjectFactory DESTINATION_OBJECT_FACTORY = new DestinationObjectFactory();
 
     private Configuration conf;
     private HiveMetastoreClient srcClient;
@@ -69,18 +73,20 @@ public class TableCompareWorker {
     private List<BlackListPair> blackList;
     private DirectoryCopier directoryCopier;
     private TaskEstimator estimator;
+    private ObjectConflictHandler objectConflictHandler = new ObjectConflictHandler();
 
-    protected void setup(Mapper.Context context) throws IOException, InterruptedException, ConfigurationException {
+    protected void setup(Mapper.Context context) throws IOException, InterruptedException, ConfigurationException{
         try {
             this.conf = context.getConfiguration();
+            ClusterFactory clusterFactory = MetastoreReplUtils.createClusterFactory(conf);
 
-            this.srcCluster = MetastoreReplUtils.getCluster(conf, true);
+            this.srcCluster = clusterFactory.getSrcCluster();
             this.srcClient = this.srcCluster.getMetastoreClient();
 
-            this.dstCluster = MetastoreReplUtils.getCluster(conf, false);
+            this.dstCluster = clusterFactory.getDestCluster();
             this.dstClient = this.dstCluster.getMetastoreClient();
 
-            this.directoryCopier = MetastoreReplUtils.getDirectoryCopier(conf);
+            this.directoryCopier = clusterFactory.getDirectoryCopier();
 
             if (context.getConfiguration().get(DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST) == null) {
                 this.blackList = Collections.<BlackListPair>emptyList();
@@ -98,7 +104,7 @@ public class TableCompareWorker {
             }
 
             this.estimator = new TaskEstimator(conf,
-                    destinationObjectFactory,
+                    DESTINATION_OBJECT_FACTORY,
                     srcCluster,
                     dstCluster,
                     directoryCopier);
@@ -130,6 +136,21 @@ public class TableCompareWorker {
 
         Table tab = srcClient.getTable(db, table);
         if (tab != null && tab.getPartitionKeys().size() > 0) {
+            // For partitioned table, if action is COPY we need to make sure to handle partition key change case first.
+            // The copy task will be run twice once here and the other time at commit phase. The task will handle the
+            // case properly.
+            if (estimate.getTaskType() == TaskEstimate.TaskType.COPY_PARTITIONED_TABLE) {
+                CopyPartitionedTableTask copyPartitionedTableTaskJob = new CopyPartitionedTableTask(
+                        conf,
+                        DESTINATION_OBJECT_FACTORY,
+                        objectConflictHandler,
+                        srcCluster,
+                        dstCluster,
+                        spec,
+                        Optional.<Path>empty());
+                copyPartitionedTableTaskJob.runTask();
+            }
+
             // partition tables need to generate partitions.
             HashSet<String> partNames = Sets.newHashSet(srcClient.getPartitionNames(db, table));
             HashSet<String> dstPartNames = Sets.newHashSet(dstClient.getPartitionNames(db, table));

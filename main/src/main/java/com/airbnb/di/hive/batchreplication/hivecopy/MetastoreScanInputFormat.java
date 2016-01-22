@@ -3,7 +3,8 @@ package com.airbnb.di.hive.batchreplication.hivecopy;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.replication.configuration.Cluster;
-import com.airbnb.di.hive.replication.deploy.ConfigurationException;
+import com.airbnb.di.hive.replication.configuration.ClusterFactory;
+import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
@@ -51,7 +52,8 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
         List<String> allTables = new ArrayList<>();
 
         try {
-            srcCluster = MetastoreReplUtils.getCluster(context.getConfiguration(), true);
+            ClusterFactory clusterFactory = MetastoreReplUtils.createClusterFactory(context.getConfiguration());
+            srcCluster = clusterFactory.getSrcCluster();
             srcClient = srcCluster.getMetastoreClient();
         } catch (ConfigurationException | HiveMetastoreException e) {
             throw new IOException("Invalid metastore host name.", e);

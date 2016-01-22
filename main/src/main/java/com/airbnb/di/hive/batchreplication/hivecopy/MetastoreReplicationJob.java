@@ -2,7 +2,7 @@ package com.airbnb.di.hive.batchreplication.hivecopy;
 
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
-import com.airbnb.di.hive.replication.deploy.ConfigurationException;
+import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.hive.replication.primitives.TaskEstimate;
 
@@ -208,7 +208,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
                                                 DeployConfigurationKeys.DEST_HDFS_ROOT,
                                                 DeployConfigurationKeys.DEST_HDFS_TMP,
                                                 DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST,
-                                                DeployConfigurationKeys.BATCH_JOB_INJECTION_CLASS
+                                                DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS
                                                 );
 
         for (String key : mergeKeys) {

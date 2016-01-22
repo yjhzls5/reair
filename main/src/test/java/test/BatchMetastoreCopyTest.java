@@ -3,6 +3,7 @@ package test;
 import com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.ReplicationUtils;
+import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.utils.ReplicationTestUtils;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
@@ -64,9 +65,9 @@ public class BatchMetastoreCopyTest extends MockClusterTest {
         JobConf jobConf = new JobConf(conf);
 
         String[] args = {};
-        jobConf.set("airbnb.reair.clusters.batch.output.dir",
+        jobConf.set(DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR,
                 new Path(destCluster.getFsRoot(), "test_output").toString());
-        jobConf.set("airbnb.reair.clusters.batch.test.injection.class", MockClusterTest.class.getName());
+        jobConf.set(DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS, MockClusterFactory.class.getName());
 
         ToolRunner.run(jobConf, new MetastoreReplicationJob(), args);
 

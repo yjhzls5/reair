@@ -8,9 +8,10 @@ import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.replication.configuration.ClusterFactory;
+import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
-import com.airbnb.di.hive.replication.deploy.ConfigurationException;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
@@ -32,7 +33,6 @@ import java.io.IOException;
 import java.util.Optional;
 
 import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.deseralizeJobResult;
-import static com.airbnb.di.hive.replication.deploy.ReplicationLauncher.makeURI;
 
 /**
  * Stage 3 mapper for commit copy action
@@ -55,13 +55,15 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
     protected void setup(Context context) throws IOException, InterruptedException {
         try {
             this.conf = context.getConfiguration();
-            this.srcCluster = MetastoreReplUtils.getCluster(conf, true);
+            ClusterFactory clusterFactory = MetastoreReplUtils.createClusterFactory(conf);
+
+            this.srcCluster = clusterFactory.getSrcCluster();
             this.srcClient = this.srcCluster.getMetastoreClient();
 
-            this.dstCluster = MetastoreReplUtils.getCluster(conf, false);
+            this.dstCluster = clusterFactory.getDestCluster();
             this.dstClient = this.dstCluster.getMetastoreClient();
 
-            this.directoryCopier = MetastoreReplUtils.getDirectoryCopier(conf);
+            this.directoryCopier = clusterFactory.getDirectoryCopier();
         } catch (HiveMetastoreException | ConfigurationException e) {
             throw new IOException(e);
         }

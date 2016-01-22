@@ -5,8 +5,9 @@ import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.replication.configuration.ClusterFactory;
+import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.deploy.ConfigurationException;
 import com.airbnb.di.hive.replication.primitives.TaskEstimate;
 import com.airbnb.di.hive.replication.primitives.TaskEstimator;
 import org.apache.commons.lang3.tuple.Pair;
@@ -21,7 +22,6 @@ import java.io.IOException;
 
 import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.deseralizeJobResult;
 import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.serializeJobResult;
-import static com.airbnb.di.hive.replication.deploy.ReplicationLauncher.makeURI;
 
 /**
  * Reducer to compare partition entity.
@@ -52,13 +52,15 @@ public class PartitionCompareReducer extends Reducer<LongWritable, Text, Text, T
         try {
             this.conf = context.getConfiguration();
 
-            this.srcCluster = MetastoreReplUtils.getCluster(conf, true);
+            ClusterFactory clusterFactory = MetastoreReplUtils.createClusterFactory(conf);
+
+            this.srcCluster = clusterFactory.getSrcCluster();
             this.srcClient = this.srcCluster.getMetastoreClient();
 
-            this.dstCluster = MetastoreReplUtils.getCluster(conf, false);
+            this.dstCluster = clusterFactory.getDestCluster();
             this.dstClient = this.dstCluster.getMetastoreClient();
 
-            this.directoryCopier = MetastoreReplUtils.getDirectoryCopier(conf);
+            this.directoryCopier = clusterFactory.getDirectoryCopier();
 
             this.estimator = new TaskEstimator(conf,
                     destinationObjectFactory,
