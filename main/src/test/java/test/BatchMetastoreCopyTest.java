@@ -22,11 +22,11 @@ import static org.junit.Assert.assertTrue;
  * Unit Test for MetastoreReplicationJob
  */
 public class BatchMetastoreCopyTest extends MockClusterTest {
+
     @BeforeClass
     public static void setupClass() throws IOException, SQLException {
         MockClusterTest.setupClass();
    }
-
 
     @Test
     public void testCopyNewTables() throws Exception {
@@ -66,15 +66,37 @@ public class BatchMetastoreCopyTest extends MockClusterTest {
         String[] args = {};
         jobConf.set("airbnb.reair.clusters.batch.output.dir",
                 new Path(destCluster.getFsRoot(), "test_output").toString());
-        jobConf.set("airbnb.reair.clusters.batch.test.injection.class", "test.MockClusterTest");
+        jobConf.set("airbnb.reair.clusters.batch.test.injection.class", MockClusterTest.class.getName());
 
         ToolRunner.run(jobConf, new MetastoreReplicationJob(), args);
 
         assertTrue(ReplicationUtils.exists(destMetastore, spec));
 
+        Table dstTable = destMetastore.getTable(spec.getDbName(), spec.getTableName());
+        assertTrue(directoryCopier.equalDirs(new Path(srcTable.getSd().getLocation()),
+                new Path(dstTable.getSd().getLocation())));
+
         assertTrue(ReplicationUtils.exists(destMetastore, partitionSpec1));
         assertTrue(ReplicationUtils.exists(destMetastore, partitionSpec2));
         assertTrue(ReplicationUtils.exists(destMetastore, partitionSpec3));
+
+        Partition dstPartition1 = destMetastore.getPartition(partitionSpec1.getDbName(),
+                partitionSpec1.getTableName(),
+                partitionSpec1.getPartitionName());
+        assertTrue(directoryCopier.equalDirs(new Path(srcPartition1.getSd().getLocation()),
+                new Path(dstPartition1.getSd().getLocation())));
+
+        Partition dstPartition2 = destMetastore.getPartition(partitionSpec2.getDbName(),
+                partitionSpec2.getTableName(),
+                partitionSpec2.getPartitionName());
+        assertTrue(directoryCopier.equalDirs(new Path(srcPartition2.getSd().getLocation()),
+                new Path(dstPartition2.getSd().getLocation())));
+
+        Partition dstPartition3 = destMetastore.getPartition(partitionSpec3.getDbName(),
+                partitionSpec3.getTableName(),
+                partitionSpec3.getPartitionName());
+        assertTrue(directoryCopier.equalDirs(new Path(srcPartition3.getSd().getLocation()),
+                new Path(dstPartition3.getSd().getLocation())));
 
         ReplicationTestUtils.dropTable(srcMetastore, spec);
         ReplicationTestUtils.dropPartition(srcMetastore, partitionSpec2);
