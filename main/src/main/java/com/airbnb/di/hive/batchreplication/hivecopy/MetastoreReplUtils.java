@@ -14,8 +14,6 @@ import java.io.IOException;
  * Util class for metastore replication
  */
 public class MetastoreReplUtils {
-    private static final Log LOG = LogFactory.getLog(MetastoreReplUtils.class);
-
     private MetastoreReplUtils() {
     }
 
@@ -30,7 +28,9 @@ public class MetastoreReplUtils {
             }
             return factory;
         } else {
-            return new ConfiguredClusterFactory();
+            ConfiguredClusterFactory configuredClusterFactory = new ConfiguredClusterFactory();
+            configuredClusterFactory.setConf(conf);
+            return configuredClusterFactory;
         }
     }
 }

@@ -153,8 +153,8 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
         Path outputParent = new Path(finalOutput);
         String step1Out = new Path(outputParent, "step1output").toString();
-        String step2Out = new Path(outputParent + "step2output").toString();
-        String step3Out = new Path(outputParent + "step3output").toString();
+        String step2Out = new Path(outputParent, "step2output").toString();
+        String step3Out = new Path(outputParent, "step3output").toString();
         if (step == -1) {
             removeOutputDirectory(step1Out, this.getConf());
             removeOutputDirectory(step2Out, this.getConf());
@@ -208,7 +208,9 @@ public class MetastoreReplicationJob extends Configured implements Tool {
                                                 DeployConfigurationKeys.DEST_HDFS_ROOT,
                                                 DeployConfigurationKeys.DEST_HDFS_TMP,
                                                 DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST,
-                                                DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS
+                                                DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS,
+                                                DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR,
+                                                DeployConfigurationKeys.BATCH_JOB_INPUT_LIST
                                                 );
 
         for (String key : mergeKeys) {
@@ -251,7 +253,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         FileInputFormat.setInputPaths(job, new Path(input));
         FileInputFormat.setMaxInputSplitSize(job,
                 this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
-        
+
         job.setOutputKeyClass(LongWritable.class);
         job.setOutputValueClass(Text.class);
 
