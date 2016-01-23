@@ -9,28 +9,36 @@ import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
 
-
 /**
- * Util class for metastore replication
+ * Util class for metastore replication.
  */
 public class MetastoreReplUtils {
-    private MetastoreReplUtils() {
-    }
+  private MetastoreReplUtils() {
+  }
 
-    public static ClusterFactory createClusterFactory(Configuration conf) throws IOException {
-        String clusterFactoryClassName = conf.get(DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS);
-        if (clusterFactoryClassName != null) {
-            ClusterFactory factory = null;
-            try {
-                factory = (ClusterFactory) Class.forName(clusterFactoryClassName).newInstance();
-            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                throw new IOException(e);
-            }
-            return factory;
-        } else {
-            ConfiguredClusterFactory configuredClusterFactory = new ConfiguredClusterFactory();
-            configuredClusterFactory.setConf(conf);
-            return configuredClusterFactory;
-        }
+  /**
+   * TODO.
+   *
+   * @param conf TODO
+   * @return TODO
+   *
+   * @throws IOException TODO
+   */
+  public static ClusterFactory createClusterFactory(Configuration conf) throws IOException {
+    String clusterFactoryClassName =
+        conf.get(DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS);
+    if (clusterFactoryClassName != null) {
+      ClusterFactory factory = null;
+      try {
+        factory = (ClusterFactory) Class.forName(clusterFactoryClassName).newInstance();
+      } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+        throw new IOException(e);
+      }
+      return factory;
+    } else {
+      ConfiguredClusterFactory configuredClusterFactory = new ConfiguredClusterFactory();
+      configuredClusterFactory.setConf(conf);
+      return configuredClusterFactory;
     }
+  }
 }

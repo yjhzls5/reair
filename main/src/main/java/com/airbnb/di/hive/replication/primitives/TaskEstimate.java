@@ -1,6 +1,7 @@
 package com.airbnb.di.hive.replication.primitives;
 
 import com.google.common.base.Objects;
+
 import org.apache.hadoop.fs.Path;
 
 import java.util.Optional;

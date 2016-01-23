@@ -1,5 +1,8 @@
 package com.airbnb.di.hive.batchreplication.hivecopy;
 
+import static
+    com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.deseralizeJobResult;
+
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
@@ -32,137 +35,140 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 import java.util.Optional;
 
-import static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.deseralizeJobResult;
-
 /**
  * Stage 3 mapper for commit copy action
  *
- * Input of the Stage 3 job is Stage 1 job output. It contains action of table and partition. In this stage,
- * we need to commit metadata operation, and finalize all drop actions.
+ * <p>Input of the Stage 3 job is Stage 1 job output. It contains action of table and partition. In
+ * this stage, we need to commit metadata operation, and finalize all drop actions.
  */
 public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, Text> {
-    private static final Log LOG = LogFactory.getLog(Stage3CommitChangeMapper.class);
-    private static final DestinationObjectFactory DESTINATION_OBJECT_FACTORY = new DestinationObjectFactory();
+  private static final Log LOG = LogFactory.getLog(Stage3CommitChangeMapper.class);
+  private static final DestinationObjectFactory DESTINATION_OBJECT_FACTORY =
+      new DestinationObjectFactory();
 
-    private Configuration conf;
-    private HiveMetastoreClient srcClient;
-    private HiveMetastoreClient dstClient;
-    private Cluster srcCluster;
-    private Cluster dstCluster;
-    private DirectoryCopier directoryCopier;
-    private ObjectConflictHandler objectConflictHandler = new ObjectConflictHandler();
+  private Configuration conf;
+  private HiveMetastoreClient srcClient;
+  private HiveMetastoreClient dstClient;
+  private Cluster srcCluster;
+  private Cluster dstCluster;
+  private DirectoryCopier directoryCopier;
+  private ObjectConflictHandler objectConflictHandler = new ObjectConflictHandler();
 
-    protected void setup(Context context) throws IOException, InterruptedException {
-        try {
-            this.conf = context.getConfiguration();
-            ClusterFactory clusterFactory = MetastoreReplUtils.createClusterFactory(conf);
+  protected void setup(Context context) throws IOException, InterruptedException {
+    try {
+      this.conf = context.getConfiguration();
+      ClusterFactory clusterFactory = MetastoreReplUtils.createClusterFactory(conf);
 
-            this.srcCluster = clusterFactory.getSrcCluster();
-            this.srcClient = this.srcCluster.getMetastoreClient();
+      this.srcCluster = clusterFactory.getSrcCluster();
+      this.srcClient = this.srcCluster.getMetastoreClient();
 
-            this.dstCluster = clusterFactory.getDestCluster();
-            this.dstClient = this.dstCluster.getMetastoreClient();
+      this.dstCluster = clusterFactory.getDestCluster();
+      this.dstClient = this.dstCluster.getMetastoreClient();
 
-            this.directoryCopier = clusterFactory.getDirectoryCopier();
-        } catch (HiveMetastoreException | ConfigurationException e) {
-            throw new IOException(e);
-        }
+      this.directoryCopier = clusterFactory.getDirectoryCopier();
+    } catch (HiveMetastoreException | ConfigurationException e) {
+      throw new IOException(e);
     }
+  }
 
-    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-        try {
-            Pair<TaskEstimate, HiveObjectSpec> input = deseralizeJobResult(value.toString());
-            TaskEstimate estimate = input.getLeft();
-            HiveObjectSpec spec = input.getRight();
-            RunInfo status = null;
+  protected void map(LongWritable key, Text value, Context context)
+      throws IOException, InterruptedException {
+    try {
+      Pair<TaskEstimate, HiveObjectSpec> input = deseralizeJobResult(value.toString());
+      TaskEstimate estimate = input.getLeft();
+      HiveObjectSpec spec = input.getRight();
+      RunInfo status = null;
 
-            switch (estimate.getTaskType()) {
-            case COPY_PARTITION:
-                CopyPartitionTask copyPartitionTask = new CopyPartitionTask(
-                        conf,
-                        DESTINATION_OBJECT_FACTORY,
-                        objectConflictHandler,
-                        srcCluster,
-                        dstCluster,
-                        spec,
-                        Optional.<Path>empty(),
-                        Optional.<Path>empty(),
-                        directoryCopier,
-                        false);
-                status = copyPartitionTask.runTask();
-                context.write(value, new Text(status.getRunStatus().toString()));
-                break;
+      switch (estimate.getTaskType()) {
+        case COPY_PARTITION:
+          CopyPartitionTask copyPartitionTask = new CopyPartitionTask(
+              conf,
+              DESTINATION_OBJECT_FACTORY,
+              objectConflictHandler,
+              srcCluster,
+              dstCluster,
+              spec,
+              Optional.<Path>empty(),
+              Optional.<Path>empty(),
+              directoryCopier,
+              false);
+          status = copyPartitionTask.runTask();
+          context.write(value, new Text(status.getRunStatus().toString()));
+          break;
 
-            case COPY_PARTITIONED_TABLE:
-                CopyPartitionedTableTask copyPartitionedTableTaskJob = new CopyPartitionedTableTask(
-                        conf,
-                        DESTINATION_OBJECT_FACTORY,
-                        objectConflictHandler,
-                        srcCluster,
-                        dstCluster,
-                        spec,
-                        Optional.<Path>empty());
-                status = copyPartitionedTableTaskJob.runTask();
-                context.write(value, new Text(status.getRunStatus().toString()));
-                break;
+        case COPY_PARTITIONED_TABLE:
+          CopyPartitionedTableTask copyPartitionedTableTaskJob = new CopyPartitionedTableTask(
+              conf,
+              DESTINATION_OBJECT_FACTORY,
+              objectConflictHandler,
+              srcCluster,
+              dstCluster,
+              spec,
+              Optional.<Path>empty());
+          status = copyPartitionedTableTaskJob.runTask();
+          context.write(value, new Text(status.getRunStatus().toString()));
+          break;
 
-            case COPY_UNPARTITIONED_TABLE:
-                CopyUnpartitionedTableTask copyUnpartitionedTableTask = new CopyUnpartitionedTableTask(
-                        conf,
-                        DESTINATION_OBJECT_FACTORY,
-                        objectConflictHandler,
-                        srcCluster,
-                        dstCluster,
-                        spec,
-                        Optional.<Path>empty(),
-                        directoryCopier,
-                        false);
-                status = copyUnpartitionedTableTask.runTask();
-                context.write(value, new Text(status.getRunStatus().toString()));
-                break;
+        case COPY_UNPARTITIONED_TABLE:
+          CopyUnpartitionedTableTask copyUnpartitionedTableTask = new CopyUnpartitionedTableTask(
+              conf,
+              DESTINATION_OBJECT_FACTORY,
+              objectConflictHandler,
+              srcCluster,
+              dstCluster,
+              spec,
+              Optional.<Path>empty(),
+              directoryCopier,
+              false);
+          status = copyUnpartitionedTableTask.runTask();
+          context.write(value, new Text(status.getRunStatus().toString()));
+          break;
 
-            case DROP_PARTITION:
-                Partition dstPart = dstClient.getPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName());
-                if (dstPart == null) {
-                    context.write(value, new Text(RunInfo.RunStatus.SUCCESSFUL.toString()));
-                    break;
-                }
+        case DROP_PARTITION:
+          Partition dstPart = dstClient.getPartition(
+                                  spec.getDbName(),
+                                  spec.getTableName(),
+                                  spec.getPartitionName());
+          if (dstPart == null) {
+            context.write(value, new Text(RunInfo.RunStatus.SUCCESSFUL.toString()));
+            break;
+          }
 
-                DropPartitionTask dropPartitionTask = new DropPartitionTask(srcCluster,
-                        dstCluster,
-                        spec,
-                        ReplicationUtils.getTldt(dstPart));
+          DropPartitionTask dropPartitionTask = new DropPartitionTask(srcCluster,
+              dstCluster,
+              spec,
+              ReplicationUtils.getTldt(dstPart));
 
-                status = dropPartitionTask.runTask();
-                context.write(value, new Text(status.getRunStatus().toString()));
-                break;
+          status = dropPartitionTask.runTask();
+          context.write(value, new Text(status.getRunStatus().toString()));
+          break;
 
-            case DROP_TABLE:
-                Table dstTable = dstClient.getTable(spec.getDbName(), spec.getTableName());
-                if (dstTable == null) {
-                    context.write(value, new Text(RunInfo.RunStatus.SUCCESSFUL.toString()));
-                    break;
-                }
+        case DROP_TABLE:
+          Table dstTable = dstClient.getTable(spec.getDbName(), spec.getTableName());
+          if (dstTable == null) {
+            context.write(value, new Text(RunInfo.RunStatus.SUCCESSFUL.toString()));
+            break;
+          }
 
-                DropTableTask dropTableTask = new DropTableTask(srcCluster,
-                        dstCluster,
-                        spec,
-                        ReplicationUtils.getTldt(dstTable));
-                status = dropTableTask.runTask();
-                context.write(value, new Text(status.getRunStatus().toString()));
-                break;
+          DropTableTask dropTableTask = new DropTableTask(srcCluster,
+              dstCluster,
+              spec,
+              ReplicationUtils.getTldt(dstTable));
+          status = dropTableTask.runTask();
+          context.write(value, new Text(status.getRunStatus().toString()));
+          break;
 
-            default:
-                break;
-            }
-        } catch (HiveMetastoreException | DistCpException e) {
-            LOG.error(String.format("Got exception while processing %s", value.toString()), e);
-            context.write(value, new Text(RunInfo.RunStatus.FAILED.toString()));
-        }
+        default:
+          break;
+      }
+    } catch (HiveMetastoreException | DistCpException e) {
+      LOG.error(String.format("Got exception while processing %s", value.toString()), e);
+      context.write(value, new Text(RunInfo.RunStatus.FAILED.toString()));
     }
+  }
 
-    protected void cleanup(Context context) throws IOException, InterruptedException {
-        this.srcClient.close();
-        this.dstClient.close();
-    }
+  protected void cleanup(Context context) throws IOException, InterruptedException {
+    this.srcClient.close();
+    this.dstClient.close();
+  }
 }
