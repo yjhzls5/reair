@@ -184,7 +184,7 @@ public class ReplicationTestUtils {
     columns.add(new FieldSchema("key", "string",
           "my comment"));
     sd.setCols(columns);
-    if (tableType == TableType.MANAGED_TABL
+    if (tableType == TableType.MANAGED_TABLE
         || tableType == TableType.EXTERNAL_TABLE) {
       sd.setLocation(tableLocation.toString());
     }
