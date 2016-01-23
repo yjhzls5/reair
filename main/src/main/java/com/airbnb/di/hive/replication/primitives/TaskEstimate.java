@@ -16,6 +16,7 @@ public class TaskEstimate {
     COPY_PARTITION,
     DROP_TABLE,
     DROP_PARTITION,
+    CHECK_PARTITION,
     NO_OP,
   }
 
@@ -34,8 +35,7 @@ public class TaskEstimate {
    * @param srcPath TODO
    * @param destPath TODO
    */
-  public TaskEstimate(
-      TaskType taskType,
+  public TaskEstimate(TaskType taskType,
       boolean updateMetadata,
       boolean updateData,
       Optional<Path> srcPath,
@@ -65,5 +65,15 @@ public class TaskEstimate {
 
   public TaskType getTaskType() {
     return taskType;
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this).add("taskType", taskType.toString())
+      .add("updateMetadata", updateMetadata)
+      .add("updateData", updateData)
+      .add("srcPath", srcPath)
+      .add("destPath", destPath)
+      .toString();
   }
 }
