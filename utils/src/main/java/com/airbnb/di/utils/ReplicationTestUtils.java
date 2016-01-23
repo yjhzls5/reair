@@ -201,7 +201,7 @@ public class ReplicationTestUtils {
 
     ms.createTable(table);
 
-    return t;
+    return table;
   }
 
   /**
@@ -258,7 +258,7 @@ public class ReplicationTestUtils {
     partition.setParameters(parameters);
 
     ms.addPartition(partition);
-    return p;
+    return partition;
   }
 
   /**
