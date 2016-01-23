@@ -36,15 +36,15 @@ import java.util.Map;
 
 /**
  * Utilities for running replication tests.
- *
- * @version
  */
 public class ReplicationTestUtils {
 
-  private static final Log LOG = LogFactory.getLog(ReplicationTestUtils.class);
+  private static final Log LOG = LogFactory.getLog(
+      ReplicationTestUtils.class);
 
 
-  private static Path getPathForHiveObject(Path warehouseRoot, HiveObjectSpec spec) {
+  private static Path getPathForHiveObject(Path warehouseRoot,
+      HiveObjectSpec spec) {
     PathBuilder pb = new PathBuilder(warehouseRoot);
     pb.add(spec.getDbName());
     pb.add(spec.getTableName());
@@ -54,7 +54,8 @@ public class ReplicationTestUtils {
     return pb.toPath();
   }
 
-  private static void createSomeTextFiles(Configuration conf, Path directory) throws IOException {
+  private static void createSomeTextFiles(Configuration conf, Path directory)
+    throws IOException {
     createTextFile(conf, directory, "file1.txt", "foobar");
     createTextFile(conf, directory, "file2.txt", "123");
   }
@@ -62,10 +63,17 @@ public class ReplicationTestUtils {
   /**
    * Creates the specified text file using Hadoop API's.
    *
+   * @param conf TODO
+   * @param directory TODO
+   * @param filename TODO
+   * @param contents TODO
    * @throws IOException TODO
    */
-  public static void createTextFile(Configuration conf, Path directory, String filename,
-      String contents) throws IOException {
+  public static void createTextFile(Configuration conf,
+      Path directory,
+      String filename,
+      String contents)
+    throws IOException {
     Path filePath = new Path(directory, filename);
     FileSystem fs = FileSystem.get(filePath.toUri(), conf);
 
@@ -81,21 +89,26 @@ public class ReplicationTestUtils {
    * @param conf TODO
    * @param ms TODO
    * @param tableSpec TODO
+   * @param tableType TODO
    * @param warehouseRoot TODO
    * @return TODO
    * @throws IOException TODO
    * @throws HiveMetastoreException TODO
    */
-  public static Table createUnpartitionedTable(Configuration conf, HiveMetastoreClient ms,
-      HiveObjectSpec tableSpec, TableType tableType, Path warehouseRoot)
-          throws IOException, HiveMetastoreException {
+  public static Table createUnpartitionedTable(Configuration conf,
+      HiveMetastoreClient ms,
+      HiveObjectSpec tableSpec,
+      TableType tableType,
+      Path warehouseRoot)
+    throws IOException, HiveMetastoreException {
 
     // Set up the basic properties of the table
     Table table = new Table();
     table.setDbName(tableSpec.getDbName());
     table.setTableName(tableSpec.getTableName());
     Map<String, String> parameters = new HashMap<>();
-    parameters.put(HiveParameterKeys.TLDT, Long.toString(System.currentTimeMillis()));
+    parameters.put(HiveParameterKeys.TLDT, Long.toString(
+          System.currentTimeMillis()));
     table.setParameters(parameters);
     table.setPartitionKeys(new ArrayList<>());
     table.setTableType(tableType.toString());
@@ -104,10 +117,12 @@ public class ReplicationTestUtils {
     StorageDescriptor sd = new StorageDescriptor();
     // Set the schema for the table
     List<FieldSchema> columns = new ArrayList<>();
-    columns.add(new FieldSchema("key", "string", "my comment"));
+    columns.add(new FieldSchema("key", "string",
+          "my comment"));
     sd.setCols(columns);
 
-    if (tableType == TableType.MANAGED_TABLE || tableType == TableType.EXTERNAL_TABLE) {
+    if (tableType == TableType.MANAGED_TABLE
+        || tableType == TableType.EXTERNAL_TABLE) {
       Path tableLocation = getPathForHiveObject(warehouseRoot, tableSpec);
       sd.setLocation(tableLocation.toString());
       // Make some fake files
@@ -132,14 +147,18 @@ public class ReplicationTestUtils {
    * @param conf TODO
    * @param ms TODO
    * @param tableSpec TODO
+   * @param tableType TODO
    * @param warehouseRoot TODO
    * @return TODO
    * @throws IOException TODO
    * @throws HiveMetastoreException TODO
    */
-  public static Table createPartitionedTable(Configuration conf, HiveMetastoreClient ms,
-      HiveObjectSpec tableSpec, TableType tableType, Path warehouseRoot)
-          throws IOException, HiveMetastoreException {
+  public static Table createPartitionedTable(Configuration conf,
+      HiveMetastoreClient ms,
+      HiveObjectSpec tableSpec,
+      TableType tableType,
+      Path warehouseRoot)
+    throws IOException, HiveMetastoreException {
     Path tableLocation = getPathForHiveObject(warehouseRoot, tableSpec);
 
     // Set up the basic properties of the table
@@ -147,7 +166,8 @@ public class ReplicationTestUtils {
     table.setDbName(tableSpec.getDbName());
     table.setTableName(tableSpec.getTableName());
     Map<String, String> parameters = new HashMap<>();
-    parameters.put(HiveParameterKeys.TLDT, Long.toString(System.currentTimeMillis()));
+    parameters.put(HiveParameterKeys.TLDT, Long.toString(
+          System.currentTimeMillis()));
     table.setParameters(parameters);
     table.setTableType(tableType.toString());
 
@@ -161,14 +181,17 @@ public class ReplicationTestUtils {
     StorageDescriptor sd = new StorageDescriptor();
     // Set the schema for the table
     List<FieldSchema> columns = new ArrayList<>();
-    columns.add(new FieldSchema("key", "string", "my comment"));
+    columns.add(new FieldSchema("key", "string",
+          "my comment"));
     sd.setCols(columns);
-    if (tableType == TableType.MANAGED_TABLE || tableType == TableType.EXTERNAL_TABLE) {
+    if (tableType == TableType.MANAGED_TABL
+        || tableType == TableType.EXTERNAL_TABLE) {
       sd.setLocation(tableLocation.toString());
     }
 
     sd.setSerdeInfo(new SerDeInfo("LazySimpleSerde",
-        "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe", new HashMap<>()));
+          "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
+          new HashMap<>()));
     table.setSd(sd);
 
     // Create DB for table if one does not exist
@@ -178,7 +201,7 @@ public class ReplicationTestUtils {
 
     ms.createTable(table);
 
-    return table;
+    return t;
   }
 
   /**
@@ -191,11 +214,14 @@ public class ReplicationTestUtils {
    * @throws IOException TODO
    * @throws HiveMetastoreException TODO
    */
-  public static Partition createPartition(Configuration conf, HiveMetastoreClient ms,
-      HiveObjectSpec partitionSpec) throws IOException, HiveMetastoreException {
+  public static Partition createPartition(Configuration conf,
+      HiveMetastoreClient ms,
+      HiveObjectSpec partitionSpec)
+    throws IOException, HiveMetastoreException {
 
     HiveObjectSpec tableSpec = partitionSpec.getTableSpec();
-    if (!ms.existsTable(tableSpec.getDbName(), tableSpec.getTableName())) {
+    if (! ms.existsTable(tableSpec.getDbName(),
+          tableSpec.getTableName())) {
       throw new HiveMetastoreException("Missing table " + tableSpec);
     }
     Table table = ms.getTable(tableSpec.getDbName(), tableSpec.getTableName());
@@ -204,16 +230,17 @@ public class ReplicationTestUtils {
     partition.setDbName(partitionSpec.getDbName());
     partition.setTableName(partitionSpec.getTableName());
 
-    Map<String, String> partitionKeyValues =
-        ms.partitionNameToMap(partitionSpec.getPartitionName());
+    Map<String, String> partitionKeyValues = ms.partitionNameToMap(
+        partitionSpec.getPartitionName());
     partition.setValues(Lists.newArrayList(partitionKeyValues.values()));
     StorageDescriptor psd = new StorageDescriptor(table.getSd());
     TableType tableType = TableType.valueOf(table.getTableType());
-    if (tableType.equals(TableType.MANAGED_TABLE) || tableType.equals(TableType.EXTERNAL_TABLE)) {
+    if (tableType.equals(TableType.MANAGED_TABLE)
+        || tableType.equals(TableType.EXTERNAL_TABLE)) {
       // Make the location for the partition to be in a subdirectory of the
       // table location. String concatenation here is not great.
-      String partitionLocation = table.getSd().getLocation()
-          + "/" + partitionSpec.getPartitionName();
+      String partitionLocation = table.getSd().getLocation() + "/"
+          + partitionSpec.getPartitionName();
       psd.setLocation(partitionLocation);
       createSomeTextFiles(conf, new Path(partitionLocation));
     }
@@ -221,15 +248,17 @@ public class ReplicationTestUtils {
     // Set the serde info as it can cause an NPE otherwise when creating
     // ql Partition objects.
     psd.setSerdeInfo(new SerDeInfo("LazySimpleSerde",
-        "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe", new HashMap<>()));
+          "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe",
+          new HashMap<>()));
     partition.setSd(psd);
 
     Map<String, String> parameters = new HashMap<>();
-    parameters.put(HiveParameterKeys.TLDT, Long.toString(System.currentTimeMillis()));
+    parameters.put(HiveParameterKeys.TLDT, Long.toString(
+          System.currentTimeMillis()));
     partition.setParameters(parameters);
 
     ms.addPartition(partition);
-    return partition;
+    return p;
   }
 
   /**
@@ -240,20 +269,21 @@ public class ReplicationTestUtils {
    *
    * @throws HiveMetastoreException TODO
    */
-  public static void updateModifiedTime(HiveMetastoreClient ms, HiveObjectSpec objectSpec)
-      throws HiveMetastoreException {
+  public static void updateModifiedTime(HiveMetastoreClient ms,
+      HiveObjectSpec objectSpec)
+    throws HiveMetastoreException {
     if (objectSpec.isPartition()) {
-      Partition partition = ms.getPartition(objectSpec.getDbName(), objectSpec.getTableName(),
-          objectSpec.getPartitionName());
-      partition.getParameters().put(
-          HiveParameterKeys.TLDT,
+      Partition partition = ms.getPartition(objectSpec.getDbName(),
+          objectSpec.getTableName(), objectSpec.getPartitionName());
+      partition.getParameters().put(HiveParameterKeys.TLDT,
           Long.toString(System.currentTimeMillis()));
     } else {
-      Table table = ms.getTable(objectSpec.getDbName(), objectSpec.getTableName());
-      table.getParameters().put(
-          HiveParameterKeys.TLDT,
+      Table table = ms.getTable(objectSpec.getDbName(),
+          objectSpec.getTableName());
+      table.getParameters().put(HiveParameterKeys.TLDT,
           Long.toString(System.currentTimeMillis()));
     }
+
   }
 
   /**
@@ -265,14 +295,16 @@ public class ReplicationTestUtils {
    *
    * @throws HiveMetastoreException TODO
    */
-  public static String getModifiedTime(HiveMetastoreClient ms, HiveObjectSpec objectSpec)
-      throws HiveMetastoreException {
+  public static String getModifiedTime(HiveMetastoreClient ms,
+      HiveObjectSpec objectSpec)
+    throws HiveMetastoreException {
     if (objectSpec.isPartition()) {
-      Partition partition = ms.getPartition(objectSpec.getDbName(), objectSpec.getTableName(),
-          objectSpec.getPartitionName());
+      Partition partition = ms.getPartition(objectSpec.getDbName(),
+          objectSpec.getTableName(), objectSpec.getPartitionName());
       return partition.getParameters().get(HiveParameterKeys.TLDT);
     } else {
-      Table table = ms.getTable(objectSpec.getDbName(), objectSpec.getTableName());
+      Table table = ms.getTable(objectSpec.getDbName(),
+          objectSpec.getTableName());
       return table.getParameters().get(HiveParameterKeys.TLDT);
     }
   }
@@ -290,8 +322,11 @@ public class ReplicationTestUtils {
    * @throws ClassNotFoundException TODO
    * @throws SQLException TODO
    */
-  public static List<String> getRow(String jdbcUrl, String username, String password,
-      String tableName, List<String> columnNames) throws ClassNotFoundException, SQLException {
+  public static List<String> getRow(String jdbcUrl, String username,
+      String password,
+      String tableName,
+      List<String> columnNames)
+    throws ClassNotFoundException, SQLException {
     return getRow(jdbcUrl, username, password, tableName, columnNames, null);
   }
 
@@ -309,9 +344,13 @@ public class ReplicationTestUtils {
    * @throws ClassNotFoundException TODO
    * @throws SQLException TODO
    */
-  public static List<String> getRow(String jdbcUrl, String username, String password,
-      String tableName, List<String> columnNames, String whereClause)
-          throws ClassNotFoundException, SQLException {
+  public static List<String> getRow(String jdbcUrl,
+      String username,
+      String password,
+      String tableName,
+      List<String> columnNames,
+      String whereClause)
+    throws ClassNotFoundException, SQLException {
     StringBuilder qb = new StringBuilder();
 
     List<String> columnExpressions = new ArrayList<>();
@@ -333,7 +372,8 @@ public class ReplicationTestUtils {
     LOG.debug("Running query " + qb.toString());
 
     Class.forName("com.mysql.jdbc.Driver");
-    Connection connection = DriverManager.getConnection(jdbcUrl, username, password);
+    Connection connection = DriverManager.getConnection(jdbcUrl, username,
+        password);
 
     Statement statement = connection.createStatement();
     ResultSet rs = statement.executeQuery(qb.toString());
@@ -363,9 +403,12 @@ public class ReplicationTestUtils {
    * @throws ClassNotFoundException TODO
    * @throws SQLException TODO
    */
-  public static List<String> getRow(DbConnectionFactory dbConnectionFactory, String dbName,
-      String tableName, List<String> columnNames, String whereClause)
-          throws ClassNotFoundException, SQLException {
+  public static List<String> getRow(DbConnectionFactory dbConnectionFactory,
+      String dbName,
+      String tableName,
+      List<String> columnNames,
+      String whereClause)
+    throws ClassNotFoundException, SQLException {
     StringBuilder qb = new StringBuilder();
 
     List<String> columnExpressions = new ArrayList<>();
@@ -406,11 +449,13 @@ public class ReplicationTestUtils {
   }
 
   public static String getJdbcUrl(EmbeddedMySqlDb db) {
-    return String.format("jdbc:mysql://%s:%s/", db.getHost(), db.getPort());
+    return String.format("jdbc:mysql://%s:%s/",
+        db.getHost(), db.getPort());
   }
 
   public static String getJdbcUrl(EmbeddedMySqlDb db, String dbName) {
-    return String.format("jdbc:mysql://%s:%s/%s", db.getHost(), db.getPort(), dbName);
+    return String.format("jdbc:mysql://%s:%s/%s",
+        db.getHost(), db.getPort(), dbName);
   }
 
   /**
@@ -418,11 +463,10 @@ public class ReplicationTestUtils {
    *
    * @param connectionFactory TODO
    * @param dbName TODO
-   *
    * @throws SQLException TODO
    */
-  public static void dropDatabase(DbConnectionFactory connectionFactory, String dbName)
-      throws SQLException {
+  public static void dropDatabase(DbConnectionFactory connectionFactory,
+      String dbName) throws SQLException {
     Connection connection = connectionFactory.getConnection();
     String sql = String.format("DROP DATABASE IF EXISTS %s", dbName);
     Statement statement = connection.createStatement();
@@ -437,12 +481,43 @@ public class ReplicationTestUtils {
   /**
    * Drops all tables from the given Hive DB.
    *
+   * @param ms TODO
+   * @param dbName TODO
    * @throws HiveMetastoreException TODO
    */
   public static void dropTables(HiveMetastoreClient ms, String dbName)
-      throws HiveMetastoreException {
+    throws HiveMetastoreException {
     for (String tableName : ms.getTables(dbName, "*")) {
       ms.dropTable(dbName, tableName, true);
+    }
+  }
+
+  /**
+   * Drops a table from the given Hive DB.
+   *
+   * @param ms TODO
+   * @param spec TODO
+   * @throws HiveMetastoreException TODO
+   */
+  public static void dropTable(HiveMetastoreClient ms, HiveObjectSpec spec)
+    throws HiveMetastoreException {
+    ms.dropTable(spec.getDbName(), spec.getTableName(), true);
+  }
+
+  /**
+   * Drops a partition from the given partitioned table.
+   *
+   * @param ms TODO
+   * @param spec TODO
+   * @throws HiveMetastoreException TODO
+   */
+  public static void dropPartition(HiveMetastoreClient ms, HiveObjectSpec spec)
+    throws HiveMetastoreException {
+    if (spec.isPartition()) {
+      ms.dropPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName(), true);
+      return;
+    } else {
+      throw new HiveMetastoreException("unpartitioned table provided" + spec.toString());
     }
   }
 }
