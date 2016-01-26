@@ -363,7 +363,7 @@ public class ReplicationJob extends Configured implements Tool {
         .addOption("d", "destination", true, "destination folder")
         .addOption("o", "output", true, "output folder")
         .addOption("p", "option", true,
-            "checking options: comma seperated option including a(add),d(delete),u(update)")
+            "checking options: comma separated option including a(add),d(delete),u(update)")
         .addOption("l", "list", false, "list file size only")
         .addOption("b", "blacklist", true, "folder blacklist regex")
         .addOption("dry", "dryrun", false, "dryrun only");
