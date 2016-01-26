@@ -1,5 +1,6 @@
 package com.airbnb.di.hive.replication;
 
+import com.airbnb.di.hive.replication.db.PersistedJobInfo;
 import com.airbnb.di.hive.replication.thrift.TReplicationJob;
 import com.airbnb.di.hive.replication.thrift.TReplicationOperation;
 import com.airbnb.di.hive.replication.thrift.TReplicationStatus;

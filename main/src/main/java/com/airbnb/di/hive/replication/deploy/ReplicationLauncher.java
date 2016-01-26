@@ -5,15 +5,16 @@ import com.airbnb.di.db.DbConnectionWatchdog;
 import com.airbnb.di.db.DbKeyValueStore;
 import com.airbnb.di.db.StaticDbConnectionFactory;
 import com.airbnb.di.hive.replication.DirectoryCopier;
-import com.airbnb.di.hive.replication.PersistedJobInfoStore;
 import com.airbnb.di.hive.replication.ReplicationServer;
 import com.airbnb.di.hive.replication.auditlog.AuditLogReader;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.ClusterFactory;
 import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import com.airbnb.di.hive.replication.configuration.ConfiguredClusterFactory;
+import com.airbnb.di.hive.replication.db.PersistedJobInfoStore;
 import com.airbnb.di.hive.replication.filter.ReplicationFilter;
 import com.airbnb.di.hive.replication.thrift.TReplicationService;
+
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;

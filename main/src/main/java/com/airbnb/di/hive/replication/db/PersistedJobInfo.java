@@ -1,4 +1,7 @@
-package com.airbnb.di.hive.replication;
+package com.airbnb.di.hive.replication.db;
+
+import com.airbnb.di.hive.replication.ReplicationOperation;
+import com.airbnb.di.hive.replication.ReplicationStatus;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

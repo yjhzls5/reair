@@ -2,7 +2,6 @@ package com.airbnb.di.hive.replication.filter;
 
 import com.airbnb.di.hive.common.NamedPartition;
 import com.airbnb.di.hive.replication.auditlog.AuditLogEntry;
-import com.airbnb.di.hive.replication.filter.ReplicationFilter;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.Table;

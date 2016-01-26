@@ -58,14 +58,6 @@ public class HardCodedCluster implements Cluster {
     return new ThriftHiveMetastoreClient(getMetastoreHost(), getMetastorePort());
   }
 
-  public String getJobtrackerHost() {
-    return jobtrackerHost;
-  }
-
-  public String getJobtrackerPort() {
-    return jobtrackerPort;
-  }
-
   public Path getFsRoot() {
     return hdfsRoot;
   }

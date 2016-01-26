@@ -14,62 +14,67 @@ import java.util.NoSuchElementException;
  */
 public interface HiveMetastoreClient {
 
-  public Partition addPartition(Partition partition) throws HiveMetastoreException;
+  Partition addPartition(Partition partition) throws HiveMetastoreException;
 
-  public Table getTable(String dbName, String tableName) throws HiveMetastoreException;
+  Table getTable(String dbName, String tableName) throws HiveMetastoreException;
 
-  public Partition getPartition(String dbName, String tableName, String partitionName)
+  Partition getPartition(String dbName, String tableName, String partitionName)
       throws HiveMetastoreException;
 
-  public List<String> getPartitionNames(String dbName, String tableName)
+  List<String> getPartitionNames(String dbName, String tableName)
       throws HiveMetastoreException;
 
-  public void alterPartition(String dbName, String tableName, Partition partition)
+  void alterPartition(String dbName, String tableName, Partition partition)
       throws HiveMetastoreException;
 
-  public void alterTable(
+  void alterTable(
       String dbName,
       String tableName,
       Table table) throws HiveMetastoreException;
 
-  public boolean isPartitioned(String dbName, String tableName) throws HiveMetastoreException;
+  boolean isPartitioned(String dbName, String tableName) throws HiveMetastoreException;
 
-  public boolean existsPartition(String dbName, String tableName, String partitionName)
+  boolean existsPartition(String dbName, String tableName, String partitionName)
       throws HiveMetastoreException;
 
-  public boolean existsTable(String dbName, String tableName) throws HiveMetastoreException;
+  boolean existsTable(String dbName, String tableName) throws HiveMetastoreException;
 
-  public void createTable(Table table) throws HiveMetastoreException;
+  void createTable(Table table) throws HiveMetastoreException;
 
-  public void dropTable(String dbName, String tableName, boolean deleteData)
+  void dropTable(String dbName, String tableName, boolean deleteData)
       throws HiveMetastoreException;
 
-  public void dropPartition(String dbName, String tableName, String partitionName,
-      boolean deleteData) throws HiveMetastoreException;
+  void dropPartition(String dbName, String tableName, String partitionName,
+                     boolean deleteData) throws HiveMetastoreException;
 
-  public Map<String, String> partitionNameToMap(String partitionName) throws HiveMetastoreException;
+  Map<String, String> partitionNameToMap(String partitionName) throws HiveMetastoreException;
 
-  public void createDatabase(Database db) throws HiveMetastoreException;
+  void createDatabase(Database db) throws HiveMetastoreException;
 
-  public Database getDatabase(String dbName) throws HiveMetastoreException;
+  Database getDatabase(String dbName) throws HiveMetastoreException;
 
-  public boolean existsDb(String dbName) throws HiveMetastoreException;
+  boolean existsDb(String dbName) throws HiveMetastoreException;
 
-  public List<String> getTables(String dbName, String tableName) throws HiveMetastoreException;
+  List<String> getTables(String dbName, String tableName) throws HiveMetastoreException;
 
-  public Partition exchangePartition(Map<String, String> partitionSpecs, String sourceDb,
-      String sourceTable, String destDb, String destinationTableName) throws HiveMetastoreException;
+  Partition exchangePartition(
+      Map<String, String> partitionSpecs,
+      String sourceDb,
+      String sourceTable,
+      String destDb,
+      String destinationTableName)
+      throws HiveMetastoreException;
 
-  public void renamePartition(
+  void renamePartition(
       String db,
       String table,
       List<String> partitionValues,
       Partition partition)
       throws HiveMetastoreException;
 
-  public List<String> getAllDatabases() throws HiveMetastoreException;
+  List<String> getAllDatabases() throws HiveMetastoreException;
 
-  public List<String> getAllTables(String dbName) throws HiveMetastoreException;
+  List<String> getAllTables(String dbName) throws HiveMetastoreException;
 
-  public void close();
+  void close();
 }

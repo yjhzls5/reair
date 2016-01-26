@@ -1,4 +1,4 @@
-package com.airbnb.di.hive.replication;
+package com.airbnb.di.hive.replication.db;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
@@ -6,6 +6,9 @@ import com.google.common.collect.Lists;
 import com.airbnb.di.common.Container;
 import com.airbnb.di.db.DbConnectionFactory;
 import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.di.hive.replication.ReplicationOperation;
+import com.airbnb.di.hive.replication.ReplicationStatus;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.utils.RetryableTask;
 import com.airbnb.di.utils.RetryingTaskRunner;
 import org.apache.commons.logging.Log;

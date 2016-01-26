@@ -2,10 +2,12 @@ package com.airbnb.di.hive.replication;
 
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.replication.db.PersistedJobInfo;
 import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.hive.replication.primitives.ReplicationTask;
 import com.airbnb.di.multiprocessing.Job;
 import com.airbnb.di.multiprocessing.LockSet;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;

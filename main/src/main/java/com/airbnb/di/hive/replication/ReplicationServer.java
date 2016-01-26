@@ -7,6 +7,8 @@ import com.airbnb.di.hive.replication.auditlog.AuditLogReader;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
+import com.airbnb.di.hive.replication.db.PersistedJobInfo;
+import com.airbnb.di.hive.replication.db.PersistedJobInfoStore;
 import com.airbnb.di.hive.replication.filter.ReplicationFilter;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionedTableTask;

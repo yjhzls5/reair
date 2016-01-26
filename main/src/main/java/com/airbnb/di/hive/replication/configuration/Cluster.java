@@ -10,11 +10,11 @@ import org.apache.hadoop.fs.Path;
  * considered as a unit.
  */
 public interface Cluster {
-  public HiveMetastoreClient getMetastoreClient() throws HiveMetastoreException;
+  HiveMetastoreClient getMetastoreClient() throws HiveMetastoreException;
 
-  public Path getFsRoot();
+  Path getFsRoot();
 
-  public Path getTmpDir();
+  Path getTmpDir();
 
-  public String getName();
+  String getName();
 }

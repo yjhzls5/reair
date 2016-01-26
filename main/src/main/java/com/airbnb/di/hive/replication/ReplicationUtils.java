@@ -573,5 +573,4 @@ public class ReplicationUtils {
 
     return lastError;
   }
-
 }
