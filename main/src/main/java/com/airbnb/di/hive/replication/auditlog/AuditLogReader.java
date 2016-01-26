@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.Queue;
 
 /**
- * Reads entries from the Hive audit log. The ID of the last successfully read ID is persisted.
+ * Reads entries from the Hive audit log.
  */
 public class AuditLogReader {
 
@@ -159,7 +159,8 @@ public class AuditLogReader {
    */
   private LongRange getIdsToRead() throws SQLException {
     String queryFormatString =
-        "SELECT MIN(id) min_id, MAX(id) max_id " + "FROM (SELECT id FROM %s WHERE id > %s "
+        "SELECT MIN(id) min_id, MAX(id) max_id "
+            + "FROM (SELECT id FROM %s WHERE id > %s "
             + "AND (command_type IS NULL OR command_type NOT IN('SHOWTABLES', 'SHOWPARTITIONS', "
             + "'SWITCHDATABASE')) "
             + "LIMIT %s)" + " subquery";
@@ -192,13 +193,18 @@ public class AuditLogReader {
     String queryFormatString = "SELECT a.id, a.create_time, "
         + "command_type, command, name, category, " + "type, serialized_object "
         + "FROM %s a LEFT OUTER JOIN %s b on a.id = b.audit_log_id "
-        + "WHERE a.id >= %s AND a.id <= %s " + "AND (command_type IS NULL OR command_type "
-        + "NOT IN('SHOWTABLES', 'SHOWPARTITIONS', 'SWITCHDATABASE')) " + "ORDER BY id";
-    String query = String.format(queryFormatString, auditLogTableName, outputObjectsTableName,
-        idsToRead.getMinimumLong(), idsToRead.getMaximumLong());
+        + "WHERE a.id >= ? AND a.id <= ? "
+        + "AND (command_type IS NULL OR command_type "
+        + "NOT IN('SHOWTABLES', 'SHOWPARTITIONS', 'SWITCHDATABASE')) "
+        + "ORDER BY id";
+    String query = String.format(queryFormatString, auditLogTableName, outputObjectsTableName);
 
     Connection connection = dbConnectionFactory.getConnection();
     PreparedStatement ps = connection.prepareStatement(query);
+
+    int index = 1;
+    ps.setLong(index++, idsToRead.getMinimumLong());
+    ps.setLong(index++, idsToRead.getMaximumLong());
 
     ResultSet rs = ps.executeQuery();
 
@@ -238,7 +244,7 @@ public class AuditLogReader {
       commandType = convertToHiveOperation(commandTypeString);
       if (commandType == null) {
         LOG.debug(
-            String.format("Invalid operation %s in audit " + "log id: %s", commandTypeString, id));
+            String.format("Invalid operation %s in audit log id: %s", commandTypeString, id));
       }
       command = rs.getString("command");
       objectName = rs.getString("name");
