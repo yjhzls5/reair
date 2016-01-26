@@ -467,13 +467,19 @@ public class FsUtils {
    */
   public static void deleteDirectory(Configuration conf, Path path) throws IOException {
 
-    Trash trash = new Trash(conf);
+    Trash trash = new Trash(path.getFileSystem(conf), conf);
     try {
-      boolean removed = trash.moveToTrash(path);
-      if (removed) {
-        LOG.debug("Moved to trash: " + path);
+      if (!trash.isEnabled()) {
+        LOG.debug("Trash is not enabled for " + path + " so deleting instead");
+        FileSystem fs = path.getFileSystem(conf);
+        fs.delete(path, true);
       } else {
-        LOG.error("Error moving to trash: " + path);
+        boolean removed = trash.moveToTrash(path);
+        if (removed) {
+          LOG.debug("Moved to trash: " + path);
+        } else {
+          LOG.error("Item already in trash: " + path);
+        }
       }
     } catch (FileNotFoundException e) {
       LOG.debug("Attempting to delete non-existent directory " + path);

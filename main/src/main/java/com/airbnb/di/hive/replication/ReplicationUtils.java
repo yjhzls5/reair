@@ -1,5 +1,8 @@
 package com.airbnb.di.hive.replication;
 
+import com.google.common.base.Joiner;
+
+import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
@@ -9,10 +12,17 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.io.IOUtils;
+import org.apache.hadoop.util.Progressable;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
@@ -523,5 +533,99 @@ public class ReplicationUtils {
     return StringUtils.equals(
         getLocation(partition1).toString(),
         getLocation(partition2).toString());
+  }
+
+  /**
+   * Returns a string row-like representation of the input columns.
+   *
+   * @param columns The columns to convert into the row.
+   * @return a string row-like representation of the input columns.
+   */
+  public static String genValue(String... columns) {
+    return Joiner.on("\t").useForNull("NULL").join(columns);
+  }
+
+  /**
+   * Executes a file copy.
+   *
+   * @param conf Hadoop configuration object
+   * @param srcFileStatus Status of the source file
+   * @param srcFs Source FileSystem
+   * @param dstFolderPath Destination directory
+   * @param dstFs Destination FileSystem
+   * @param progressable A progressable object to progress during long file copies
+   * @param forceUpdate Whether to force a copy
+   * @param identifier Identifier to use in the temporary file
+   * @return An error string or null if successful
+   */
+  public static String doCopyFileAction(
+      Configuration conf,
+      ExtendedFileStatus srcFileStatus,
+      FileSystem srcFs,
+      String dstFolderPath,
+      FileSystem dstFs,
+      Progressable progressable,
+      boolean forceUpdate,
+      String identifier) {
+    // TODO: Should be configurable
+    int retry = 3;
+    String lastError = null;
+
+    while (retry > 0) {
+      try {
+        Path srcPath = new Path(srcFileStatus.getFullPath());
+        if (!srcFs.exists(srcPath)) {
+          LOG.info("Src does not exist. " + srcFileStatus.getFullPath());
+          return "Src does not exist. " + srcFileStatus.getFullPath();
+        }
+        FileStatus srcStatus = srcFs.getFileStatus(srcPath);
+
+        final FSDataInputStream inputStream = srcFs.open(srcPath);
+        Path dstPath = new Path(dstFolderPath + "/" + srcFileStatus.getFileName());
+        // if dst already exists.
+        if (dstFs.exists(dstPath)) {
+          FileStatus dstStatus = dstFs.getFileStatus(dstPath);
+          // If it is not force update, and the file size are same we will not recopy.
+          // This normally happens when we do retry run.
+          if (!forceUpdate && srcStatus.getLen() == dstStatus.getLen()) {
+            LOG.info("dst already exists. " + dstPath.toString());
+            return "dst already exists. " + dstPath.toString();
+          }
+        }
+
+        Path dstParentPath = new Path(dstFolderPath);
+        if (!dstFs.exists(dstParentPath) && !dstFs.mkdirs(dstParentPath)) {
+          LOG.info("Could not create directory: " + dstFolderPath);
+          return "Could not create directory: " + dstFolderPath;
+        }
+
+        Path tmpDstPath = new Path(
+            dstFolderPath + "/__tmp__copy__file_" + identifier + "." + System.currentTimeMillis());
+        if (dstFs.exists(tmpDstPath)) {
+          dstFs.delete(tmpDstPath, false);
+        }
+
+        FSDataOutputStream outputStream = dstFs.create(tmpDstPath, progressable);
+        IOUtils.copyBytes(inputStream, outputStream, conf);
+        inputStream.close();
+        outputStream.close();
+        if (forceUpdate && dstFs.exists(dstPath)) {
+          dstFs.delete(dstPath, false);
+        }
+
+        dstFs.rename(tmpDstPath, dstPath);
+        dstFs.setTimes(dstPath, srcStatus.getModificationTime(), srcStatus.getAccessTime());
+        LOG.info(dstPath.toString() + " file copied");
+        progressable.progress();
+        return null;
+      } catch (IOException e) {
+        e.printStackTrace();
+        LOG.info(e.getMessage());
+        lastError = e.getMessage();
+        --retry;
+      }
+    }
+
+    return lastError;
   }
 }

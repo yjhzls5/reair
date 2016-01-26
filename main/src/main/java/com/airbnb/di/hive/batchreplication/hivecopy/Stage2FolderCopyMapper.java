@@ -1,12 +1,12 @@
 package com.airbnb.di.hive.batchreplication.hivecopy;
 
-import static com.airbnb.di.hive.batchreplication.ReplicationUtils.genValue;
 import
     static com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob.deseralizeJobResult;
 
 import com.google.common.hash.Hashing;
 
 import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.primitives.TaskEstimate;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -119,8 +119,7 @@ public class Stage2FolderCopyMapper extends Mapper<LongWritable, Text, LongWrita
 
         context.write(
             new LongWritable(hashValue),
-            new Text(
-                genValue(
+            new Text(ReplicationUtils.genValue(
                     status.getPath().toString(),
                     dst.toString(),
                     String.valueOf(status.getLen()))));

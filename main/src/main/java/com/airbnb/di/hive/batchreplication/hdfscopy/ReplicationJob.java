@@ -12,7 +12,7 @@ import com.google.common.collect.Ordering;
 import com.google.common.hash.Hashing;
 
 import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
-import com.airbnb.di.hive.batchreplication.ReplicationUtils;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;

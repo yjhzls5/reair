@@ -1,7 +1,5 @@
 package com.airbnb.di.hive.batchreplication.hdfscopy;
 
-import static com.airbnb.di.hive.batchreplication.ReplicationUtils.genValue;
-
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -13,6 +11,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
 import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
+import com.airbnb.di.hive.replication.ReplicationUtils;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -111,7 +111,7 @@ public class HdfsStatus extends Configured implements Tool {
           String parentPath = relativeIndex == -1 ? "/" : relPath.substring(0, relativeIndex);
 
           context.write(new Text(parentPath),
-              new Text(genValue(relPath, String.valueOf(folderStats[0]),
+              new Text(ReplicationUtils.genValue(relPath, String.valueOf(folderStats[0]),
                   String.valueOf(folderStats[1]), String.valueOf(recursive))));
         } catch (InterruptedException e) {
           e.printStackTrace();

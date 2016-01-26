@@ -1,12 +1,11 @@
 package com.airbnb.di.hive.batchreplication.hivecopy;
 
-import static com.airbnb.di.hive.batchreplication.ReplicationUtils.genValue;
-import static com.airbnb.di.hive.batchreplication.ReplicationUtils.removeOutputDirectory;
-
 import com.google.common.collect.ImmutableList;
 
+import com.airbnb.di.common.FsUtils;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.hive.replication.primitives.TaskEstimate;
@@ -54,7 +53,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
    * @return TODO
    */
   public static String serializeJobResult(TaskEstimate estimate, HiveObjectSpec spec) {
-    return genValue(estimate.getTaskType().name(),
+    return ReplicationUtils.genValue(estimate.getTaskType().name(),
         String.valueOf(estimate.isUpdateMetadata()),
         String.valueOf(estimate.isUpdateData()),
         !estimate.getSrcPath().isPresent() ? null : estimate.getSrcPath().get().toString(),
@@ -185,9 +184,9 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     String step2Out = new Path(outputParent, "step2output").toString();
     String step3Out = new Path(outputParent, "step3output").toString();
     if (step == -1) {
-      removeOutputDirectory(step1Out, this.getConf());
-      removeOutputDirectory(step2Out, this.getConf());
-      removeOutputDirectory(step3Out, this.getConf());
+      FsUtils.deleteDirectory(this.getConf(), new Path(step1Out));
+      FsUtils.deleteDirectory(this.getConf(), new Path(step2Out));
+      FsUtils.deleteDirectory(this.getConf(), new Path(step3Out));
       int result = 0;
       if (inputTableList != null) {
         result = this.runMetastoreCompareJobWithTextInput(inputTableList, step1Out);
@@ -200,21 +199,21 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     } else {
       switch (step) {
         case 1:
-          removeOutputDirectory(step1Out, this.getConf());
+          FsUtils.deleteDirectory(this.getConf(), new Path(step1Out));
           if (inputTableList != null) {
             return this.runMetastoreCompareJobWithTextInput(inputTableList, step1Out);
           } else {
             return this.runMetastoreCompareJob(step1Out);
           }
         case 2:
-          removeOutputDirectory(step2Out, this.getConf());
+          FsUtils.deleteDirectory(this.getConf(), new Path(step2Out));
           if (cl.hasOption("override-input")) {
             step1Out = cl.getOptionValue("override-input");
           }
 
           return this.runHdfsCopyJob(step1Out + "/part*", step2Out);
         case 3:
-          removeOutputDirectory(step3Out, this.getConf());
+          FsUtils.deleteDirectory(this.getConf(), new Path(step3Out));
           if (cl.hasOption("override-input")) {
             step1Out = cl.getOptionValue("override-input");
           }

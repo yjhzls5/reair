@@ -1,9 +1,8 @@
 package com.airbnb.di.hive.batchreplication.hivecopy;
 
-import static com.airbnb.di.hive.batchreplication.ReplicationUtils.genValue;
-
 import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
-import com.airbnb.di.hive.batchreplication.ReplicationUtils;
+import com.airbnb.di.hive.replication.ReplicationUtils;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -58,11 +57,12 @@ public class Stage2FolderCopyReducer extends Reducer<LongWritable, Text, Text, T
           context.getTaskAttemptID().toString());
       if (result == null) {
         context.write(new Text(CopyStatus.COPIED.toString()),
-            new Text(genValue(value.toString(), " ", String.valueOf(System.currentTimeMillis()))));
+            new Text(ReplicationUtils.genValue(value.toString(), " ",
+                String.valueOf(System.currentTimeMillis()))));
       } else {
         context.write(
             new Text(CopyStatus.SKIPPED.toString()),
-            new Text(genValue(
+            new Text(ReplicationUtils.genValue(
                 value.toString(),
                 result,
                 String.valueOf(System.currentTimeMillis()))));
