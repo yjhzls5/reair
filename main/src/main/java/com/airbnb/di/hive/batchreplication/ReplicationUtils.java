@@ -113,27 +113,6 @@ public class ReplicationUtils {
    * TODO.
    *
    * @param path TODO
-   * @return TODO
-   */
-  public static String getClusterName(HdfsPath path) {
-    if (path.getHost().matches("airfs-silver")) {
-      return "silver";
-    } else if (path.getHost().matches("airfs-brain")) {
-      return "brain";
-    } else if (path.getHost().matches("airfs-gold")) {
-      return "gold";
-    } else if (path.getProto().matches("s3n|s3a|s3")) {
-      return "s3";
-    } else {
-      LOG.info("invalid cluster path:" + path.getFullPath());
-      return "unknown";
-    }
-  }
-
-  /**
-   * TODO.
-   *
-   * @param path TODO
    * @param conf TODO
    *
    * @throws IOException TODO

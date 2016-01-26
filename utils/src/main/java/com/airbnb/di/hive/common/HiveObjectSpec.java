@@ -72,6 +72,7 @@ public class HiveObjectSpec {
    *
    * @return TODO
    */
+  @Override
   public String toString() {
     if (partitionName == null) {
       return String.format("%s.%s", dbName, tableName);
