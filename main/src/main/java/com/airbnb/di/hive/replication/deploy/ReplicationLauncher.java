@@ -38,6 +38,14 @@ public class ReplicationLauncher {
   private static final Log LOG = LogFactory.getLog(
       ReplicationLauncher.class);
 
+  /**
+   * TODO.
+   *
+   * @param thriftUri TODO
+   * @return TODO
+   *
+   * @throws ConfigurationException TODO
+   */
   public static URI makeUri(String thriftUri) throws ConfigurationException {
     try {
       URI uri = new URI(thriftUri);
