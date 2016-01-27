@@ -1,9 +1,10 @@
+-- hdfs copy job output table.
 CREATE TABLE IF NOT EXISTS hdfscopy_result(
-      dst_path string,
-      action string,
-      src_path string,
-      size bigint,
-      ts bigint)
+      dst_path string,  -- destination path
+      action string,    -- action, add, update, delete
+      src_path string,  -- source path
+      size bigint,      -- size
+      ts bigint)        -- file timestamp
 PARTITIONED BY (
       jobts bigint)
 ROW FORMAT DELIMITED
