@@ -238,14 +238,27 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         DeployConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST,
         DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS,
         DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR,
-        DeployConfigurationKeys.BATCH_JOB_INPUT_LIST
+        DeployConfigurationKeys.BATCH_JOB_INPUT_LIST,
+        DeployConfigurationKeys.BATCH_JOB_PARALLELISM,
+        DeployConfigurationKeys.BATCH_JOB_POOL
         );
 
     for (String key : mergeKeys) {
       String value = inputConfig.get(key);
-      if (value != null) {
-        merged.set(key, value);
+      if (key.equals(DeployConfigurationKeys.BATCH_JOB_PARALLELISM)) {
+        if (value != null) {
+          merged.set("mapreduce.job.maps", value);
+          merged.set("mapreduce.job.reduces", value);
+        } else {
+          merged.set("mapreduce.job.maps", "150");
+          merged.set("mapreduce.job.reduces", "150");
+        }
+      } else {
+        if (value != null) {
+          merged.set(key, value);
+        }
       }
+
     }
   }
 
@@ -419,7 +432,6 @@ public class MetastoreReplicationJob extends Configured implements Tool {
             String.format(
                 "database %s, table %s got exception", key.toString(), value.toString()), e);
       }
-
     }
 
     protected void cleanup(Context context) throws IOException, InterruptedException {

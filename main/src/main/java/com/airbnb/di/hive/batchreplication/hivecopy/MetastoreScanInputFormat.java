@@ -8,6 +8,8 @@ import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.ClusterFactory;
 import com.airbnb.di.hive.replication.configuration.ConfigurationException;
+import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.Text;
@@ -37,7 +39,6 @@ import javax.annotation.Nullable;
 public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
   private static final Log LOG = LogFactory.getLog(MetastoreScanInputFormat.class);
   private static final int NUMBER_OF_THREADS = 16;
-  private static final int NUMBER_OF_MAPPERS = 100;
 
   @Override
   public RecordReader<Text, Text> createRecordReader(
@@ -54,6 +55,8 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
     Cluster srcCluster = null;
     HiveMetastoreClient srcClient = null;
     List<String> allTables = new ArrayList<>();
+    final int numberOfMappers = context.getConfiguration()
+            .getInt(DeployConfigurationKeys.BATCH_JOB_PARALLELISM, 150);
 
     try {
       ClusterFactory clusterFactory =
@@ -100,7 +103,7 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
     assert allTables.size() > 0;
     Collections.shuffle(allTables, new Random(System.nanoTime()));
 
-    final int tablesPerSplit = Math.max(allTables.size() / NUMBER_OF_MAPPERS, 1);
+    final int tablesPerSplit = Math.max(allTables.size() / numberOfMappers, 1);
 
     return Lists.transform(
         Lists.partition(allTables, tablesPerSplit),

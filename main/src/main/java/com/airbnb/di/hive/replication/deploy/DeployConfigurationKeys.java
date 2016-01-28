@@ -33,7 +33,8 @@ public class DeployConfigurationKeys {
       "airbnb.reair.clusters.batch.metastore.blacklist";
   public static final String BATCH_JOB_CLUSTER_FACTORY_CLASS =
       "airbnb.reair.clusters.batch.cluster.factory.class";
-
+  public static final String BATCH_JOB_PARALLELISM =
+          "airbnb.reair.clusters.batch.parallelism";
 
   public static final String OBJECT_FILTER_CLASS = "airbnb.reair.object.filter";
 

@@ -45,7 +45,6 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
     }
   };
   private static final int NUMBER_OF_THREADS = 16;
-  private static final int NUMBER_OF_MAPPERS = 500;
   public static final String NO_FILE_FILTER = "replication.inputformat.nofilter";
 
   @Override
@@ -103,6 +102,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
     List<InputSplit> splits = new ArrayList<>();
     List<FileStatus> dirToProcess = getInitialSplits(context);
     int level = 0;
+    final int numberOfMappers = context.getConfiguration().getInt("mapreduce.job.maps", 500);
 
     try {
       splits.addAll(Lists.transform(dirToProcess, new Function<FileStatus, DirInputSplit>() {
@@ -137,7 +137,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
 
         // at least explore 3 levels
         if (level > 2 && (dirToProcess.size() == 0
-            || splits.size() + dirToProcess.size() > 10 * NUMBER_OF_MAPPERS)) {
+            || splits.size() + dirToProcess.size() > 10 * numberOfMappers)) {
           finished = true;
         }
 
@@ -161,7 +161,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
     assert splits.size() > 0;
     Collections.shuffle(splits, new Random(System.nanoTime()));
 
-    final int foldersPerSplit = Math.max(splits.size() / NUMBER_OF_MAPPERS, 1);
+    final int foldersPerSplit = Math.max(splits.size() / numberOfMappers, 1);
 
     return Lists.transform(Lists.partition(splits, foldersPerSplit),
         new Function<List<InputSplit>, InputSplit>() {
