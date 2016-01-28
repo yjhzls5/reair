@@ -239,8 +239,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS,
         DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR,
         DeployConfigurationKeys.BATCH_JOB_INPUT_LIST,
-        DeployConfigurationKeys.BATCH_JOB_PARALLELISM,
-        DeployConfigurationKeys.BATCH_JOB_POOL
+        DeployConfigurationKeys.BATCH_JOB_PARALLELISM
         );
 
     for (String key : mergeKeys) {
