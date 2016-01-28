@@ -2,73 +2,6 @@
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 
 <configuration>
-
-  <property>
-    <name>airbnb.reair.audit_log.db.jdbc</name>
-    <value>jdbc:mysql://myhost:myport/mydb</value>
-    <comment>
-      JDBC connection URL to the MySQL instance containing the audit log.
-      The URL should include the DB name as well.
-    </comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.audit_log.db.user</name>
-    <value>username</value>
-    <comment>Username for the audit log MySQL DB</comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.audit_log.db.password</name>
-    <value>password</value>
-    <comment>Password for the audit log DB</comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.audit_log.db.table</name>
-    <value>audit_log</value>
-    <comment>Name of the audit log MySQL table</comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.audit_log.objects.db.table</name>
-    <value>audit_objects</value>
-    <comment>Name of the audit objects MySQL table</comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.state.db.jdbc</name>
-    <value>jdbc:mysql://myhost:myport/mydb</value>
-    <comment>
-      JDBC connection URL to the MySQL instance that contains the state tables.
-      The URL should include the DB name as well.
-    </comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.state.db.user</name>
-    <value>username</value>
-    <comment>Username for MySQL instance containing the state tables.</comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.state.db.password</name>
-    <value>password</value>
-    <comment>Password for MySQL instance containing the state tables.</comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.state.db.table</name>
-    <value>replication_jobs</value>
-    <comment>Name of the table containing replication job details.</comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.state.kv.db.table</name>
-    <value>key_value</value>
-    <comment>Name of the table containing key/value pairs.</comment>
-  </property>
-
   <property>
     <name>airbnb.reair.clusters.src.name</name>
     <value>production</value>
@@ -135,29 +68,6 @@
     <comment>
       Name of the class used to filter out entries from replication
     </comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.worker.threads</name>
-    <value>20</value>
-    <comment>
-      Number of worker threads. Each worker threads process one entry at a time.
-    </comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.jobs.in_memory_count</name>
-    <value>600</value>
-    <comment>
-      Number of jobs that can be kept in memory. Typically, this is a large nubmer
-      so that historical jobs can be referenced.
-    </comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.thrift.port</name>
-    <value>9090</value>
-    <comment>Port that the thrift service should listen on.</comment>
   </property>
 
   <property>

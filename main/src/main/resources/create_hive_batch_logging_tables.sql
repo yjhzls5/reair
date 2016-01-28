@@ -12,10 +12,7 @@ PARTITIONED BY (
       jobts bigint)        -- job run timestamp
 ROW FORMAT DELIMITED
   FIELDS TERMINATED BY '\t'
-STORED AS INPUTFORMAT
-  'org.apache.hadoop.mapred.TextInputFormat'
-OUTPUTFORMAT
-  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat';
+STORED AS TEXTFILE;
 
 -- Stage 2 job output table.
 CREATE TABLE IF NOT EXITS hivecopy_stage2_result(
@@ -29,10 +26,7 @@ PARTITIONED BY (
       jobts bigint)    -- job run timestamp
 ROW FORMAT DELIMITED
   FIELDS TERMINATED BY '\t'
-STORED AS INPUTFORMAT
-  'org.apache.hadoop.mapred.TextInputFormat'
-OUTPUTFORMAT
-  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat';
+STORED AS TEXTFILE;
 
 -- Stage 3 job output table.
 CREATE TABLE IF NOT EXITS hivecopy_stage3_result(
@@ -49,7 +43,4 @@ PARTITIONED BY (
       jobts bigint)
 ROW FORMAT DELIMITED
   FIELDS TERMINATED BY '\t'
-STORED AS INPUTFORMAT
-  'org.apache.hadoop.mapred.TextInputFormat'
-OUTPUTFORMAT
-  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat';
+STORED AS TEXTFILE;

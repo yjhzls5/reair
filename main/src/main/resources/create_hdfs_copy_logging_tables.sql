@@ -9,7 +9,4 @@ PARTITIONED BY (
       jobts bigint)
 ROW FORMAT DELIMITED
   FIELDS TERMINATED BY '\t'
-STORED AS INPUTFORMAT
-  'org.apache.hadoop.mapred.TextInputFormat'
-OUTPUTFORMAT
-  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat';
+STORED AS TEXTFILE;

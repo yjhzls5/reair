@@ -151,7 +151,7 @@ export HADOOP_HEAPSIZE=8096
 timestamp="$(date +"%s")"
 
 # Example -libjars for Cloudera deployments
-hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob -Dmapreduce.framework.name=yarn -Dmapreduce.job.reduces=150 -libjars /mnt/var/opt/CDH/lib/hive/lib/hive-metastore.jar,/mnt/var/opt/CDH/lib/hive/lib/libfb303-0.9.0.jar,/mnt/var/opt/CDH/lib/hive/lib/libthrift-0.9.0-cdh5-2.jar -config-files my_config_file.xml
+hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob -Dmapreduce.job.reduces=150 -libjars /mnt/var/opt/CDH/lib/hive/lib/hive-metastore.jar,/mnt/var/opt/CDH/lib/hive/lib/libfb303-0.9.0.jar,/mnt/var/opt/CDH/lib/hive/lib/libthrift-0.9.0-cdh5-2.jar -config-files my_config_file.xml
 
 hive -e "LOAD  DATA  INPATH  '/user/test/hivecopy_output/step1output' OVERWRITE INTO TABLE hivecopy_stage1_result partition ( jobts = $timestamp);"
 hive -e "LOAD  DATA  INPATH  '/user/test/hivecopy_output/step2output' OVERWRITE INTO TABLE hivecopy_stage2_result partition ( jobts = $timestamp);"
@@ -162,7 +162,7 @@ hive -e "LOAD  DATA  INPATH  '/user/test/hivecopy_output/step3output' OVERWRITE 
 
 ```
 # Example -libjars for Cloudera deployments
-hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob -Dmapreduce.framework.name=yarn -Dmapreduce.job.reduces=150 -libjars /mnt/var/opt/CDH/lib/hive/lib/hive-metastore.jar,/mnt/var/opt/CDH/lib/hive/lib/libfb303-0.9.0.jar,/mnt/var/opt/CDH/lib/hive/lib/libthrift-0.9.0-cdh5-2.jar -config-files my_config_file.xml  --config-files my_config_file.xml --step 2 --override-input hdfs:///user/test/hivecopy_output/step1output/
+hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob -Dmapreduce.job.reduces=150 -libjars /mnt/var/opt/CDH/lib/hive/lib/hive-metastore.jar,/mnt/var/opt/CDH/lib/hive/lib/libfb303-0.9.0.jar,/mnt/var/opt/CDH/lib/hive/lib/libthrift-0.9.0-cdh5-2.jar -config-files my_config_file.xml  --config-files my_config_file.xml --step 2 --override-input hdfs:///user/test/hivecopy_output/step1output/
 ```
 
 ## HDFS Copy Job
@@ -197,7 +197,7 @@ mvn clean install -DskipTests
 export HADOOP_HEAPSIZE=8096
 timestamp="$(date +"%s")"
 
-hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.batchreplication.hdfscopy.ReplicationJob -Dmapreduce.framework.name=yarn -Dmapreduce.job.reduces=500 -Dmapreduce.map.memory.mb=8000 -Dmapreduce.map.java.opts="-Djava.net.preferIPv4Stack=true -Xmx7000m" -s hdfs://airfs-src/ -d hdfs://airfs-dest/ -o hdfs://airfs-dest/user/test/fullrepljob -b "tmp.*" -p a,u,d
+hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.batchreplication.hdfscopy.ReplicationJob -Dmapreduce.job.reduces=500 -Dmapreduce.map.memory.mb=8000 -Dmapreduce.map.java.opts="-Djava.net.preferIPv4Stack=true -Xmx7000m" -s hdfs://airfs-src/ -d hdfs://airfs-dest/ -o hdfs://airfs-dest/user/test/fullrepljob -b "tmp.*" -p a,u,d
 
 hive -e "LOAD  DATA  INPATH  '/user/test/fullrepljob' OVERWRITE INTO TABLE hdfscopy_result partition ( jobts = $timestamp);"
 ```
