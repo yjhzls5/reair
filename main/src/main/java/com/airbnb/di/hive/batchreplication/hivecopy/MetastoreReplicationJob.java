@@ -3,6 +3,8 @@ package com.airbnb.di.hive.batchreplication.hivecopy;
 import com.google.common.collect.ImmutableList;
 
 import com.airbnb.di.common.FsUtils;
+import com.airbnb.di.hive.batchreplication.template.TemplateRenderException;
+import com.airbnb.di.hive.batchreplication.template.VelocityUtils;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.ReplicationUtils;
@@ -32,18 +34,31 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.velocity.VelocityContext;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
+import java.util.TimeZone;
 
 public class MetastoreReplicationJob extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(MetastoreReplicationJob.class);
 
   public static final String USAGE_COMMAND_STR = "Usage: hadoop jar <path to jar> "
       + "<class reference> -libjar <path hive-metastore.jar,libthrift.jar,libfb303.jar> options";
+
+  // Context for rendering templates using velocity
+  private VelocityContext velocityContext = new VelocityContext();
+
+  // After each job completes, we'll output Hive commands to the screen that can be used to view
+  // debug data. These are the templates for those commands.
+  private static final String STEP1_HQL_TEMPLATE = "step1_log.hql.vm";
+  private static final String STEP2_HQL_TEMPLATE = "step2_log.hql.vm";
+  private static final String STEP3_HQL_TEMPLATE = "step3_log.hql.vm";
+
 
   /**
    * TODO.
@@ -109,6 +124,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
    *
    * @throws Exception TODO
    */
+  @SuppressWarnings("static-access")
   public int run(String[] args) throws Exception {
     Options options = new Options();
 
@@ -177,50 +193,62 @@ public class MetastoreReplicationJob extends Configured implements Tool {
       return 1;
     }
 
-    String inputTableList = this.getConf().get(DeployConfigurationKeys.BATCH_JOB_INPUT_LIST);
+    Optional<Path> inputTableListPath = Optional.ofNullable(
+        getConf().get(DeployConfigurationKeys.BATCH_JOB_INPUT_LIST)).map(Path::new);
 
     Path outputParent = new Path(finalOutput);
-    String step1Out = new Path(outputParent, "step1output").toString();
-    String step2Out = new Path(outputParent, "step2output").toString();
-    String step3Out = new Path(outputParent, "step3output").toString();
+    Path step1Out = new Path(outputParent, "step1output");
+    Path step2Out = new Path(outputParent, "step2output");
+    Path step3Out = new Path(outputParent, "step3output");
+
+    Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+    String jobStartTime = String.format("%tY-%<tm-%<tdT%<tH_%<tM_%<tS",
+        calendar);
+
+    velocityContext.put("job_start_time", jobStartTime);
+    velocityContext.put("step1_output_directory", step1Out.toString());
+    velocityContext.put("step2_output_directory", step2Out.toString());
+    velocityContext.put("step3_output_directory", step3Out.toString());
+
     if (step == -1) {
-      FsUtils.deleteDirectory(this.getConf(), new Path(step1Out));
-      FsUtils.deleteDirectory(this.getConf(), new Path(step2Out));
-      FsUtils.deleteDirectory(this.getConf(), new Path(step3Out));
-      int result = 0;
-      if (inputTableList != null) {
-        result = this.runMetastoreCompareJobWithTextInput(inputTableList, step1Out);
-      } else {
-        result = this.runMetastoreCompareJob(step1Out);
+      FsUtils.deleteDirectory(getConf(), step1Out);
+      FsUtils.deleteDirectory(getConf(), step2Out);
+      FsUtils.deleteDirectory(getConf(), step3Out);
+
+      if (runMetastoreCompareJob(inputTableListPath, step1Out) != 0) {
+        return -1;
       }
-      return
-        result == 0 && this.runHdfsCopyJob(step1Out + "/part*", step2Out) == 0
-        ? this.runCommitChangeJob(step1Out + "/part*", step3Out) : 1;
+
+      if (runHdfsCopyJob(new Path(step1Out, "part*"), step2Out) != 0) {
+        return -1;
+      }
+
+      if (runCommitChangeJob(new Path(step1Out, "part*"), step3Out) != 0) {
+        return -1;
+      }
+
+      return 0;
     } else {
       switch (step) {
         case 1:
-          FsUtils.deleteDirectory(this.getConf(), new Path(step1Out));
-          if (inputTableList != null) {
-            return this.runMetastoreCompareJobWithTextInput(inputTableList, step1Out);
-          } else {
-            return this.runMetastoreCompareJob(step1Out);
-          }
+          FsUtils.deleteDirectory(getConf(), step1Out);
+          return this.runMetastoreCompareJob(inputTableListPath, step1Out);
         case 2:
-          FsUtils.deleteDirectory(this.getConf(), new Path(step2Out));
+          FsUtils.deleteDirectory(getConf(), step2Out);
           if (cl.hasOption("override-input")) {
-            step1Out = cl.getOptionValue("override-input");
+            step1Out = new Path(cl.getOptionValue("override-input"));
           }
 
-          return this.runHdfsCopyJob(step1Out + "/part*", step2Out);
+          return this.runHdfsCopyJob(new Path(step1Out, "part*"), step2Out);
         case 3:
-          FsUtils.deleteDirectory(this.getConf(), new Path(step3Out));
+          FsUtils.deleteDirectory(this.getConf(), step3Out);
           if (cl.hasOption("override-input")) {
-            step1Out = cl.getOptionValue("override-input");
+            step2Out = new Path(cl.getOptionValue("override-input"));
           }
 
-          return this.runCommitChangeJob(step1Out + "/part*", step3Out);
+          return this.runCommitChangeJob(new Path(step2Out, "part*"), step3Out);
         default:
-          LOG.error("Invalid steps specified:" + step);
+          LOG.error("Invalid step specified: " + step);
           return 1;
       }
     }
@@ -261,7 +289,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     }
   }
 
-  private int runMetastoreCompareJob(String output)
+  private int runMetastoreCompareJob(Path output)
     throws IOException, InterruptedException, ClassNotFoundException {
     Job job = Job.getInstance(this.getConf(), "Stage1: Metastore Compare Job");
 
@@ -273,7 +301,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     job.setOutputKeyClass(LongWritable.class);
     job.setOutputValueClass(Text.class);
 
-    FileOutputFormat.setOutputPath(job, new Path(output));
+    FileOutputFormat.setOutputPath(job, output);
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
 
     boolean success = job.waitForCompletion(true);
@@ -281,7 +309,34 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     return success ? 0 : 1;
   }
 
-  private int runMetastoreCompareJobWithTextInput(String input, String output)
+  /**
+   * Runs the job to scan the metastore for directory locations.
+   *
+   * @param inputTableListPath the path to the file containing the tables to copy
+   * @param outputPath the directory to store the logging output data
+   */
+  private int runMetastoreCompareJob(Optional<Path> inputTableListPath, Path outputPath)
+      throws InterruptedException, IOException, ClassNotFoundException, TemplateRenderException {
+    LOG.info("Starting job for step 1...");
+
+    int result = 0;
+    if (inputTableListPath.isPresent()) {
+      result = runMetastoreCompareJobWithTextInput(inputTableListPath.get(), outputPath);
+    } else {
+      result = runMetastoreCompareJob(outputPath);
+    }
+
+    if (result == 0) {
+      LOG.info("Job for step 1 finished successfully! To view logging data, run the following "
+          + "commands in Hive: \n\n"
+          + VelocityUtils.renderTemplate(STEP1_HQL_TEMPLATE, velocityContext)
+          + "\n");
+    }
+
+    return result;
+  }
+
+  private int runMetastoreCompareJobWithTextInput(Path input, Path output)
     throws IOException, InterruptedException, ClassNotFoundException {
     Job job = Job.getInstance(this.getConf(), "Stage1: Metastore Compare Job with Input List");
 
@@ -290,14 +345,14 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     job.setMapperClass(Stage1ProcessTableMapperWithTextInput.class);
     job.setReducerClass(PartitionCompareReducer.class);
 
-    FileInputFormat.setInputPaths(job, new Path(input));
+    FileInputFormat.setInputPaths(job, input);
     FileInputFormat.setMaxInputSplitSize(job,
         this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
 
     job.setOutputKeyClass(LongWritable.class);
     job.setOutputValueClass(Text.class);
 
-    FileOutputFormat.setOutputPath(job, new Path(output));
+    FileOutputFormat.setOutputPath(job, output);
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
 
     boolean success = job.waitForCompletion(true);
@@ -305,32 +360,45 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     return success ? 0 : 1;
   }
 
-  private int runHdfsCopyJob(String input, String output)
-    throws IOException, InterruptedException, ClassNotFoundException {
-    Job job = Job.getInstance(this.getConf(), "Stage2: HDFS Copy Job");
+  private int runHdfsCopyJob(Path input, Path output)
+    throws IOException, InterruptedException, ClassNotFoundException, TemplateRenderException {
+
+    LOG.info("Starting job for step 2...");
+
+    Job job = Job.getInstance(this.getConf(), "Stage 2: HDFS Copy Job");
 
     job.setJarByClass(this.getClass());
     job.setInputFormatClass(TextInputFormat.class);
     job.setMapperClass(Stage2FolderCopyMapper.class);
     job.setReducerClass(Stage2FolderCopyReducer.class);
 
-    FileInputFormat.setInputPaths(job, new Path(input));
+    FileInputFormat.setInputPaths(job, input);
     FileInputFormat.setMaxInputSplitSize(job,
         this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
 
     job.setOutputKeyClass(LongWritable.class);
     job.setOutputValueClass(Text.class);
 
-    FileOutputFormat.setOutputPath(job, new Path(output));
+    FileOutputFormat.setOutputPath(job, output);
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
 
     boolean success = job.waitForCompletion(true);
 
+    if (success) {
+      LOG.info("Job for step 2 finished successfully! To view logging data, run the following "
+          + "commands in Hive: \n\n"
+          + VelocityUtils.renderTemplate(STEP2_HQL_TEMPLATE, velocityContext)
+          + "\n");
+    }
+
     return success ? 0 : 1;
   }
 
-  private int runCommitChangeJob(String input, String output)
-    throws IOException, InterruptedException, ClassNotFoundException {
+  private int runCommitChangeJob(Path input, Path output)
+    throws IOException, InterruptedException, ClassNotFoundException, TemplateRenderException {
+
+    LOG.info("Starting job for step 2...");
+
     Job job = Job.getInstance(this.getConf(), "Stage3: Commit Change Job");
 
     job.setJarByClass(this.getClass());
@@ -341,15 +409,21 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(Text.class);
 
-    FileInputFormat.setInputPaths(job, new Path(input));
+    FileInputFormat.setInputPaths(job, input);
     FileInputFormat.setMaxInputSplitSize(job,
         this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
 
-    FileOutputFormat.setOutputPath(job, new Path(output));
+    FileOutputFormat.setOutputPath(job, output);
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
 
     boolean success = job.waitForCompletion(true);
 
+    if (success) {
+      LOG.info("Job for step 3 finished successfully! To view logging data, run the following "
+          + "commands in Hive: \n\n"
+          + VelocityUtils.renderTemplate(STEP3_HQL_TEMPLATE, velocityContext)
+          + "\n");
+    }
     return success ? 0 : 1;
   }
 
