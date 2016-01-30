@@ -2,11 +2,13 @@ package com.airbnb.di.hive.replication;
 
 import com.google.common.base.Joiner;
 
+import com.airbnb.di.common.FsUtils;
 import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveParameterKeys;
+import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.StringUtils;
@@ -613,6 +615,20 @@ public class ReplicationUtils {
           dstFs.delete(dstPath, false);
         }
 
+        // If checksums exist and don't match, re-do the copy. If checksums do not exist, assume
+        // that they match.
+        if (!FsUtils.checksumsMatch(conf, srcPath, tmpDstPath)
+            .map(Boolean::booleanValue)
+            .orElse(true)) {
+          LOG.warn(String.format("Not renaming %s to %s since checksums do not match between "
+              + "%s and %s",
+              tmpDstPath,
+              dstPath,
+              srcPath,
+              tmpDstPath));
+          continue;
+        }
+
         dstFs.rename(tmpDstPath, dstPath);
         dstFs.setTimes(dstPath, srcStatus.getModificationTime(), srcStatus.getAccessTime());
         LOG.info(dstPath.toString() + " file copied");
@@ -628,4 +644,5 @@ public class ReplicationUtils {
 
     return lastError;
   }
+
 }

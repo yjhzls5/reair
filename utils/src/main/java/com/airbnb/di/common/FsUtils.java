@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileChecksum;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsShell;
@@ -515,5 +516,31 @@ public class FsUtils {
     }
     LOG.debug("Renaming " + src + " to " + dest);
     fs.rename(src, dest);
+  }
+
+  /**
+   * Returns true if the both files have checksums and they match. Returns false if checksums exist
+   * but they do not match. Returns empty if either file does not have a checksum.
+   *
+   * @param conf configuration use to create the FileSystems
+   * @param srcFile source file
+   * @param destFile destination file
+   * @throws IOException if there is an error getting the checksum for the specified files
+   */
+  public static Optional<Boolean> checksumsMatch(Configuration conf, Path srcFile, Path destFile)
+      throws IOException {
+    FileSystem srcFs = srcFile.getFileSystem(conf);
+    FileChecksum srcChecksum = srcFs.getFileChecksum(srcFile);
+
+    FileSystem destFs = destFile.getFileSystem(conf);
+    FileChecksum destChecksum = destFs.getFileChecksum(destFile);
+
+    if (srcChecksum == null || destChecksum == null) {
+      // If either filesystem does not support checksums
+      return Optional.empty();
+    } else {
+      return Optional.of(Boolean.valueOf(srcChecksum.equals(destChecksum)));
+    }
+
   }
 }
