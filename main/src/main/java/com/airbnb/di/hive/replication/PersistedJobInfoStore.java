@@ -10,9 +10,7 @@ import com.airbnb.di.utils.RetryableTask;
 import com.airbnb.di.utils.RetryingTaskRunner;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.net.ntp.TimeStamp;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.util.StringUtils;
 
 import java.io.IOException;

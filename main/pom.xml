@@ -12,6 +12,9 @@
       <artifactId>airbnb-reair-parent</artifactId>
       <version>1.0.0</version>
     </parent>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
     <repositories>
         <repository>
@@ -90,24 +93,60 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-metastore</artifactId>
+            <!--
+                For ease of use, the default is to build in the metastore Thrift bindings as a part
+                of the shaded JAR. Please update this version as needed for your cluster. If you
+                want add the JAR's at runtime, change the scope to 'provided'.
+             -->
+            <version>0.13.1-cdh5.3.3</version>
+            <scope>compile</scope>
+            <!--
+    	        Since we only need the Thrift bindings, we can exclude the other transitive
+    	        dependencies.
+            -->
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
             <groupId>org.apache.thrift</groupId>
             <artifactId>libthrift</artifactId>
             <version>0.9.1</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
+            <!-- We only need the Thrift classes, not the transitive dependencies. -->
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.thrift</groupId>
+            <artifactId>libfb303</artifactId>
+            <version>0.9.1</version>
+            <scope>compile</scope>
+            <!-- We only need the Thrift classes, not the transitive dependencies. -->
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
             <version>0.13.1-cdh5.3.3</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-common</artifactId>
-            <version>0.13.1-cdh5.3.3</version>
-            <scope>provided</scope>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
