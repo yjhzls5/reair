@@ -56,7 +56,7 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
     HiveMetastoreClient srcClient = null;
     List<String> allTables = new ArrayList<>();
     final int numberOfMappers = context.getConfiguration()
-            .getInt(DeployConfigurationKeys.BATCH_JOB_PARALLELISM, 150);
+            .getInt(DeployConfigurationKeys.BATCH_JOB_METASTORE_PARALLELISM, 150);
 
     try {
       ClusterFactory clusterFactory =

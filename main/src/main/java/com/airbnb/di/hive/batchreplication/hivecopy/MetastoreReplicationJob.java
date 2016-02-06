@@ -267,25 +267,15 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS,
         DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR,
         DeployConfigurationKeys.BATCH_JOB_INPUT_LIST,
-        DeployConfigurationKeys.BATCH_JOB_PARALLELISM
+        DeployConfigurationKeys.BATCH_JOB_METASTORE_PARALLELISM,
+        DeployConfigurationKeys.BATCH_JOB_COPY_PARALLELISM
         );
 
     for (String key : mergeKeys) {
       String value = inputConfig.get(key);
-      if (key.equals(DeployConfigurationKeys.BATCH_JOB_PARALLELISM)) {
-        if (value != null) {
-          merged.set("mapreduce.job.maps", value);
-          merged.set("mapreduce.job.reduces", value);
-        } else {
-          merged.set("mapreduce.job.maps", "150");
-          merged.set("mapreduce.job.reduces", "150");
-        }
-      } else {
-        if (value != null) {
-          merged.set(key, value);
-        }
+      if (value != null) {
+        merged.set(key, value);
       }
-
     }
   }
 
@@ -347,13 +337,18 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     FileInputFormat.setInputPaths(job, input);
     FileInputFormat.setMaxInputSplitSize(job,
-        this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
+        this.getConf().getLong(FileInputFormat.SPLIT_MAXSIZE, 60000L));
 
     job.setOutputKeyClass(LongWritable.class);
     job.setOutputValueClass(Text.class);
 
     FileOutputFormat.setOutputPath(job, output);
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
+
+    job.setNumReduceTasks(getConf().getInt(
+        DeployConfigurationKeys.BATCH_JOB_METASTORE_PARALLELISM,
+        150));
+
 
     boolean success = job.waitForCompletion(true);
 
@@ -374,13 +369,17 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     FileInputFormat.setInputPaths(job, input);
     FileInputFormat.setMaxInputSplitSize(job,
-        this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
+        this.getConf().getLong(FileInputFormat.SPLIT_MAXSIZE, 60000L));
 
     job.setOutputKeyClass(LongWritable.class);
     job.setOutputValueClass(Text.class);
 
     FileOutputFormat.setOutputPath(job, output);
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
+
+    job.setNumReduceTasks(getConf().getInt(
+        DeployConfigurationKeys.BATCH_JOB_COPY_PARALLELISM,
+        150));
 
     boolean success = job.waitForCompletion(true);
 
@@ -397,7 +396,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
   private int runCommitChangeJob(Path input, Path output)
     throws IOException, InterruptedException, ClassNotFoundException, TemplateRenderException {
 
-    LOG.info("Starting job for step 2...");
+    LOG.info("Starting job for step 3...");
 
     Job job = Job.getInstance(this.getConf(), "Stage3: Commit Change Job");
 
@@ -411,10 +410,14 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     FileInputFormat.setInputPaths(job, input);
     FileInputFormat.setMaxInputSplitSize(job,
-        this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
+        this.getConf().getLong(FileInputFormat.SPLIT_MAXSIZE, 60000L));
 
     FileOutputFormat.setOutputPath(job, output);
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
+
+    job.setNumReduceTasks(getConf().getInt(
+        DeployConfigurationKeys.BATCH_JOB_METASTORE_PARALLELISM,
+        150));
 
     boolean success = job.waitForCompletion(true);
 

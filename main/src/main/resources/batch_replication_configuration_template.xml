@@ -97,4 +97,23 @@
     </comment>
   </property>
 
+  <property>
+    <name>airbnb.reair.batch.metastore.parallelism</name>
+    <value>150</value>
+    <comment>
+      The parallelism to use for jobs requiring metastore calls. This translates to the number of
+      mappers or reducers in the relevant jobs.
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.batch.copy.parallelism</name>
+    <value>150</value>
+    <comment>
+      The parallelism to use for jobs that copy files. This translates to the number of reducers
+      in the relevant jobs.
+    </comment>
+  </property>
+
+
 </configuration>
