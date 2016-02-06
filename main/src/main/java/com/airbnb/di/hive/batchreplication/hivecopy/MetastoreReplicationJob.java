@@ -11,6 +11,7 @@ import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.hive.replication.primitives.TaskEstimate;
+
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -23,6 +24,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -40,10 +43,12 @@ import org.apache.velocity.VelocityContext;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 import java.util.TimeZone;
+import java.util.UUID;
 
 public class MetastoreReplicationJob extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(MetastoreReplicationJob.class);
@@ -148,6 +153,13 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         .withArgName("OI")
         .create());
 
+    options.addOption(OptionBuilder.withLongOpt("table-list")
+        .withDescription("File containing a list of tables to copy")
+        .hasArg()
+        .withArgName("PATH")
+        .create());
+
+
     CommandLineParser parser = new BasicParser();
     CommandLine cl = null;
 
@@ -189,6 +201,10 @@ public class MetastoreReplicationJob extends Configured implements Tool {
       throw new ConfigurationException(String.format("Speculative execution must be disabled "
           + "for reducers! Please set %s appropriately.", MRJobConfig.REDUCE_SPECULATIVE));
     }
+    Optional<Path> localTableListFile = Optional.empty();
+    if (cl.hasOption("table-list")) {
+      localTableListFile = Optional.of(new Path(cl.getOptionValue("table-list")));
+    }
 
     int step = -1;
     if (cl.hasOption("step")) {
@@ -201,9 +217,6 @@ public class MetastoreReplicationJob extends Configured implements Tool {
           DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR + " is required in configuration file.");
       return 1;
     }
-
-    Optional<Path> inputTableListPath = Optional.ofNullable(
-        getConf().get(DeployConfigurationKeys.BATCH_JOB_INPUT_LIST)).map(Path::new);
 
     Path outputParent = new Path(finalOutput);
     Path step1Out = new Path(outputParent, "step1output");
@@ -219,12 +232,33 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     velocityContext.put("step2_output_directory", step2Out.toString());
     velocityContext.put("step3_output_directory", step3Out.toString());
 
+    Optional<Path> tableListFileOnHdfs = Optional.empty();
+    if (localTableListFile.isPresent()) {
+      // Create a temporary directory on HDFS and copy our table list to that directory so that it
+      // can be read by mappers in the HDFS job.
+      Path tableFilePath = localTableListFile.get();
+      Path tmpDir = createTempDirectory(getConf());
+      tableListFileOnHdfs = Optional.of(new Path(tmpDir, tableFilePath.getName()));
+      LOG.info(String.format("Copying %s to temporary directory %s",
+          tableFilePath,
+          tableListFileOnHdfs.get()));
+      copyFile(localTableListFile.get(), tableListFileOnHdfs.get());
+      LOG.info(String.format("Copied %s to temporary directory %s",
+          tableFilePath,
+          tableListFileOnHdfs.get()));
+    } else {
+      LOG.info("List of tables to copy is not specified. Copying all tables instead.");
+    }
+
     if (step == -1) {
+      LOG.info("Deleting " + step1Out);
       FsUtils.deleteDirectory(getConf(), step1Out);
+      LOG.info("Deleting " + step2Out);
       FsUtils.deleteDirectory(getConf(), step2Out);
+      LOG.info("Deleting " + step3Out);
       FsUtils.deleteDirectory(getConf(), step3Out);
 
-      if (runMetastoreCompareJob(inputTableListPath, step1Out) != 0) {
+      if (runMetastoreCompareJob(tableListFileOnHdfs, step1Out) != 0) {
         return -1;
       }
 
@@ -240,9 +274,12 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     } else {
       switch (step) {
         case 1:
-          FsUtils.deleteDirectory(getConf(), step1Out);
-          return this.runMetastoreCompareJob(inputTableListPath, step1Out);
+          LOG.info("Deleting " + step1Out);
+          FsUtils.deleteDirectory(this.getConf(), step1Out);
+
+          return this.runMetastoreCompareJob(tableListFileOnHdfs, step1Out);
         case 2:
+          LOG.info("Deleting " + step2Out);
           FsUtils.deleteDirectory(getConf(), step2Out);
           if (cl.hasOption("override-input")) {
             step1Out = new Path(cl.getOptionValue("override-input"));
@@ -250,6 +287,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
           return this.runHdfsCopyJob(new Path(step1Out, "part*"), step2Out);
         case 3:
+          LOG.info("Deleting " + step3Out);
           FsUtils.deleteDirectory(this.getConf(), step3Out);
           if (cl.hasOption("override-input")) {
             step2Out = new Path(cl.getOptionValue("override-input"));
@@ -320,7 +358,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
       throws InterruptedException, IOException, ClassNotFoundException, TemplateRenderException {
     LOG.info("Starting job for step 1...");
 
-    int result = 0;
+    int result;
     if (inputTableListPath.isPresent()) {
       result = runMetastoreCompareJobWithTextInput(inputTableListPath.get(), outputPath);
     } else {
@@ -330,8 +368,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     if (result == 0) {
       LOG.info("Job for step 1 finished successfully! To view logging data, run the following "
           + "commands in Hive: \n\n"
-          + VelocityUtils.renderTemplate(STEP1_HQL_TEMPLATE, velocityContext)
-          + "\n");
+          + VelocityUtils.renderTemplate(STEP1_HQL_TEMPLATE, velocityContext));
     }
 
     return result;
@@ -435,8 +472,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     if (success) {
       LOG.info("Job for step 3 finished successfully! To view logging data, run the following "
           + "commands in Hive: \n\n"
-          + VelocityUtils.renderTemplate(STEP3_HQL_TEMPLATE, velocityContext)
-          + "\n");
+          + VelocityUtils.renderTemplate(STEP3_HQL_TEMPLATE, velocityContext));
     }
     return success ? 0 : 1;
   }
@@ -523,6 +559,46 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     protected void cleanup(Context context) throws IOException, InterruptedException {
       worker.cleanup();
+    }
+  }
+
+  /**
+   * Creates a new temporary directory under the temporary directory root.
+   *
+   * @param conf Configuration containing the directory for temporary files on HDFS
+   * @return A path to a new and unique directory under the temporary directory
+   * @throws IOException if there's an error creating the temporary directory
+   */
+  private static Path createTempDirectory(Configuration conf) throws IOException {
+    Path tmpRoot = new Path(conf.get(DeployConfigurationKeys.DEST_HDFS_TMP));
+    String uuid = String.format("reair_%d_%s",
+        System.currentTimeMillis(),
+        UUID.randomUUID().toString());
+    Path tmpDir = new Path(tmpRoot, uuid);
+    FileSystem fs = tmpDir.getFileSystem(conf);
+    fs.mkdirs(tmpDir);
+    LOG.info(String.format("Registering %s to be deleted on exit", tmpDir));
+    fs.deleteOnExit(tmpDir);
+    return tmpDir;
+  }
+
+  /**
+   * Copies a files.
+   * @param srcFile File to copy from.
+   * @param destFile File to copy to. The file should not exist.
+   * @throws IOException if there is an error copying the file.
+   */
+  private static void copyFile(Path srcFile, Path destFile) throws IOException {
+    String[] copyArgs = {"-cp", srcFile.toString(), destFile.toString()};
+
+    FsShell shell = new FsShell();
+    try {
+      LOG.debug("Using shell to copy with args " + Arrays.asList(copyArgs));
+      ToolRunner.run(shell, copyArgs);
+    } catch (Exception e) {
+      throw new IOException(e);
+    } finally {
+      shell.close();
     }
   }
 }
