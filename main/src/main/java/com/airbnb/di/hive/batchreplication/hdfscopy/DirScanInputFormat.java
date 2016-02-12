@@ -31,7 +31,7 @@ import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /**
- * InputFormat that scan directories bread first. It will stop at a level when it gets enough
+ * InputFormat that scan directories breadth first. It will stop at a level when it gets enough
  * splits. The InputSplit it returns will keep track if the folder needs further scan. If it does
  * the recursive scan will be done in RecorderReader. The InputFormat will return file path as key,
  * and file size information as value.
@@ -45,7 +45,10 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
     }
   };
   private static final int NUMBER_OF_THREADS = 16;
-  public static final String NO_FILE_FILTER = "replication.inputformat.nofilter";
+  private static final int NUMBER_OF_FOLDER_PER_MAPPER = 10;
+  public static final String NO_HIDDEN_FILE_FILTER = "replication.inputformat.nohiddenfilefilter";
+  public static final String FOLDER_TRAVERSE_MAX_LEVEL =
+          "replication.inputformat.max.traverse.level";
 
   @Override
   public RecordReader<Text, Boolean> createRecordReader(InputSplit inputSplit,
@@ -55,13 +58,12 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
 
   private List<FileStatus> getInitialSplits(JobContext job) throws IOException {
     String folderBlackList = job.getConfiguration().get(ReplicationJob.DIRECTORY_BLACKLIST_REGEX);
-    boolean nofilter = job.getConfiguration().getBoolean(NO_FILE_FILTER, false);
+    boolean nofilter = job.getConfiguration().getBoolean(NO_HIDDEN_FILE_FILTER, false);
     ArrayList result = new ArrayList();
     Path[] dirs = getInputPaths(job);
     if (dirs.length == 0) {
       throw new IOException("No input paths specified in job");
     } else {
-      // TokenCache.obtainTokensForNamenodes(job.getCredentials(), dirs, job.getConfiguration());
       ArrayList errors = new ArrayList();
 
       for (int i = 0; i < dirs.length; ++i) {
@@ -76,7 +78,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
           errors.add(new IOException("Input Pattern " + path + " matches 0 files"));
         } else {
           for (FileStatus globStat : matches) {
-            if (globStat.isDir()) {
+            if (globStat.isDirectory()) {
               if (folderBlackList == null
                   || !globStat.getPath().getName().matches(folderBlackList)) {
                 result.add(globStat);
@@ -103,6 +105,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
     List<FileStatus> dirToProcess = getInitialSplits(context);
     int level = 0;
     final int numberOfMappers = context.getConfiguration().getInt("mapreduce.job.maps", 500);
+    final int max_level = context.getConfiguration().getInt(FOLDER_TRAVERSE_MAX_LEVEL, 3);
 
     try {
       splits.addAll(Lists.transform(dirToProcess, new Function<FileStatus, DirInputSplit>() {
@@ -135,9 +138,10 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
           }
         }
 
-        // at least explore 3 levels
-        if (level > 2 && (dirToProcess.size() == 0
-            || splits.size() + dirToProcess.size() > 10 * numberOfMappers)) {
+        // at least explore max_level or if we can generate numberOfMappers with 10 folder each.
+        if (level >= max_level && (dirToProcess.size() == 0
+                || (splits.size() + dirToProcess.size())
+                    > NUMBER_OF_FOLDER_PER_MAPPER * numberOfMappers)) {
           finished = true;
         }
 
@@ -187,14 +191,14 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
       this.conf = conf;
       this.level = level;
       this.folderBlackList = conf.get(ReplicationJob.DIRECTORY_BLACKLIST_REGEX);
-      this.nofilter = conf.getBoolean(NO_FILE_FILTER, false);
+      this.nofilter = conf.getBoolean(NO_HIDDEN_FILE_FILTER, false);
     }
 
     public List<FileStatus> call() throws Exception {
       ArrayList<FileStatus> nextLevel = new ArrayList<FileStatus>();
 
       for (FileStatus f : candidates) {
-        if (!f.isDir()) {
+        if (!f.isDirectory()) {
           LOG.error(f.getPath() + " is not a directory");
           continue;
         }
@@ -202,7 +206,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
         try {
           for (FileStatus child : nofilter ? fs.listStatus(f.getPath())
               : fs.listStatus(f.getPath(), hiddenFileFilter)) {
-            if (child.isDir()) {
+            if (child.isDirectory()) {
               if (folderBlackList == null || !child.getPath().getName().matches(folderBlackList)) {
                 nextLevel.add(child);
               }
