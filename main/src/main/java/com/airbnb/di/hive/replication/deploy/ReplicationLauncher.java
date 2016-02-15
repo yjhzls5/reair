@@ -263,6 +263,13 @@ public class ReplicationLauncher {
           + "state");
     }
 
+    // Threads shouldn't exit with an exception - terminate to facilitate debugging.
+    Thread.setDefaultUncaughtExceptionHandler((Thread thread, Throwable throwable) -> {
+      LOG.error(String.format("Exiting due to uncaught exception from thread %s!", thread),
+          throwable);
+      System.exit(-1);
+    });
+
     Configuration conf = new Configuration();
 
     if (configPaths != null) {
