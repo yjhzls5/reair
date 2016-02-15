@@ -16,24 +16,85 @@ While many organizations start out with a single Hive cluster, they often want b
 
 Lastly, ReAir can be used to replicated datasets to a hot-standby cluster for fast failover in disaster recovery scenarios.
 
-To accommodate these use cases, ReAir includes both batch and incremental replication tools. Batch replication executes a one-time copy of a list of tables and partitions. Incremental replication is run as a long-running process that copies objects as they are created or changed on the source cluster. Please see the sections below for details on how to run each tool.
+To accommodate these use cases, ReAir includes both batch and incremental replication tools. Batch replication executes a one-time copy of a list of tables. Incremental replication is run as a long-running process that copies objects as they are created or changed on the source cluster.
 
-## Incremental Replication
+## Additional Documentation
 
-Incremental replication is accomplished by recording the changes the source cluster and then copying those changes over to the destination cluster.
+* Blog post
+* FAQ
 
-Changes on the source cluster are recorded through the use of a post-execute hook in Hive. The post-execute hook allows execution of code after a query has successfully finished. The audit log hook, as included in ReAir, writes the objects that were changed by a successful query into a table on MySQL.
-
-The incremental replication process reads these changes from the audit log and converts them into one of several replication jobs. The replication jobs do a specific action: copy a partition, rename a table, etc. The jobs are run in parallel, but obey some restrictions to ensure that we see the correct behavior on the destination cluster. For example, it's necessary to create a table before copying a partition of that table. The process writes state of these replication jobs into another MySQL table.
-
-Progress checkpointing is done in two ways. The state of each replication job is recorded as they change. In addition, the ID of the audit log entry is recorded as each entry is converted into a replication job. This ensures that the incremental replication process can be restarted at any point with good efficiency. All necessary information is recorded into MySQL tables.
-
-The replication process follows an eventually-consistent consistency model. Updates to the underlying data directories are guaranteed to be atomic, but there is no guarantees on the ordering of updates between objects.
+## Batch Replication
 
 ### Prerequisites:
 
-* Hive (version >= 0.12)
-* MySQL (version >= 5.1)
+* Hadoop (Most, but tested with 2.5.0)
+* Hive (Most, but tested with 0.13)
+
+### Run Batch Replication
+
+* Read through and fill out the configuration from the  [template](main/src/main/resources/batch_replication_configuration_template.xml).
+* Switch to the repo directory and build the JAR.
+
+```
+cd reair
+mvn clean install -DskipTests
+```
+
+* Create a local text file containing the tables that you want to copy. A row in the text file should consist of the DB name and the table name separated by a tab. e.g.
+
+```
+my_db1	my_table1
+my_db2	my_table2
+```
+
+* Launch the job using the `hadoop jar` command, specifying the config file and the list of tables to copy. A larger heap for the client may be needed for large batches.
+
+```
+export HADOOP_HEAPSIZE=8096
+hadoop jar airbnb-reair-main-1.0.0.jar --config-file my_config_file.xml --table-list my_tables_to_copy.txt
+```
+
+* Additional CLI Options: `--step`, `--override-input`. These arguments are useful if want to run one of the three MR job individually. `--step` indicates which step to run. `--override-input` provides the path for the input when running the second and third stage MR jobs. The input path will usually be the output for the first stage MR job.
+
+### Run a Standalone HDFS Copy
+
+* Switch to the repo directory and build the JAR.
+
+```
+cd reair
+mvn clean install -DskipTests
+```
+
+* If HDFS copy logging table does not exist, create using [these commands](main/src/main/resources/create_hdfs_copy_logging_tables.sql)
+
+* CLI options:
+```
+  -s, --source: source folder
+  -d, --destination: destination folder. source and destination must have same relative path.
+  -o, --output: logging folder
+  -p, --option: checking options: comma separated option including a(add),d(delete),u(update)
+  -l, --list: list file size only
+  -b, --blacklist: folder name blacklist regex
+  -dry, --dryrun: dry run mode
+```
+
+* To starts HDFS replication
+
+```
+export HADOOP_HEAPSIZE=8096
+timestamp="$(date +"%s")"
+
+hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.batchreplication.hdfscopy.ReplicationJob -Dmapreduce.job.reduces=500 -Dmapreduce.map.memory.mb=8000 -Dmapreduce.map.java.opts="-Djava.net.preferIPv4Stack=true -Xmx7000m" -s hdfs://airfs-src/ -d hdfs://airfs-dest/ -o hdfs://airfs-dest/user/test/fullrepljob -b "tmp.*" -p a,u,d
+
+hive -e "LOAD  DATA  INPATH  '/user/test/fullrepljob' OVERWRITE INTO TABLE hdfscopy_result partition ( jobts = $timestamp);"
+```
+
+## Incremental Replication
+
+### Prerequisites:
+
+* Hadoop (Most, but tested with 2.5.0)
+* Hive (Most, but tested with 0.13)
 
 ### Audit Log Hook Setup
 
@@ -75,8 +136,6 @@ Once it finishes, the JAR to run the incremental replication process can be foun
 * To start replicating, add the directory containing the Hive libraries to the Hadoop classpath and then kick off the replication launcher by using the `hadoop jar` command. Be sure to specify the configuration file that was filled out in the prior step.
 
 ```
-# Example classpath for Cloudera deployments
-export HADOOP_CLASSPATH="/mnt/var/opt/CDH/lib/hive/lib/*"
 hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.replication.deploy.ReplicationLauncher --config-files my_config_file.xml
 ```
 
@@ -86,12 +145,14 @@ When the incremental replication process is launched for the first time, it will
 
 * Verify that entries are replicated properly by creating a test table on the source cluster and checking to see if it appears on the destination cluster.
 
+* For production deployment, an external process should monitor and restart the replication process if it exits.
+
 ### Additional CLI options:
 
 To force the process to start replicating entries after a particular audit log ID, you can pass the `--start-after-id` parameter:
 
 ```
-hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.replication.deploy.ReplicationLauncher --start-after-id 123456
+hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.replication.deploy.ReplicationLauncher --config-files my_config_file.xml --start-after-id 123456
 ```
 
 Replication entries that were started but not completed on the last invocation will be marked as aborted when you use `--start-after-id` to restart the process.
@@ -124,80 +185,3 @@ java -jar airbnb-reair-web-server-1.0.0.jar --thrift-host localhost --thrift-por
 ### Known Issues
 * Due to https://issues.apache.org/jira/browse/HIVE-12865, exchange partition commands will be replicated under limited conditions. Resolution is pending.
 * Since the audit log hook writes the changes in a separate transaction from the Hive metastore, it's possible to miss updates if the client fails after the metastore write, but before hook execution. In practice, this is not an issue if failed Hive queries are re-run.
-
-## Batch Replication
-
-The batch replication mode is typically used to go through the entire data warehouse. Starting the batch replication process is simple: the user runs a shell command that launches a series of map-reduce jobs. The execution contract is to replicate a list of entities, defined as Hive tables, from the source warehouse to the destination warehouse. The batch replication process is efficient when run multiple times in succession - it detects files that match between the source and the destination and only copies the differences. Likewise, metadata is only updated when needed. This 'idempotent' nature ensures that the tool is easy to run and there's no wasted work. Batch replication will handle entity creation, update, and deletion.
-
-There are several challenges for batch replication. First, in a production data warehouse, the sizes of the entities is not even, but the replication latency should not depend on the largest one. For example, common tables can have < 10 partitions, while the largest tables can have over 100,000 partitions. To keep latency in check, it’s necessary to load balance the replication work. Keeping operational load low is also another important challenge. With such a complex operation, detailed logging is a must to figure out and solve errors as they occur. To address this, batch replication needs to record what was copied, what errors occurred, and what was committed in the metastore. For ease of auditing and reporting, these details are written to HDFS.
-
-To solve the load balancing issues, we designed batch replication as a series of map-reduce (MR) jobs. The two most expensive operations in batch replication are metadata updates and files copies, so those steps are often distributed via a shuffle phase. The three jobs generate the list of files to copy, execute the file copy, and lastly, execute the metadata update.
-
-In the first MR job, entity identifiers are read from HDFS and shuffled evenly to reducers. The reducers run various checks on the entities and produce a mapping from entity to the HDFS directory that needs to be copied.  The second MR job goes through the list of directories generated by the first job and creates a list of files in those directories. The file names are shuffled to reducers based on hash of file path and size. Once shuffled, the reducers execute the copy with good load balancing. The third MR job handles the commit logic for the Hive metastore. Since the list of entities was already load balanced in the first MR job, the third MR job can be map-only.
-
-### Run Batch Replication
-
-* Read through and fill out the configuration from the  [template](main/src/main/resources/batch_replication_configuration_template.xml). You need to configure batch replication related configurations.
-* Switch to the repo directory and build the JAR.
-```
-cd reair
-mvn clean install -DskipTests
-```
-* If hive batch replication logging table does not exist, create using [here](main/src/main/resources/create_hive_batch_logging_tables.sql)
-* To start batch replicating, provide corresponding hive-metastore, libfb303, and libthrift using -libjars and kick off the MetastoreReplicationJob by using the `hadoop jar` command. Be sure to specify the configuration file that was filled out in the prior step. The number of reducers control how fast the job will run. It is decided by your cluster network bandwidth. In Airbnb's data warehouse, we choose 150 and it works well. At the end, each stage result will be inserted into logging table.
-
-```
-export HADOOP_HEAPSIZE=8096
-timestamp="$(date +"%s")"
-
-# Example -libjars for Cloudera deployments
-hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob -libjars /mnt/var/opt/CDH/lib/hive/lib/hive-metastore.jar,/mnt/var/opt/CDH/lib/hive/lib/libfb303-0.9.0.jar,/mnt/var/opt/CDH/lib/hive/lib/libthrift-0.9.0-cdh5-2.jar -config-files my_config_file.xml
-
-hive -e "LOAD  DATA  INPATH  '/user/test/hivecopy_output/step1output' OVERWRITE INTO TABLE hivecopy_stage1_result partition ( jobts = $timestamp);"
-hive -e "LOAD  DATA  INPATH  '/user/test/hivecopy_output/step2output' OVERWRITE INTO TABLE hivecopy_stage2_result partition ( jobts = $timestamp);"
-hive -e "LOAD  DATA  INPATH  '/user/test/hivecopy_output/step3output' OVERWRITE INTO TABLE hivecopy_stage3_result partition ( jobts = $timestamp);"
-```
-
-* Additional CLI Options: --step, --override-input. Those two arguments are used when you are debugging the job and want to run one of three MR job individually. --step indicates which step to run. --override-input provide an input path for second and third stage MR jobs. The input path normally will be the output for the first stage MR job.
-
-```
-# Example -libjars for Cloudera deployments
-hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob -libjars /mnt/var/opt/CDH/lib/hive/lib/hive-metastore.jar,/mnt/var/opt/CDH/lib/hive/lib/libfb303-0.9.0.jar,/mnt/var/opt/CDH/lib/hive/lib/libthrift-0.9.0-cdh5-2.jar -config-files my_config_file.xml  --config-files my_config_file.xml --step 2 --override-input hdfs:///user/test/hivecopy_output/step1output/
-```
-
-## HDFS Copy Job
-
-Outside of the Hive metastore, Airsync also includes a separate tool to do HDFS copies. While tools like `distcp` / `distcp2` are commonly used, we found several issues during testing:
-* Performance on a folder with millions of files or the entire warehouse is poor.
-* The error rate can be high and `distcp` does not allow custom error-handling.
-* Easy-to-analyze logging is missing.
-
-To solve these problems, we developed a series of (2) MR jobs to handle general HDFS copies. The first job builds a list of splits using a heuristic, level-based directory traversal. Once there are enough directories, mappers traverse those folders to generate the full file list for copying. This is done on both source and destination clusters. The file paths are shuffled based on folder path without cluster name to reducers. Reducer will determine whether a copy is necessary. The second MR job reads the list of files to copy and load balances the copy via a shuffle. During our cluster migration, we observed that the new tool has very few failures compared to the other solutions and was only limited by cluster bandwidth.
-
-### Run HDFS Copy
-
-* Switch to the repo directory and build the JAR.
-```
-cd reair
-mvn clean install -DskipTests
-```
-* If HDFS copy logging table does not exist, create using [here](main/src/main/resources/create_hdfs_copy_logging_tables.sql)
-* CLI options:
-```
-  -s, --source: source folder
-  -d, --destination: destination folder. source and destination must have same relative path.
-  -o, --output: logging folder
-  -p, --option: checking options: comma separated option including a(add),d(delete),u(update)
-  -l, --list: list file size only
-  -b, --blacklist: folder name blacklist regex
-  -dry, --dryrun: dry run mode
-```
-* To start batch replicating, run the following commands.
-```
-export HADOOP_HEAPSIZE=8096
-timestamp="$(date +"%s")"
-
-hadoop jar airbnb-reair-main-1.0.0.jar com.airbnb.di.hive.batchreplication.hdfscopy.ReplicationJob -Dmapreduce.job.reduces=500 -Dmapreduce.map.memory.mb=8000 -Dmapreduce.map.java.opts="-Djava.net.preferIPv4Stack=true -Xmx7000m" -s hdfs://airfs-src/ -d hdfs://airfs-dest/ -o hdfs://airfs-dest/user/test/fullrepljob -b "tmp.*" -p a,u,d
-
-hive -e "LOAD  DATA  INPATH  '/user/test/fullrepljob' OVERWRITE INTO TABLE hdfscopy_result partition ( jobts = $timestamp);"
-```
