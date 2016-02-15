@@ -152,12 +152,11 @@ public class RenameTableTask implements ReplicationTask {
         newTableOnDestination.setTableName(renameToSpec.getTableName());
         destMs.alterTable(renameFromSpec.getDbName(), renameFromSpec.getTableName(),
             newTableOnDestination);
+        // After a rename, the table should be re-copied to get the
+        // correct modified time changes. With a proper rename, this
+        // should be a mostly no-op.
         LOG.debug(StringUtils.format("Renamed %s to %s", renameFromSpec, renameToSpec));
-      // After a rename, the table should be re-copied to get the
-      // correct modified time changes. With a proper rename, this
-      // should be a mostly no-op. Fall through to the next case.
-      // fallthrough
-
+      // fallthrough to run the table copy as per above comment.
       case COPY_TABLE:
         CopyCompleteTableTask task =
             new CopyCompleteTableTask(conf, destObjectFactory, objectConflictHandler, srcCluster,
