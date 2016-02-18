@@ -37,6 +37,12 @@
   </property>
 
   <property>
+    <name>airbnb.reair.audit_log.map_red_stats.db.table</name>
+    <value>audit_objects</value>
+    <comment>Name of the mapreduce stats MySQL table</comment>
+  </property>
+
+  <property>
     <name>airbnb.reair.state.db.jdbc</name>
     <value>jdbc:mysql://myhost:myport/mydb</value>
     <comment>

@@ -36,6 +36,7 @@ public class AuditLogReader {
   private DbConnectionFactory dbConnectionFactory;
   private String auditLogTableName;
   private String outputObjectsTableName;
+  private String mapRedStatsTableName;
   private long lastReadId;
   private Queue<AuditLogEntry> auditLogEntries;
   private RetryingTaskRunner retryingTaskRunner;
@@ -46,6 +47,7 @@ public class AuditLogReader {
    * @param dbConnectionFactory TODO
    * @param auditLogTableName TODO
    * @param outputObjectsTableName TODO
+   * @param mapRedStatsTableName TODO
    * @param getIdsAfter TODO
    *
    * @throws SQLException TODO
@@ -54,10 +56,12 @@ public class AuditLogReader {
       DbConnectionFactory dbConnectionFactory,
       String auditLogTableName,
       String outputObjectsTableName,
+      String mapRedStatsTableName,
       long getIdsAfter) throws SQLException {
     this.dbConnectionFactory = dbConnectionFactory;
     this.auditLogTableName = auditLogTableName;
     this.outputObjectsTableName = outputObjectsTableName;
+    this.mapRedStatsTableName = mapRedStatsTableName;
     this.lastReadId = getIdsAfter;
     auditLogEntries = new LinkedList<>();
     this.retryingTaskRunner = new RetryingTaskRunner();
@@ -113,7 +117,7 @@ public class AuditLogReader {
       return Optional.of(auditLogEntries.remove());
     }
 
-    LOG.debug("Executing queries to try to get more audit log entries " + "from the DB");
+    LOG.debug("Executing queries to try to get more audit log entries from the DB");
 
     fetchMoreEntries();
 
@@ -152,18 +156,19 @@ public class AuditLogReader {
   }
 
   /**
-   * Given that we start reading after lastReadId and need to get ROW_FETCH_SIZE rows from the audit
-   * log, figure out the min and max row ID's to read.
+   * Given that we start reading after lastReadId and need to get
+   * ROW_FETCH_SIZE rows from the audit log, figure out the min and max row
+   * ID's to read.
    *
    * @throws SQLException TODO
    */
   private LongRange getIdsToRead() throws SQLException {
-    String queryFormatString =
-        "SELECT MIN(id) min_id, MAX(id) max_id "
-            + "FROM (SELECT id FROM %s WHERE id > %s "
-            + "AND (command_type IS NULL OR command_type NOT IN('SHOWTABLES', 'SHOWPARTITIONS', "
-            + "'SWITCHDATABASE')) "
-            + "LIMIT %s)" + " subquery";
+    String queryFormatString = "SELECT MIN(id) min_id, MAX(id) max_id "
+        + "FROM (SELECT id FROM %s WHERE id > %s "
+        + "AND (command_type IS NULL OR command_type NOT IN('SHOWTABLES', 'SHOWPARTITIONS', "
+        + "'SWITCHDATABASE')) "
+        + "LIMIT %s)"
+        + " subquery";
     String query = String.format(queryFormatString, auditLogTableName, lastReadId, ROW_FETCH_SIZE);
     Connection connection = dbConnectionFactory.getConnection();
 
@@ -189,15 +194,18 @@ public class AuditLogReader {
     }
 
     // TODO: Remove left outer join and command type filter once the
-    // exchange partition bug is fixed in HIVE-12865
+    // exchange partition bug is fixed in HIVE-12215
     String queryFormatString = "SELECT a.id, a.create_time, "
-        + "command_type, command, name, category, " + "type, serialized_object "
+        + "command_type, command, name, category, "
+        + "type, serialized_object "
         + "FROM %s a LEFT OUTER JOIN %s b on a.id = b.audit_log_id "
         + "WHERE a.id >= ? AND a.id <= ? "
         + "AND (command_type IS NULL OR command_type "
         + "NOT IN('SHOWTABLES', 'SHOWPARTITIONS', 'SWITCHDATABASE')) "
         + "ORDER BY id";
-    String query = String.format(queryFormatString, auditLogTableName, outputObjectsTableName);
+    String query = String.format(queryFormatString,
+        auditLogTableName, outputObjectsTableName,
+        idsToRead.getMinimumLong(), idsToRead.getMaximumLong());
 
     Connection connection = dbConnectionFactory.getConnection();
     PreparedStatement ps = connection.prepareStatement(query);
@@ -243,8 +251,7 @@ public class AuditLogReader {
       String commandTypeString = rs.getString("command_type");
       commandType = convertToHiveOperation(commandTypeString);
       if (commandType == null) {
-        LOG.debug(
-            String.format("Invalid operation %s in audit log id: %s", commandTypeString, id));
+        LOG.debug(String.format("Invalid operation %s in audit log id: %s", commandTypeString, id));
       }
       command = rs.getString("command");
       objectName = rs.getString("name");
@@ -256,9 +263,17 @@ public class AuditLogReader {
         lastReadId = previouslyReadId;
         // This means that all the outputs for a given audit log entry
         // has been read.
-        AuditLogEntry entry = new AuditLogEntry(previouslyReadId, previouslyReadTs,
-            previousCommandType, previousCommand, outputDirectories, referenceTables, outputTables,
-            outputPartitions, renameFromTable, renameFromPartition);
+        AuditLogEntry entry = new AuditLogEntry(
+            previouslyReadId,
+            previouslyReadTs,
+            previousCommandType,
+            previousCommand,
+            outputDirectories,
+            referenceTables,
+            outputTables,
+            outputPartitions,
+            renameFromTable,
+            renameFromPartition);
         auditLogEntries.add(entry);
         // Reset these accumulated values
         outputDirectories = new LinkedList<>();
@@ -329,8 +344,16 @@ public class AuditLogReader {
 
     // This is the case where we read to the end of the table.
     if (id != -1) {
-      AuditLogEntry entry = new AuditLogEntry(id, createTime, commandType, command,
-          outputDirectories, referenceTables, outputTables, outputPartitions, renameFromTable,
+      AuditLogEntry entry = new AuditLogEntry(
+          id,
+          createTime,
+          commandType,
+          command,
+          outputDirectories,
+          referenceTables,
+          outputTables,
+          outputPartitions,
+          renameFromTable,
           renameFromPartition);
       auditLogEntries.add(entry);
     }

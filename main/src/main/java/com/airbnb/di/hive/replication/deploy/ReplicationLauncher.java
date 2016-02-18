@@ -95,11 +95,14 @@ public class ReplicationLauncher {
         DeployConfigurationKeys.AUDIT_LOG_DB_TABLE);
     String auditLogObjectsTableName = conf.get(
         DeployConfigurationKeys.AUDIT_LOG_OBJECTS_DB_TABLE);
+    String auditLogMapRedStatsTableName = conf.get(
+        DeployConfigurationKeys.AUDIT_LOG_MAP_RED_STATS_DB_TABLE);
 
     final AuditLogReader auditLogReader = new AuditLogReader(
         auditLogConnectionFactory,
         auditLogTableName,
         auditLogObjectsTableName,
+        auditLogMapRedStatsTableName,
         0);
 
     // Create the connection to the key value store in the DB

@@ -9,6 +9,8 @@ public class DeployConfigurationKeys {
   public static final String AUDIT_LOG_DB_PASSWORD = "airbnb.reair.audit_log.db.password";
   public static final String AUDIT_LOG_DB_TABLE = "airbnb.reair.audit_log.db.table";
   public static final String AUDIT_LOG_OBJECTS_DB_TABLE = "airbnb.reair.audit_log.objects.db.table";
+  public static final String AUDIT_LOG_MAP_RED_STATS_DB_TABLE =
+      "airbnb.reair.audit_log.map_red_stats.db.table";
 
   public static final String STATE_JDBC_URL = "airbnb.reair.state.db.jdbc";
   public static final String STATE_DB_USER = "airbnb.reair.state.db.user";
