@@ -120,10 +120,10 @@ public class AuditLogHook implements PostExecute {
    * @throws Exception TODO
    */
   protected long runLogModules(final Connection connection,
-                             final SessionState sessionState,
-                             final Set<ReadEntity> readEntities,
-                             final Set<WriteEntity> writeEntities,
-                             final UserGroupInformation userGroupInformation)
+                               final SessionState sessionState,
+                               final Set<ReadEntity> readEntities,
+                               final Set<WriteEntity> writeEntities,
+                               final UserGroupInformation userGroupInformation)
       throws Exception {
     long auditLogId = new AuditCoreLogModule(
                               connection,
