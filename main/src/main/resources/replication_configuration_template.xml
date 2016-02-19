@@ -38,7 +38,7 @@
 
   <property>
     <name>airbnb.reair.audit_log.map_red_stats.db.table</name>
-    <value>audit_objects</value>
+    <value>map_red_stats</value>
     <comment>Name of the mapreduce stats MySQL table</comment>
   </property>
 
