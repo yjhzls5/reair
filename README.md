@@ -51,7 +51,7 @@ mvn clean install -DskipTests
 
 * Copy the JAR to the Hive auxiliary library path. The specifics of the path depending on your setup. Generally, the Hive client's auxiliary library path can be configured using the configuration parameter `hive.aux.jars.path` or through environment variables as defined in shell scripts that launch Hive.
 
-* Create and setup the tables on MySQL required for the audit log. You can create the tables by running the create table commands listed [here](hive-hooks/src/main/resources/create_tables.sql). If you're planning to use the same DB to store the tables for incremental replication, also run the create table commands [here](main/src/main/resources/create_tables.sql).
+* Create and setup the tables on MySQL required for the audit log. You can create the tables by running the create table commands in all of the .sql files [here](hive-hooks/src/main/resources/). If you're planning to use the same DB to store the tables for incremental replication, also run the create table commands [here](main/src/main/resources/create_tables.sql).
 
 * Configure Hive to use the audit log hook by adding the following sections to `hive-site.xml` from the [audit log configuration template](hive-hooks/src/main/resources/hook_configuration_template.xml). Note: Replace with appropriate values.
 
