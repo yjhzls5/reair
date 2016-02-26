@@ -5,6 +5,8 @@ import com.airbnb.di.common.DistCpWrapper;
 import com.airbnb.di.common.DistCpWrapperOptions;
 import com.airbnb.di.common.FsUtils;
 import com.airbnb.di.common.PathBuilder;
+import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
@@ -64,8 +66,16 @@ public class DirectoryCopier {
       // Copy directory
       DistCpWrapper distCpWrapper = new DistCpWrapper(conf);
       DistCpWrapperOptions options =
-          new DistCpWrapperOptions(srcDir, destDir, distCpTmpDir, distCpLogDir).setAtomic(true)
+          new DistCpWrapperOptions(srcDir, destDir, distCpTmpDir, distCpLogDir)
+              .setAtomic(true)
               .setSyncModificationTimes(checkFileModificationTimes);
+
+      long copyJobTimeoutSeconds = conf.getLong(
+          DeployConfigurationKeys.COPY_JOB_TIMEOUT_SECONDS,
+          -1);
+      if (copyJobTimeoutSeconds > 0) {
+        options.setDistCpJobTimeout(copyJobTimeoutSeconds * 1000);
+      }
 
       long bytesCopied = distCpWrapper.copy(options);
       return bytesCopied;

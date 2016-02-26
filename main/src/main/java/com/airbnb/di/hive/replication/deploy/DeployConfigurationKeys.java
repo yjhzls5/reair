@@ -45,4 +45,6 @@ public class DeployConfigurationKeys {
   public static final String WORKER_THREADS = "airbnb.reair.worker.threads";
   public static final String MAX_JOBS_IN_MEMORY = "airbnb.reair.jobs.in_memory_count";
   public static final String THRIFT_SERVER_PORT = "airbnb.reair.thrift.port";
+
+  public static final String COPY_JOB_TIMEOUT_SECONDS = "airbnb.reair.copy.timeout.seconds";
 }
