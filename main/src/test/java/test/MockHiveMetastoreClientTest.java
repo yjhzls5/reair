@@ -1,8 +1,13 @@
 package test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+
+import com.google.common.collect.Lists;
+
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.google.common.collect.Lists;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -16,10 +21,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
-
 /**
- * Test for the fake metastore client that we'll use later for testing
+ * Test for the fake metastore client that we'll use later for testing.
  */
 public class MockHiveMetastoreClientTest {
   private static MockHiveMetastoreClient mockHiveMetastoreClient;
@@ -31,18 +34,18 @@ public class MockHiveMetastoreClientTest {
 
   @Test
   public void testCreateAndDropTable() throws HiveMetastoreException {
-    String dbName = "test_db";
-    String tableName = "test_table";
+    final String dbName = "test_db";
+    final String tableName = "test_table";
 
     // First create a db and a table
     mockHiveMetastoreClient.createDatabase(new Database(dbName, null, null, null));
-    Table t = new Table();
-    t.setDbName(dbName);
-    t.setTableName(tableName);
-    mockHiveMetastoreClient.createTable(t);
+    Table table = new Table();
+    table.setDbName(dbName);
+    table.setTableName(tableName);
+    mockHiveMetastoreClient.createTable(table);
 
     // Verify that you get the same table back
-    assertEquals(mockHiveMetastoreClient.getTable(dbName, tableName), t);
+    assertEquals(mockHiveMetastoreClient.getTable(dbName, tableName), table);
 
     // Drop it
     mockHiveMetastoreClient.dropTable(dbName, tableName, false);
@@ -54,35 +57,35 @@ public class MockHiveMetastoreClientTest {
 
   @Test
   public void testCreateAndDropPartition() throws HiveMetastoreException {
-    String dbName = "test_db";
-    String tableName = "test_table";
-    String partitionName = "ds=1/hr=2";
-    List<String> partitionValues = new ArrayList<>();
+    final String dbName = "test_db";
+    final String tableName = "test_table";
+    final String partitionName = "ds=1/hr=2";
+    final List<String> partitionValues = new ArrayList<>();
     partitionValues.add("1");
     partitionValues.add("2");
 
     // First create the db and a partitioned table
     mockHiveMetastoreClient.createDatabase(new Database(dbName, null, null, null));
-    Table t = new Table();
-    t.setDbName(dbName);
-    t.setTableName(tableName);
+    Table table = new Table();
+    table.setDbName(dbName);
+    table.setTableName(tableName);
 
     List<FieldSchema> partitionCols = new ArrayList<>();
     partitionCols.add(new FieldSchema("ds", "string", "my ds comment"));
     partitionCols.add(new FieldSchema("hr", "string", "my hr comment"));
-    t.setPartitionKeys(partitionCols);
+    table.setPartitionKeys(partitionCols);
 
-    mockHiveMetastoreClient.createTable(t);
+    mockHiveMetastoreClient.createTable(table);
 
     // Then try adding a partition
-    Partition p = new Partition();
-    p.setDbName(dbName);
-    p.setTableName(tableName);
-    p.setValues(partitionValues);
-    mockHiveMetastoreClient.addPartition(p);
+    Partition partition = new Partition();
+    partition.setDbName(dbName);
+    partition.setTableName(tableName);
+    partition.setValues(partitionValues);
+    mockHiveMetastoreClient.addPartition(partition);
 
     // Verify that you get back the same partition
-    assertEquals(mockHiveMetastoreClient.getPartition(dbName, tableName, partitionName), p);
+    assertEquals(mockHiveMetastoreClient.getPartition(dbName, tableName, partitionName), partition);
 
     // Try dropping the partition and verify that it doesn't exist
     mockHiveMetastoreClient.dropPartition(dbName, tableName, partitionName, false);
@@ -90,7 +93,7 @@ public class MockHiveMetastoreClientTest {
     assertFalse(mockHiveMetastoreClient.existsPartition(dbName, tableName, partitionName));
 
     // Try adding a partition again
-    mockHiveMetastoreClient.addPartition(p);
+    mockHiveMetastoreClient.addPartition(partition);
 
     // Drop the table
     mockHiveMetastoreClient.dropTable(dbName, tableName, false);
@@ -118,29 +121,29 @@ public class MockHiveMetastoreClientTest {
 
   @Test
   public void testRenameTable() throws HiveMetastoreException {
-    String dbName = "test_db";
-    String tableName = "test_table";
-    String newTableName = "new_test_table";
+    final String dbName = "test_db";
+    final String tableName = "test_table";
+    final String newTableName = "new_test_table";
 
     // First create the DB and the table
     mockHiveMetastoreClient.createDatabase(new Database(dbName, null, null, null));
-    Table t = new Table();
-    t.setDbName(dbName);
-    t.setTableName(tableName);
-    mockHiveMetastoreClient.createTable(t);
+    final Table table = new Table();
+    table.setDbName(dbName);
+    table.setTableName(tableName);
+    mockHiveMetastoreClient.createTable(table);
 
     // Verify that you get the same table back
-    assertEquals(mockHiveMetastoreClient.getTable(dbName, tableName), t);
+    assertEquals(mockHiveMetastoreClient.getTable(dbName, tableName), table);
 
     // Rename it
-    Table newT = new Table(t);
-    newT.setTableName(newTableName);
-    mockHiveMetastoreClient.alterTable(dbName, tableName, newT);
+    final Table newTable = new Table(table);
+    newTable.setTableName(newTableName);
+    mockHiveMetastoreClient.alterTable(dbName, tableName, newTable);
 
     // Verify that you can't get the old table any more
     assertNull(mockHiveMetastoreClient.getTable(dbName, tableName));
 
     // Verify that you can get the new table
-    assertEquals(mockHiveMetastoreClient.getTable(dbName, newTableName), newT);
+    assertEquals(mockHiveMetastoreClient.getTable(dbName, newTableName), newTable);
   }
 }

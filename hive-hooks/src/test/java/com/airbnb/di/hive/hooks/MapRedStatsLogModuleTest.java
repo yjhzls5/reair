@@ -22,8 +22,8 @@ public class MapRedStatsLogModuleTest {
     counters.incrCounter("SomeCounterGroupName", "SomeCounterName", 3);
     String json = MapRedStatsLogModule.toJson(counters);
     assertEquals(
-        "[{\"groupName\":\"SomeCounterGroupName\",\"counters\":[{\"counterNa" +
-        "me\":\"SomeCounterName\",\"value\":3}]}]",
+        "[{\"groupName\":\"SomeCounterGroupName\",\"counters\":[{\"counterNa"
+          + "me\":\"SomeCounterName\",\"value\":3}]}]",
         json);
   }
 
@@ -35,10 +35,10 @@ public class MapRedStatsLogModuleTest {
     counters.incrCounter("SomeCounterGroupName", "YetAnotherCounterName", 4);
     String json = MapRedStatsLogModule.toJson(counters);
     assertEquals(
-        "[{\"groupName\":\"SomeCounterGroupName\",\"counters\":[{\"counterNam" +
-        "e\":\"AnotherCounterName\",\"value\":4},{\"counterName\":\"SomeCount" +
-        "erName\",\"value\":3},{\"counterName\":\"YetAnotherCounterName\",\"v" +
-        "alue\":4}]}]",
+        "[{\"groupName\":\"SomeCounterGroupName\",\"counters\":[{\"counterNam"
+          + "e\":\"AnotherCounterName\",\"value\":4},{\"counterName\":\"SomeCount"
+          + "erName\",\"value\":3},{\"counterName\":\"YetAnotherCounterName\",\"v"
+          + "alue\":4}]}]",
         json);
   }
 
@@ -57,29 +57,29 @@ public class MapRedStatsLogModuleTest {
     counters.incrCounter("SomeCounterGroupName3", "SomeCounterName3", 11);
     String json = MapRedStatsLogModule.toJson(counters);
     assertEquals(
-        "[{\"groupName\":\"SomeCounterGroupName1\",\"counters\":[{\"counterN" +
-        "ame\":\"SomeCounterName1\",\"value\":3},{\"counterName\":\"SomeCount" +
-        "erName2\",\"value\":4},{\"counterName\":\"SomeCounterName3\",\"value" +
-        "\":5},{\"counterName\":\"SomeCounterName1\",\"value\":6},{\"counterN" +
-        "ame\":\"SomeCounterName2\",\"value\":7},{\"counterName\":\"SomeCount" +
-        "erName3\",\"value\":8},{\"counterName\":\"SomeCounterName1\",\"value" +
-        "\":9},{\"counterName\":\"SomeCounterName2\",\"value\":10},{\"counter" +
-        "Name\":\"SomeCounterName3\",\"value\":11}]},{\"groupName\":\"SomeCou" +
-        "nterGroupName2\",\"counters\":[{\"counterName\":\"SomeCounterName1\"" +
-        ",\"value\":3},{\"counterName\":\"SomeCounterName2\",\"value\":4},{\"" +
-        "counterName\":\"SomeCounterName3\",\"value\":5},{\"counterName\":\"S" +
-        "omeCounterName1\",\"value\":6},{\"counterName\":\"SomeCounterName2\"" +
-        ",\"value\":7},{\"counterName\":\"SomeCounterName3\",\"value\":8},{\"" +
-        "counterName\":\"SomeCounterName1\",\"value\":9},{\"counterName\":\"S" +
-        "omeCounterName2\",\"value\":10},{\"counterName\":\"SomeCounterName3"  +
-        "\",\"value\":11}]},{\"groupName\":\"SomeCounterGroupName3\",\"counte" +
-        "rs\":[{\"counterName\":\"SomeCounterName1\",\"value\":3},{\"counterN" +
-        "ame\":\"SomeCounterName2\",\"value\":4},{\"counterName\":\"SomeCount" +
-        "erName3\",\"value\":5},{\"counterName\":\"SomeCounterName1\",\"value" +
-        "\":6},{\"counterName\":\"SomeCounterName2\",\"value\":7},{\"counterN" +
-        "ame\":\"SomeCounterName3\",\"value\":8},{\"counterName\":\"SomeCount" +
-        "erName1\",\"value\":9},{\"counterName\":\"SomeCounterName2\",\"value" +
-        "\":10},{\"counterName\":\"SomeCounterName3\",\"value\":11}]}]",
+        "[{\"groupName\":\"SomeCounterGroupName1\",\"counters\":[{\"counterN"
+          + "ame\":\"SomeCounterName1\",\"value\":3},{\"counterName\":\"SomeCount"
+          + "erName2\",\"value\":4},{\"counterName\":\"SomeCounterName3\",\"value"
+          + "\":5},{\"counterName\":\"SomeCounterName1\",\"value\":6},{\"counterN"
+          + "ame\":\"SomeCounterName2\",\"value\":7},{\"counterName\":\"SomeCount"
+          + "erName3\",\"value\":8},{\"counterName\":\"SomeCounterName1\",\"value"
+          + "\":9},{\"counterName\":\"SomeCounterName2\",\"value\":10},{\"counter"
+          + "Name\":\"SomeCounterName3\",\"value\":11}]},{\"groupName\":\"SomeCou"
+          + "nterGroupName2\",\"counters\":[{\"counterName\":\"SomeCounterName1\""
+          + ",\"value\":3},{\"counterName\":\"SomeCounterName2\",\"value\":4},{\""
+          + "counterName\":\"SomeCounterName3\",\"value\":5},{\"counterName\":\"S"
+          + "omeCounterName1\",\"value\":6},{\"counterName\":\"SomeCounterName2\""
+          + ",\"value\":7},{\"counterName\":\"SomeCounterName3\",\"value\":8},{\""
+          + "counterName\":\"SomeCounterName1\",\"value\":9},{\"counterName\":\"S"
+          + "omeCounterName2\",\"value\":10},{\"counterName\":\"SomeCounterName3" 
+          + "\",\"value\":11}]},{\"groupName\":\"SomeCounterGroupName3\",\"counte"
+          + "rs\":[{\"counterName\":\"SomeCounterName1\",\"value\":3},{\"counterN"
+          + "ame\":\"SomeCounterName2\",\"value\":4},{\"counterName\":\"SomeCount"
+          + "erName3\",\"value\":5},{\"counterName\":\"SomeCounterName1\",\"value"
+          + "\":6},{\"counterName\":\"SomeCounterName2\",\"value\":7},{\"counterN"
+          + "ame\":\"SomeCounterName3\",\"value\":8},{\"counterName\":\"SomeCount"
+          + "erName1\",\"value\":9},{\"counterName\":\"SomeCounterName2\",\"value"
+          + "\":10},{\"counterName\":\"SomeCounterName3\",\"value\":11}]}]",
         json);
   }
 }

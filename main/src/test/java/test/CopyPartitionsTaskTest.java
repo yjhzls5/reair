@@ -1,11 +1,15 @@
 package test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionsTask;
-import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.multiprocessing.ParallelJobExecutor;
 import com.airbnb.di.utils.ReplicationTestUtils;
 
@@ -22,10 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class CopyPartitionsTaskTest extends MockClusterTest {
 
@@ -88,10 +88,10 @@ public class CopyPartitionsTaskTest extends MockClusterTest {
   /**
    * This ensures that the common directory isn't copied in cases where copying the common directory
    * would copy too much data.
-   * 
-   * @throws IOException
-   * @throws HiveMetastoreException
-   * @throws DistCpException
+   *
+   * @throws IOException TODO
+   * @throws HiveMetastoreException TODO
+   * @throws DistCpException TODO
    */
   @Test
   public void testCopyPartitionsWithoutCopyingCommon()

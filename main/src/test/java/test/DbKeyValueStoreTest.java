@@ -1,5 +1,8 @@
 package test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import com.airbnb.di.db.DbConnectionFactory;
 import com.airbnb.di.db.DbKeyValueStore;
 import com.airbnb.di.db.StaticDbConnectionFactory;
@@ -17,9 +20,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
 public class DbKeyValueStoreTest {
   private static final Log LOG = LogFactory.getLog(DbKeyValueStore.class);
 
@@ -27,6 +27,12 @@ public class DbKeyValueStoreTest {
   private static String MYSQL_TEST_DB_NAME = "replication_test";
   private static String MYSQL_TEST_TABLE_NAME = "key_value";
 
+  /**
+   * TODO.
+   *
+   * @throws ClassNotFoundException TODO
+   * @throws SQLException TODO
+   */
   @BeforeClass
   public static void setupClass() throws ClassNotFoundException, SQLException {
     // Create the MySQL process

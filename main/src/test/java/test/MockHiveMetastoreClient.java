@@ -1,9 +1,10 @@
 package test;
 
-import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.google.common.collect.Lists;
+
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.google.common.collect.Lists;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Simulates a Hive metastore client connected to a Hive metastore Thrift server
+ * Simulates a Hive metastore client connected to a Hive metastore Thrift server.
  */
 public class MockHiveMetastoreClient implements HiveMetastoreClient {
 
@@ -26,6 +27,9 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
   private Map<HiveObjectSpec, Table> specToTable;
   private Map<HiveObjectSpec, Partition> specToPartition;
 
+  /**
+   * TODO.
+   */
   public MockHiveMetastoreClient() {
     dbNameToDatabase = new HashMap<>();
     specToTable = new HashMap<>();
@@ -36,33 +40,49 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
    * Returns the partition name (e.g. ds=1/hr=2) given a Table and Partition object. For simplicity,
    * this does not handle special characters properly.
    *
-   * @throws HiveMetastoreException
+   * @throws HiveMetastoreException TODO
    */
-  private String getPartitionName(Table t, Partition p) throws HiveMetastoreException {
-    if (t.getPartitionKeys().size() != p.getValues().size()) {
+  private String getPartitionName(Table table, Partition partition) throws HiveMetastoreException {
+    if (table.getPartitionKeys().size() != partition.getValues().size()) {
       throw new HiveMetastoreException(
-          "Partition column mismatch: " + "table has " + t.getPartitionKeys().size() + " columns "
-              + "while partition has " + p.getValues().size() + " values");
+          "Partition column mismatch: " + "table has " + table.getPartitionKeys().size()
+              + " columns " + "while partition has " + partition.getValues().size() + " values");
     }
 
     StringBuilder sb = new StringBuilder();
     List<String> keyValues = new ArrayList<>();
-    int i = 0;
-    for (FieldSchema field : t.getPartitionKeys()) {
-      keyValues.add(field.getName() + "=" + p.getValues().get(i));
-      i++;
+    int keyValueIndex = 0;
+    for (FieldSchema field : table.getPartitionKeys()) {
+      keyValues.add(field.getName() + "=" + partition.getValues().get(keyValueIndex));
+      keyValueIndex++;
     }
     return StringUtils.join(keyValues, "/");
   }
 
+  private String getPartitionName(Table table, List<String> values) {
+    StringBuilder sb = new StringBuilder();
+    int index = 0;
+    for (FieldSchema fs : table.getPartitionKeys()) {
+      if (index > 0) {
+        sb.append("/");
+      }
+      sb.append(fs.getName());
+      sb.append("=");
+      sb.append(values.get(index));
+      index++;
+    }
+    return sb.toString();
+  }
+
+
   @Override
-  public Partition addPartition(Partition p) throws HiveMetastoreException {
-    HiveObjectSpec tableSpec = new HiveObjectSpec(p.getDbName(), p.getTableName());
+  public Partition addPartition(Partition partition) throws HiveMetastoreException {
+    HiveObjectSpec tableSpec = new HiveObjectSpec(partition.getDbName(), partition.getTableName());
     if (!specToTable.containsKey(tableSpec)) {
       throw new HiveMetastoreException("Unknown table: " + tableSpec);
     }
-    Table t = specToTable.get(tableSpec);
-    String partitionName = getPartitionName(t, p);
+    Table table = specToTable.get(tableSpec);
+    String partitionName = getPartitionName(table, partition);
 
     HiveObjectSpec partitionSpec =
         new HiveObjectSpec(tableSpec.getDbName(), tableSpec.getTableName(), partitionName);
@@ -71,8 +91,8 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
       throw new HiveMetastoreException("Partition already exists: " + partitionSpec);
     }
 
-    specToPartition.put(partitionSpec, p);
-    return p;
+    specToPartition.put(partitionSpec, partition);
+    return partition;
   }
 
   @Override
@@ -87,14 +107,14 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
   }
 
   @Override
-  public void alterPartition(String dbName, String tableName, Partition p)
+  public void alterPartition(String dbName, String tableName, Partition partition)
       throws HiveMetastoreException {
-    HiveObjectSpec tableSpec = new HiveObjectSpec(p.getDbName(), p.getTableName());
+    HiveObjectSpec tableSpec = new HiveObjectSpec(partition.getDbName(), partition.getTableName());
     if (!specToTable.containsKey(tableSpec)) {
       throw new HiveMetastoreException("Unknown table: " + tableSpec);
     }
-    Table t = specToTable.get(tableSpec);
-    String partitionName = getPartitionName(t, p);
+    Table table = specToTable.get(tableSpec);
+    String partitionName = getPartitionName(table, partition);
 
     HiveObjectSpec partitionSpec =
         new HiveObjectSpec(tableSpec.getDbName(), tableSpec.getTableName(), partitionName);
@@ -102,7 +122,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
       throw new HiveMetastoreException("Partition does not exist: " + partitionSpec);
     }
 
-    specToPartition.put(partitionSpec, p);
+    specToPartition.put(partitionSpec, partition);
   }
 
   @Override
@@ -124,22 +144,25 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
   }
 
   @Override
-  public void createTable(Table t) throws HiveMetastoreException {
-    if (!existsDb(t.getDbName())) {
-      throw new HiveMetastoreException("DB " + t.getDbName() + " does not exist!");
+  public void createTable(Table table) throws HiveMetastoreException {
+    if (!existsDb(table.getDbName())) {
+      throw new HiveMetastoreException("DB " + table.getDbName() + " does not exist!");
     }
 
-    HiveObjectSpec tableSpec = new HiveObjectSpec(t.getDbName(), t.getTableName());
+    HiveObjectSpec tableSpec = new HiveObjectSpec(table.getDbName(), table.getTableName());
     if (specToTable.containsKey(tableSpec)) {
       throw new HiveMetastoreException("Table already exists: " + tableSpec);
     }
-    specToTable.put(tableSpec, t);
+    specToTable.put(tableSpec, table);
   }
 
   @Override
-  public void alterTable(String dbName, String tableName, Table t) throws HiveMetastoreException {
+  public void alterTable(
+      String dbName,
+      String tableName,
+      Table table) throws HiveMetastoreException {
     HiveObjectSpec existingTableSpec = new HiveObjectSpec(dbName, tableName);
-    HiveObjectSpec newTableSpec = new HiveObjectSpec(t.getDbName(), t.getTableName());
+    HiveObjectSpec newTableSpec = new HiveObjectSpec(table.getDbName(), table.getTableName());
     if (!specToTable.containsKey(existingTableSpec)) {
       throw new HiveMetastoreException("Unknown table: " + existingTableSpec);
     }
@@ -147,7 +170,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
     if (removedTable == null) {
       throw new RuntimeException("Shouldn't happen!");
     }
-    specToTable.put(newTableSpec, t);
+    specToTable.put(newTableSpec, table);
   }
 
   @Override
@@ -169,8 +192,8 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
 
   /**
    * Drops the table, but for safety, doesn't delete the data.
-   * 
-   * @throws HiveMetastoreException
+   *
+   * @throws HiveMetastoreException TODO
    */
   @Override
   public void dropTable(String dbName, String tableName, boolean deleteData)
@@ -180,7 +203,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
       throw new HiveMetastoreException("Missing table: " + tableSpec);
     }
     // Remove the table
-    Table t = specToTable.remove(new HiveObjectSpec(dbName, tableName));
+    Table table = specToTable.remove(new HiveObjectSpec(dbName, tableName));
 
     // Remove associated partitions
     Iterator<Map.Entry<HiveObjectSpec, Partition>> mapIterator =
@@ -197,8 +220,8 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
 
   /**
    * Drops the partition, but for safety, doesn't delete the data.
-   * 
-   * @throws HiveMetastoreException
+   *
+   * @throws HiveMetastoreException TODO
    */
   @Override
   public void dropPartition(
@@ -272,6 +295,19 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
     return sb.toString();
   }
 
+  /**
+   * TODO.
+   *
+   * @param partitionSpecs TODO
+   * @param sourceDb TODO
+   * @param sourceTable TODO
+   * @param destDb TODO
+   * @param destinationTableName TODO
+   *
+   * @return TODO
+   *
+   * @throws HiveMetastoreException TODO
+   */
   public Partition exchangePartition(
       Map<String, String> partitionSpecs,
       String sourceDb,
@@ -279,10 +315,10 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
       String destDb,
       String destinationTableName)
           throws HiveMetastoreException {
-    String partitionName = partitionSpecToName(partitionSpecs);
-    HiveObjectSpec exchangeFromPartitionSpec =
+    final String partitionName = partitionSpecToName(partitionSpecs);
+    final HiveObjectSpec exchangeFromPartitionSpec =
         new HiveObjectSpec(sourceDb, sourceTable, partitionName);
-    HiveObjectSpec exchangeToPartitionSpec =
+    final HiveObjectSpec exchangeToPartitionSpec =
         new HiveObjectSpec(destDb, destinationTableName, partitionName);
 
     if (!existsPartition(sourceDb, sourceTable, partitionName)) {
@@ -295,39 +331,28 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
           String.format("Unknown destination table %s.%s", destDb, destinationTableName));
     }
 
-    Partition p = specToPartition.remove(exchangeFromPartitionSpec);
-    p.setDbName(destDb);
-    p.setTableName(destinationTableName);
-    specToPartition.put(exchangeToPartitionSpec, p);
-    return p;
-  }
-
-  private String getPartitionName(Table t, List<String> values) {
-    StringBuilder sb = new StringBuilder();
-    int i = 0;
-    for (FieldSchema fs : t.getPartitionKeys()) {
-      if (i > 0) {
-        sb.append("/");
-      }
-      sb.append(fs.getName());
-      sb.append("=");
-      sb.append(values.get(i));
-      i++;
-    }
-    return sb.toString();
+    Partition partition = specToPartition.remove(exchangeFromPartitionSpec);
+    partition.setDbName(destDb);
+    partition.setTableName(destinationTableName);
+    specToPartition.put(exchangeToPartitionSpec, partition);
+    return partition;
   }
 
   @Override
-  public void renamePartition(String db, String table, List<String> partitionValues, Partition p)
-      throws HiveMetastoreException {
-    HiveObjectSpec tableSpec = new HiveObjectSpec(db, table);
-    Table t = specToTable.get(tableSpec);
+  public void renamePartition(
+      String db,
+      String tableName,
+      List<String> partitionValues,
+      Partition partition)
+          throws HiveMetastoreException {
+    HiveObjectSpec tableSpec = new HiveObjectSpec(db, tableName);
+    Table table = specToTable.get(tableSpec);
 
-    String renameFromPartitionName = getPartitionName(t, partitionValues);
-    String renameToPartitionName = getPartitionName(t, p.getValues());
+    String renameFromPartitionName = getPartitionName(table, partitionValues);
+    String renameToPartitionName = getPartitionName(table, partition.getValues());
 
-    HiveObjectSpec renameFromSpec = new HiveObjectSpec(db, table, renameFromPartitionName);
-    HiveObjectSpec renameToSpec = new HiveObjectSpec(db, table, renameToPartitionName);
+    HiveObjectSpec renameFromSpec = new HiveObjectSpec(db, tableName, renameFromPartitionName);
+    HiveObjectSpec renameToSpec = new HiveObjectSpec(db, tableName, renameToPartitionName);
 
     if (specToPartition.containsKey(renameToSpec)) {
       throw new HiveMetastoreException("Partition already exists: " + renameToSpec);
@@ -338,7 +363,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
     }
 
     Partition removed = specToPartition.remove(renameFromSpec);
-    removed.setValues(new ArrayList<>(p.getValues()));
+    removed.setValues(new ArrayList<>(partition.getValues()));
     specToPartition.put(renameToSpec, removed);
   }
 
@@ -348,11 +373,11 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
   }
 
   @Override
-  public List<String> getAllTables(final String db_name) throws HiveMetastoreException {
+  public List<String> getAllTables(final String dbName) throws HiveMetastoreException {
     ArrayList<String> tables = new ArrayList<>();
 
     for (HiveObjectSpec spec : specToTable.keySet()) {
-      if (spec.getDbName().equals(db_name)) {
+      if (spec.getDbName().equals(dbName)) {
         tables.add(spec.getTableName());
       }
 

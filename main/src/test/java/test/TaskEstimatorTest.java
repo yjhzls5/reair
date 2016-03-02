@@ -1,5 +1,9 @@
 package test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
@@ -9,11 +13,11 @@ import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
-import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionedTableTask;
+import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.TaskEstimate;
 import com.airbnb.di.hive.replication.primitives.TaskEstimator;
-import com.airbnb.di.utils.*;
+import com.airbnb.di.utils.ReplicationTestUtils;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,10 +31,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Optional;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class TaskEstimatorTest extends MockClusterTest {
   private static final Log LOG = LogFactory.getLog(TaskEstimatorTest.class);
@@ -49,15 +49,16 @@ public class TaskEstimatorTest extends MockClusterTest {
   public void testEstimatesForUnpartitionedTable()
       throws IOException, HiveMetastoreException, DistCpException {
 
-    DirectoryCopier directoryCopier = new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
+    final DirectoryCopier directoryCopier =
+        new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
 
     // Create an unpartitioned table in the source
-    HiveObjectSpec spec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE);
+    final HiveObjectSpec spec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE);
 
-    Table srcTable = ReplicationTestUtils.createUnpartitionedTable(conf, srcMetastore, spec,
+    final Table srcTable = ReplicationTestUtils.createUnpartitionedTable(conf, srcMetastore, spec,
         TableType.MANAGED_TABLE, srcWarehouseRoot);
 
-    TaskEstimator estimator =
+    final TaskEstimator estimator =
         new TaskEstimator(conf, destinationObjectFactory, srcCluster, destCluster, directoryCopier);
 
     // Table exists in source, but not in dest. It should copy the table.
@@ -68,10 +69,10 @@ public class TaskEstimatorTest extends MockClusterTest {
     assertTrue(estimate.getSrcPath().get().equals(new Path(srcTable.getSd().getLocation())));
 
     // Replicate the table
-    CopyUnpartitionedTableTask copyJob =
+    final CopyUnpartitionedTableTask copyJob =
         new CopyUnpartitionedTableTask(conf, destinationObjectFactory, conflictHandler, srcCluster,
             destCluster, spec, ReplicationUtils.getLocation(srcTable), directoryCopier, true);
-    RunInfo status = copyJob.runTask();
+    final RunInfo status = copyJob.runTask();
     assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
 
     // A copy has been made on the destination. Now it shouldn't need to do
@@ -107,15 +108,16 @@ public class TaskEstimatorTest extends MockClusterTest {
   public void testEstimatesForPartitionedTable()
       throws IOException, HiveMetastoreException, DistCpException {
 
-    DirectoryCopier directoryCopier = new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
+    final DirectoryCopier directoryCopier =
+        new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
 
     // Create an partitioned table in the source
-    HiveObjectSpec spec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE);
+    final HiveObjectSpec spec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE);
 
-    Table srcTable = ReplicationTestUtils.createPartitionedTable(conf, srcMetastore, spec,
+    final Table srcTable = ReplicationTestUtils.createPartitionedTable(conf, srcMetastore, spec,
         TableType.MANAGED_TABLE, srcWarehouseRoot);
 
-    TaskEstimator estimator =
+    final TaskEstimator estimator =
         new TaskEstimator(conf, destinationObjectFactory, srcCluster, destCluster, directoryCopier);
 
     // Table exists in source, but not in dest. It should copy the table.
@@ -125,9 +127,10 @@ public class TaskEstimatorTest extends MockClusterTest {
     assertFalse(estimate.isUpdateData());
 
     // Replicate the table
-    CopyPartitionedTableTask copyJob = new CopyPartitionedTableTask(conf, destinationObjectFactory,
-        conflictHandler, srcCluster, destCluster, spec, ReplicationUtils.getLocation(srcTable));
-    RunInfo status = copyJob.runTask();
+    final CopyPartitionedTableTask copyJob =
+        new CopyPartitionedTableTask(conf, destinationObjectFactory, conflictHandler, srcCluster,
+                                     destCluster, spec, ReplicationUtils.getLocation(srcTable));
+    final RunInfo status = copyJob.runTask();
     assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
 
     // A copy has been made on the destination. Now it shouldn't need to do
@@ -154,16 +157,18 @@ public class TaskEstimatorTest extends MockClusterTest {
   public void testEstimatesForPartition()
       throws IOException, HiveMetastoreException, DistCpException {
 
-    DirectoryCopier directoryCopier = new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
+    final DirectoryCopier directoryCopier =
+        new DirectoryCopier(conf, srcCluster.getTmpDir(), false);
 
     // Create an partitioned table in the source
-    HiveObjectSpec tableSpec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE);
-    Table srcTable = ReplicationTestUtils.createPartitionedTable(conf, srcMetastore, tableSpec,
-        TableType.MANAGED_TABLE, srcWarehouseRoot);
+    final HiveObjectSpec tableSpec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE);
+    final Table srcTable =
+        ReplicationTestUtils.createPartitionedTable(conf, srcMetastore, tableSpec,
+                                                    TableType.MANAGED_TABLE, srcWarehouseRoot);
 
     // Create a partition in the source
-    HiveObjectSpec spec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE, HIVE_PARTITION);
-    Partition srcPartition = ReplicationTestUtils.createPartition(conf, srcMetastore, spec);
+    final HiveObjectSpec spec = new HiveObjectSpec(HIVE_DB, HIVE_TABLE, HIVE_PARTITION);
+    final Partition srcPartition = ReplicationTestUtils.createPartition(conf, srcMetastore, spec);
 
     TaskEstimator estimator =
         new TaskEstimator(conf, destinationObjectFactory, srcCluster, destCluster, directoryCopier);
@@ -177,10 +182,10 @@ public class TaskEstimatorTest extends MockClusterTest {
     assertTrue(estimate.getSrcPath().get().equals(new Path(srcPartition.getSd().getLocation())));
 
     // Replicate the partition
-    CopyPartitionTask copyJob = new CopyPartitionTask(conf, destinationObjectFactory,
+    final CopyPartitionTask copyJob = new CopyPartitionTask(conf, destinationObjectFactory,
         conflictHandler, srcCluster, destCluster, spec, ReplicationUtils.getLocation(srcTable),
         Optional.<Path>empty(), directoryCopier, true);
-    RunInfo status = copyJob.runTask();
+    final RunInfo status = copyJob.runTask();
     assertEquals(RunInfo.RunStatus.SUCCESSFUL, status.getRunStatus());
 
     // A copy has been made on the destination. Now it shouldn't need to do

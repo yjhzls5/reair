@@ -1,12 +1,16 @@
 package test;
 
-import com.airbnb.di.common.FsUtils;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.di.common.FsUtils;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.primitives.CopyCompleteTableTask;
-import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.multiprocessing.ParallelJobExecutor;
 import com.airbnb.di.utils.ReplicationTestUtils;
 
@@ -21,10 +25,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class CopyCompleteTableTaskTest extends MockClusterTest {
 

@@ -1,8 +1,10 @@
 package test;
 
+import static org.junit.Assert.assertEquals;
+
 import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
@@ -17,8 +19,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Optional;
-
-import static org.junit.Assert.*;
 
 public class CopyPartitionTaskTest extends MockClusterTest {
   private static final Log LOG = LogFactory.getLog(CopyPartitionTaskTest.class);

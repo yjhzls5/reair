@@ -1,7 +1,7 @@
 package test;
 
-import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.DirectoryCopier;
+import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
 import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 
@@ -49,6 +49,12 @@ public abstract class MockClusterTest {
   protected Path srcWarehouseRoot;
   protected Path destWarehouseRoot;
 
+  /**
+   * TODO.
+   *
+   * @throws IOException TODO
+   * @throws SQLException TODO
+   */
   @BeforeClass
   public static void setupClass() throws IOException, SQLException {
     conf = new YarnConfiguration();
@@ -65,6 +71,11 @@ public abstract class MockClusterTest {
     destinationObjectFactory.setConf(conf);
   }
 
+  /**
+   * TODO.
+   *
+   * @throws IOException TODO
+   */
   @Before
   public void setUp() throws IOException {
     srcMetastore = new MockHiveMetastoreClient();
@@ -73,17 +84,17 @@ public abstract class MockClusterTest {
     srcLocalTmp.create();
     destLocalTmp.create();
 
-    Path srcFsRoot = new Path("file://" + srcLocalTmp.getRoot().getAbsolutePath());
-    Path destFsRoot = new Path("file://" + destLocalTmp.getRoot().getAbsolutePath());
+    final Path srcFsRoot = new Path("file://" + srcLocalTmp.getRoot().getAbsolutePath());
+    final Path destFsRoot = new Path("file://" + destLocalTmp.getRoot().getAbsolutePath());
 
-    srcWarehouseRoot = new Path(makeFileURI(srcLocalTmp), "warehouse");
-    destWarehouseRoot = new Path(makeFileURI(destLocalTmp), "warehouse");
+    srcWarehouseRoot = new Path(makeFileUri(srcLocalTmp), "warehouse");
+    destWarehouseRoot = new Path(makeFileUri(destLocalTmp), "warehouse");
 
     System.out
         .println(String.format("src root: %s, dest root: %s", srcWarehouseRoot, destWarehouseRoot));
 
-    Path srcTmp = new Path(makeFileURI(this.srcLocalTmp), "tmp");
-    Path destTmp = new Path(makeFileURI(this.destLocalTmp), "tmp");
+    final Path srcTmp = new Path(makeFileUri(this.srcLocalTmp), "tmp");
+    final Path destTmp = new Path(makeFileUri(this.destLocalTmp), "tmp");
 
     srcCluster = new MockCluster("src_cluster", srcMetastore, srcFsRoot, srcTmp);
     destCluster = new MockCluster("dest_cluster", destMetastore, destFsRoot, destTmp);
@@ -98,7 +109,7 @@ public abstract class MockClusterTest {
     miniCluster.stop();
   }
 
-  protected static Path makeFileURI(TemporaryFolder directory) {
+  protected static Path makeFileUri(TemporaryFolder directory) {
     return new Path("file://" + directory.getRoot().getAbsolutePath());
   }
 }

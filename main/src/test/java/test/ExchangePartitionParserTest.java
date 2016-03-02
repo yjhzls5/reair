@@ -1,13 +1,13 @@
 package test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.ExchangePartitionParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class ExchangePartitionParserTest {
   private static final Log LOG = LogFactory.getLog(ExchangePartitionParserTest.class);

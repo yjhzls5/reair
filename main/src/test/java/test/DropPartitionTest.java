@@ -1,10 +1,13 @@
 package test;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.ReplicationUtils;
+import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
 import com.airbnb.di.hive.replication.primitives.DropPartitionTask;
 import com.airbnb.di.utils.ReplicationTestUtils;
@@ -16,9 +19,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Optional;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class DropPartitionTest extends MockClusterTest {
   @Test

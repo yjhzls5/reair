@@ -1,12 +1,16 @@
 package test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
-import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
+import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
 import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
 import com.airbnb.di.hive.replication.primitives.RenamePartitionTask;
 import com.airbnb.di.multiprocessing.ParallelJobExecutor;
@@ -24,13 +28,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 public class RenamePartitionTaskTest extends MockClusterTest {
   private static ParallelJobExecutor jobExecutor = new ParallelJobExecutor(1);
 
+  /**
+   * TODO.
+   *
+   * @throws IOException TODO
+   * @throws SQLException TODO
+   */
   @BeforeClass
   public static void setupClass() throws IOException, SQLException {
     MockClusterTest.setupClass();
@@ -39,33 +45,33 @@ public class RenamePartitionTaskTest extends MockClusterTest {
 
   @Test
   public void testRenamePartition() throws IOException, HiveMetastoreException, DistCpException {
-    String dbName = "test_db";
-    String tableName = "test_table";
-    String oldPartitionName = "ds=1/hr=1";
-    String newPartitionName = "ds=1/hr=2";
+    final String dbName = "test_db";
+    final String tableName = "test_table";
+    final String oldPartitionName = "ds=1/hr=1";
+    final String newPartitionName = "ds=1/hr=2";
 
     // Create an partitioned table in the source
-    HiveObjectSpec originalTableSpec = new HiveObjectSpec(dbName, tableName);
-    HiveObjectSpec oldPartitionSpec = new HiveObjectSpec(dbName, tableName, oldPartitionName);
-    HiveObjectSpec newPartitionSpec = new HiveObjectSpec(dbName, tableName, newPartitionName);
+    final HiveObjectSpec originalTableSpec = new HiveObjectSpec(dbName, tableName);
+    final HiveObjectSpec oldPartitionSpec = new HiveObjectSpec(dbName, tableName, oldPartitionName);
+    final HiveObjectSpec newPartitionSpec = new HiveObjectSpec(dbName, tableName, newPartitionName);
 
-    Table srcTable = ReplicationTestUtils.createPartitionedTable(conf, srcMetastore,
+    final Table srcTable = ReplicationTestUtils.createPartitionedTable(conf, srcMetastore,
         originalTableSpec, TableType.MANAGED_TABLE, srcWarehouseRoot);
 
-    Partition oldPartition =
+    final Partition oldPartition =
         ReplicationTestUtils.createPartition(conf, srcMetastore, oldPartitionSpec);
 
     // Copy the partition
-    Configuration testConf = new Configuration(conf);
-    CopyPartitionTask copyJob = new CopyPartitionTask(testConf, destinationObjectFactory,
+    final Configuration testConf = new Configuration(conf);
+    final CopyPartitionTask copyJob = new CopyPartitionTask(testConf, destinationObjectFactory,
         conflictHandler, srcCluster, destCluster, oldPartitionSpec,
         ReplicationUtils.getLocation(oldPartition), Optional.empty(), directoryCopier, true);
 
-    RunInfo status = copyJob.runTask();
+    final RunInfo status = copyJob.runTask();
 
     // Rename the source partition
-    Partition newPartition = new Partition(oldPartition);
-    List<String> newValues = new ArrayList<>();
+    final Partition newPartition = new Partition(oldPartition);
+    final List<String> newValues = new ArrayList<>();
     newValues.add("1");
     newValues.add("2");
     newPartition.setValues(newValues);
@@ -73,12 +79,12 @@ public class RenamePartitionTaskTest extends MockClusterTest {
     srcMetastore.renamePartition(dbName, tableName, oldPartition.getValues(), newPartition);
 
     // Propagate the rename
-    RenamePartitionTask task = new RenamePartitionTask(testConf, destinationObjectFactory,
+    final RenamePartitionTask task = new RenamePartitionTask(testConf, destinationObjectFactory,
         conflictHandler, srcCluster, destCluster, oldPartitionSpec, newPartitionSpec,
         ReplicationUtils.getLocation(oldPartition), ReplicationUtils.getLocation(newPartition),
         ReplicationUtils.getTldt(oldPartition), directoryCopier);
 
-    RunInfo runInfo = task.runTask();
+    final RunInfo runInfo = task.runTask();
 
     // Check to make sure that the rename has succeeded
     assertEquals(RunInfo.RunStatus.SUCCESSFUL, runInfo.getRunStatus());

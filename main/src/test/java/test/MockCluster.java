@@ -12,6 +12,14 @@ public class MockCluster implements Cluster {
   private Path fsRoot;
   private Path tmpDir;
 
+  /**
+   * TODO.
+   *
+   * @param name TODO
+   * @param client TODO
+   * @param fsRoot TODO
+   * @param tmpDir TODO
+   */
   public MockCluster(String name, HiveMetastoreClient client, Path fsRoot, Path tmpDir) {
     this.name = name;
     this.client = client;

@@ -1,12 +1,14 @@
 package test;
 
-import com.airbnb.di.hive.common.HiveObjectSpec;
+import static org.junit.Assert.assertEquals;
+
 import com.airbnb.di.db.DbConnectionFactory;
+import com.airbnb.di.db.StaticDbConnectionFactory;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.PersistedJobInfo;
 import com.airbnb.di.hive.replication.PersistedJobInfoStore;
 import com.airbnb.di.hive.replication.ReplicationOperation;
 import com.airbnb.di.hive.replication.ReplicationStatus;
-import com.airbnb.di.db.StaticDbConnectionFactory;
 import com.airbnb.di.utils.EmbeddedMySqlDb;
 import com.airbnb.di.utils.ReplicationTestUtils;
 import org.apache.commons.logging.Log;
@@ -27,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.Assert.assertEquals;
-
 public class PersistedJobInfoStoreTest {
   private static final Log LOG = LogFactory.getLog(PersistedJobInfoStoreTest.class);
 
@@ -36,6 +36,12 @@ public class PersistedJobInfoStoreTest {
   private static String MYSQL_TEST_DB_NAME = "replication_test";
   private static String MYSQL_TEST_TABLE_NAME = "replication_jobs";
 
+  /**
+   * TODO.
+   *
+   * @throws ClassNotFoundException TODO
+   * @throws SQLException TODO
+   */
   @BeforeClass
   public static void setupClass() throws ClassNotFoundException, SQLException {
     // Create the MySQL process

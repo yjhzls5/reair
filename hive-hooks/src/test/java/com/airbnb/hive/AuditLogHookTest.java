@@ -2,16 +2,16 @@ package com.airbnb.hive;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.collect.Lists;
+
 import com.airbnb.di.db.DbConnectionFactory;
 import com.airbnb.di.db.StaticDbConnectionFactory;
-import com.airbnb.di.hive.hooks.AuditLogHookUtils;
 import com.airbnb.di.hive.hooks.AuditLogHook;
+import com.airbnb.di.hive.hooks.AuditLogHookUtils;
 import com.airbnb.di.hive.hooks.HiveOperation;
 import com.airbnb.di.utils.EmbeddedMySqlDb;
 import com.airbnb.di.utils.ReplicationTestUtils;
 import com.airbnb.di.utils.TestDbCredentials;
-import com.google.common.collect.Lists;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
@@ -50,12 +50,12 @@ public class AuditLogHookTest {
   }
 
   /**
-   * Generates a database connection factory for use in testing
+   * Generates a database connection factory for use in testing.
    *
    * @return the database connection factory
    *
-   * @throws IOException
-   * @throws SQLException
+   * @throws IOException TODO
+   * @throws SQLException TODO
    */
   public static DbConnectionFactory getDbConnectionFactory()
       throws IOException, SQLException {
@@ -68,10 +68,10 @@ public class AuditLogHookTest {
   }
 
   /**
-   * Resets the testing database
+   * Resets the testing database.
    *
-   * @throws IOException
-   * @throws SQLException
+   * @throws IOException TODO
+   * @throws SQLException TODO
    */
   public static void resetState() throws IOException, SQLException {
     DbConnectionFactory dbConnectionFactory = getDbConnectionFactory();
@@ -90,12 +90,12 @@ public class AuditLogHookTest {
     resetState();
 
     TestDbCredentials testDbCredentials = new TestDbCredentials();
-    DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(
+    final DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(
         ReplicationTestUtils.getJdbcUrl(embeddedMySqlDb),
         testDbCredentials.getReadWriteUsername(),
         testDbCredentials.getReadWritePassword());
 
-    AuditLogHook auditLogHook = new AuditLogHook(testDbCredentials);
+    final AuditLogHook auditLogHook = new AuditLogHook(testDbCredentials);
 
     // Set up the source
     org.apache.hadoop.hive.ql.metadata.Table inputTable =
@@ -172,24 +172,24 @@ public class AuditLogHookTest {
     expectedDbRow = Lists.newArrayList(
         "test_db.test_output_table",
         "TABLE",
-        "{\"1\":{\"str\":\"test_" +
-            "output_table\"},\"2\":{\"str\":\"test_db\"},\"4\":" +
-            "{\"i32\":0},\"5\":{\"i32\":0},\"6\":{\"i3" +
-            "2\":0},\"7\":{\"rec\":{\"1\":{\"lst\":[\"rec\",0]}" +
-            ",\"3\":{\"str\":\"org.apache.hadoop.mapred.Sequenc" +
-            "eFileInputFormat\"},\"4\":{\"str\":\"org.apache.ha" +
-            "doop.hive.ql.io.HiveSequenceFileOutputFormat\"},\"" +
-            "5\":{\"tf\":0},\"6\":{\"i32\":-1},\"7\":{\"rec\":{" +
-            "\"2\":{\"str\":\"org.apache.hadoop.hive.serde2.Met" +
-            "adataTypedColumnsetSerDe\"},\"3\":{\"map\":[\"str\"" +
-            ",\"str\",1,{\"serialization.format\":\"1\"}]}}},\"" +
-            "8\":{\"lst\":[\"str\",0]},\"9\":{\"lst\":[\"rec\"," +
-            "0]},\"10\":{\"map\":[\"str\",\"str\",0,{}]},\"11\"" +
-            ":{\"rec\":{\"1\":{\"lst\":[\"str\",0]},\"2\":{\"ls" +
-            "t\":[\"lst\",0]},\"3\":{\"map\":[\"lst\",\"str\",0" +
-            ",{}]}}}}},\"8\":{\"lst\":[\"rec\",0]},\"9\":{\"map" +
-            "\":[\"str\",\"str\",0,{}]},\"12\":{\"str\":\"MANAG" +
-            "ED_TABLE\"}}");
+        "{\"1\":{\"str\":\"test_"
+          + "output_table\"},\"2\":{\"str\":\"test_db\"},\"4\":"
+          + "{\"i32\":0},\"5\":{\"i32\":0},\"6\":{\"i3"
+          + "2\":0},\"7\":{\"rec\":{\"1\":{\"lst\":[\"rec\",0]}"
+          + ",\"3\":{\"str\":\"org.apache.hadoop.mapred.Sequenc"
+          + "eFileInputFormat\"},\"4\":{\"str\":\"org.apache.ha"
+          + "doop.hive.ql.io.HiveSequenceFileOutputFormat\"},\""
+          + "5\":{\"tf\":0},\"6\":{\"i32\":-1},\"7\":{\"rec\":{"
+          + "\"2\":{\"str\":\"org.apache.hadoop.hive.serde2.Met"
+          + "adataTypedColumnsetSerDe\"},\"3\":{\"map\":[\"str\""
+          + ",\"str\",1,{\"serialization.format\":\"1\"}]}}},\""
+          + "8\":{\"lst\":[\"str\",0]},\"9\":{\"lst\":[\"rec\","
+          + "0]},\"10\":{\"map\":[\"str\",\"str\",0,{}]},\"11\""
+          + ":{\"rec\":{\"1\":{\"lst\":[\"str\",0]},\"2\":{\"ls"
+          + "t\":[\"lst\",0]},\"3\":{\"map\":[\"lst\",\"str\",0"
+          + ",{}]}}}}},\"8\":{\"lst\":[\"rec\",0]},\"9\":{\"map"
+          + "\":[\"str\",\"str\",0,{}]},\"12\":{\"str\":\"MANAG"
+          + "ED_TABLE\"}}");
     assertEquals(expectedDbRow, outputObjectsRow);
 
     // Check the map reduce stats audit log
@@ -208,8 +208,8 @@ public class AuditLogHookTest {
         "2",
         "3",
         "2500",
-        "[{\"groupName\":\"SomeCounterGroupName\",\"counters\":[{\"counterNam" +
-            "e\":\"SomeCounterName\",\"value\":3}]}]");
+        "[{\"groupName\":\"SomeCounterGroupName\",\"counters\":[{\"counterNam"
+          + "e\":\"SomeCounterName\",\"value\":3}]}]");
     assertEquals(expectedDbRow, mapRedStatsRow);
   }
 
@@ -218,13 +218,13 @@ public class AuditLogHookTest {
     // Setup the audit log DB
     resetState();
 
-    TestDbCredentials testDbCredentials = new TestDbCredentials();
-    DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(
+    final TestDbCredentials testDbCredentials = new TestDbCredentials();
+    final DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(
         ReplicationTestUtils.getJdbcUrl(embeddedMySqlDb),
         testDbCredentials.getReadWriteUsername(),
         testDbCredentials.getReadWritePassword());
 
-    AuditLogHook auditLogHook = new AuditLogHook(testDbCredentials);
+    final AuditLogHook auditLogHook = new AuditLogHook(testDbCredentials);
 
 
     // Make a partitioned output table
@@ -281,8 +281,8 @@ public class AuditLogHookTest {
         "QUERY",
         DEFAULT_QUERY_STRING,
         "{}",
-        "{\"partitions\":" +
-            "[\"test_db.test_output_table/ds=1\"]}");
+        "{\"partitions\":"
+          + "[\"test_db.test_output_table/ds=1\"]}");
     assertEquals(expectedDbRow, auditCoreLogRow);
 
 
@@ -300,22 +300,22 @@ public class AuditLogHookTest {
     expectedDbRow = Lists.newArrayList(
         "test_db.test_output_table/ds=1",
         "PARTITION",
-        "{\"1\":{\"lst\":[\"str\",1,\"1\"]},\"2\":{\"str" +
-            "\":\"test_db\"},\"3\":{\"str\":\"test_output_table" +
-            "\"},\"4\":{\"i32\":0},\"5\":{\"i32\":0},\"6\":{\"rec" +
-            "\":{\"1\":{\"lst\":[\"rec\",0]},\"2\":{\"str\":\"" +
-            "file://a/b/c\"},\"3\":{\"str\":\"org.apache.hadoop." +
-            "mapred.SequenceFileInputFormat\"},\"4\":{\"str\":\"" +
-            "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutput" +
-            "Format\"},\"5\":{\"tf\":0},\"6\":{\"i32\":-1},\"7\"" +
-            ":{\"rec\":{\"2\":{\"str\":\"org.apache.hadoop.hive." +
-            "serde2.MetadataTypedColumnsetSerDe\"},\"3\":{\"map\"" +
-            ":[\"str\",\"str\",1,{\"serialization.format\":\"1\"" +
-            "}]}}},\"8\":{\"lst\":[\"str\",0]},\"9\":{\"lst\":[\"" +
-            "rec\",0]},\"10\":{\"map\":[\"str\",\"str\",0,{}]},\"" +
-            "11\":{\"rec\":{\"1\":{\"lst\":[\"str\",0]},\"2\":{\"" +
-            "lst\":[\"lst\",0]},\"3\":{\"map\":[\"lst\",\"str\",0" +
-            ",{}]}}}}}}");
+        "{\"1\":{\"lst\":[\"str\",1,\"1\"]},\"2\":{\"str"
+          + "\":\"test_db\"},\"3\":{\"str\":\"test_output_table"
+          + "\"},\"4\":{\"i32\":0},\"5\":{\"i32\":0},\"6\":{\"rec"
+          + "\":{\"1\":{\"lst\":[\"rec\",0]},\"2\":{\"str\":\""
+          + "file://a/b/c\"},\"3\":{\"str\":\"org.apache.hadoop."
+          + "mapred.SequenceFileInputFormat\"},\"4\":{\"str\":\""
+          + "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutput"
+          + "Format\"},\"5\":{\"tf\":0},\"6\":{\"i32\":-1},\"7\""
+          + ":{\"rec\":{\"2\":{\"str\":\"org.apache.hadoop.hive."
+          + "serde2.MetadataTypedColumnsetSerDe\"},\"3\":{\"map\""
+          + ":[\"str\",\"str\",1,{\"serialization.format\":\"1\""
+          + "}]}}},\"8\":{\"lst\":[\"str\",0]},\"9\":{\"lst\":[\""
+          + "rec\",0]},\"10\":{\"map\":[\"str\",\"str\",0,{}]},\""
+          + "11\":{\"rec\":{\"1\":{\"lst\":[\"str\",0]},\"2\":{\""
+          + "lst\":[\"lst\",0]},\"3\":{\"map\":[\"lst\",\"str\",0"
+          + ",{}]}}}}}}");
 
     assertEquals(expectedDbRow, outputObjectsRow);
 
@@ -329,24 +329,24 @@ public class AuditLogHookTest {
     expectedDbRow = Lists.newArrayList(
         "test_db.test_output_table",
         "TABLE",
-        "{\"1\":{\"str\":\"test_output_table\"},\"2\":{\"str\":\"" +
-            "test_db\"},\"4\":{\"i32\":0},\"5\":{\"i3" +
-            "2\":0},\"6\":{\"i32\":0},\"7\":{\"rec\":{\"1\":{\"" +
-            "lst\":[\"rec\",0]},\"2\":{\"str\":\"file://a/b/c\"" +
-            "},\"3\":{\"str\":\"org.apache.hadoop.mapred.Seque" +
-            "nceFileInputFormat\"},\"4\":{\"str\":\"org.apache" +
-            ".hadoop.hive.ql.io.HiveSequenceFileOutputFormat\"" +
-            "},\"5\":{\"tf\":0},\"6\":{\"i32\":-1},\"7\":{\"re" +
-            "c\":{\"2\":{\"str\":\"org.apache.hadoop.hive.serd" +
-            "e2.MetadataTypedColumnsetSerDe\"},\"3\":{\"map\":" +
-            "[\"str\",\"str\",1,{\"serialization.format\":\"1\"" +
-            "}]}}},\"8\":{\"lst\":[\"str\",0]},\"9\":{\"lst\":[" +
-            "\"rec\",0]},\"10\":{\"map\":[\"str\",\"str\",0,{}]" +
-            "},\"11\":{\"rec\":{\"1\":{\"lst\":[\"str\",0]},\"2" +
-            "\":{\"lst\":[\"lst\",0]},\"3\":{\"map\":[\"lst\",\"" +
-            "str\",0,{}]}}}}},\"8\":{\"lst\":[\"rec\",1,{\"1\":" +
-            "{\"str\":\"ds\"}}]},\"9\":{\"map\":[\"str\",\"str\"" +
-            ",0,{}]},\"12\":{\"str\":\"MANAGED_TABLE\"}}");
+        "{\"1\":{\"str\":\"test_output_table\"},\"2\":{\"str\":\""
+          + "test_db\"},\"4\":{\"i32\":0},\"5\":{\"i3"
+          + "2\":0},\"6\":{\"i32\":0},\"7\":{\"rec\":{\"1\":{\""
+          + "lst\":[\"rec\",0]},\"2\":{\"str\":\"file://a/b/c\""
+          + "},\"3\":{\"str\":\"org.apache.hadoop.mapred.Seque"
+          + "nceFileInputFormat\"},\"4\":{\"str\":\"org.apache"
+          + ".hadoop.hive.ql.io.HiveSequenceFileOutputFormat\""
+          + "},\"5\":{\"tf\":0},\"6\":{\"i32\":-1},\"7\":{\"re"
+          + "c\":{\"2\":{\"str\":\"org.apache.hadoop.hive.serd"
+          + "e2.MetadataTypedColumnsetSerDe\"},\"3\":{\"map\":"
+          + "[\"str\",\"str\",1,{\"serialization.format\":\"1\""
+          + "}]}}},\"8\":{\"lst\":[\"str\",0]},\"9\":{\"lst\":["
+          + "\"rec\",0]},\"10\":{\"map\":[\"str\",\"str\",0,{}]"
+          + "},\"11\":{\"rec\":{\"1\":{\"lst\":[\"str\",0]},\"2"
+          + "\":{\"lst\":[\"lst\",0]},\"3\":{\"map\":[\"lst\",\""
+          + "str\",0,{}]}}}}},\"8\":{\"lst\":[\"rec\",1,{\"1\":"
+          + "{\"str\":\"ds\"}}]},\"9\":{\"map\":[\"str\",\"str\""
+          + ",0,{}]},\"12\":{\"str\":\"MANAGED_TABLE\"}}");
 
     assertEquals(expectedDbRow, outputObjectsRow);
   }

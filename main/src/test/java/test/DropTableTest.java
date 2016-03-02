@@ -1,10 +1,15 @@
 package test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.replication.RunInfo;
+import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.ReplicationUtils;
+import com.airbnb.di.hive.replication.RunInfo;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.DropTableTask;
 import com.airbnb.di.utils.ReplicationTestUtils;
@@ -15,11 +20,6 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.Test;
 
 import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class DropTableTest extends MockClusterTest {
   private static final Log LOG = LogFactory.getLog(DropTableTest.class);
