@@ -77,6 +77,9 @@ public class DeployConfigurationKeys {
   public static final String BATCH_JOB_COPY_PARALLELISM =
       "airbnb.reair.batch.copy.parallelism";
 
+  // If a replication job fails, the number of times to retry the job.
+  public static final String JOB_RETRIES = "airbnb.reair.job.retries";
+
   // When copying tables or partitions using an MR job, fail the job and retry if the job takes
   // longer than this many seconds.
   public static final String COPY_JOB_TIMEOUT_SECONDS = "airbnb.reair.copy.timeout.seconds";

@@ -2,11 +2,13 @@ package com.airbnb.di.hive.replication;
 
 import com.airbnb.di.common.DistCpException;
 import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.hive.replication.primitives.ReplicationTask;
 import com.airbnb.di.multiprocessing.Job;
 import com.airbnb.di.multiprocessing.LockSet;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,10 +23,10 @@ import java.util.Set;
  */
 public class ReplicationJob extends Job {
   private static final Log LOG = LogFactory.getLog(ReplicationJob.class);
+  // Default number of times to retry a job if it fails.
+  public static final int DEFAULT_JOB_RETRIES = 8;
 
-  // The number of ms to sleep between retries if the replication task fails
-  private static long RETRY_SLEEP_TIME_MS = 60 * 1000;
-
+  private Configuration conf;
   private ReplicationTask replicationTask;
   private OnStateChangeHandler onStateChangeHandler;
   private PersistedJobInfo persistedJobInfo;
@@ -38,9 +40,11 @@ public class ReplicationJob extends Job {
    * @param persistedJobInfo the PersistedJobInfo that should be associated with this job
    */
   public ReplicationJob(
+      Configuration conf,
       ReplicationTask replicationTask,
       OnStateChangeHandler onStateChangeHandler,
       PersistedJobInfo persistedJobInfo) {
+    this.conf = conf;
     this.replicationTask = replicationTask;
     this.onStateChangeHandler = onStateChangeHandler;
     this.persistedJobInfo = persistedJobInfo;
@@ -52,8 +56,8 @@ public class ReplicationJob extends Job {
 
   @Override
   public int run() {
-    int attempt = 0;
-    while (true) {
+    int maxAttempts = 1 + Math.max(0, conf.getInt(DeployConfigurationKeys.JOB_RETRIES, 8));
+    for (int attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         onStateChangeHandler.onStart(this);
         RunInfo runInfo = replicationTask.runTask();
@@ -70,25 +74,25 @@ public class ReplicationJob extends Job {
           default:
             throw new RuntimeException("State not handled: " + runInfo.getRunStatus());
         }
-      } catch (HiveMetastoreException e) {
-        LOG.error("Got an exception - will retry", e);
-      } catch (IOException e) {
-        LOG.error("Got an exception - will retry", e);
-      } catch (DistCpException e) {
-        LOG.error("Got an exception - will retry", e);
+      } catch (HiveMetastoreException | IOException | DistCpException e) {
+        LOG.error("Got an exception!", e);
       }
+
+      if (attempt == maxAttempts - 1) {
+        break;
+      }
+
       LOG.error("Because job id: " + getId() + " was not successful, "
           + "it will be retried after sleeping.");
-
       try {
         ReplicationUtils.exponentialSleep(attempt);
       } catch (InterruptedException e) {
         LOG.warn("Got interrupted", e);
         return -1;
       }
-
       attempt++;
     }
+    return -1;
   }
 
   @Override

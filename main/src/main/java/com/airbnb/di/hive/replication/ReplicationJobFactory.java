@@ -125,11 +125,13 @@ public class ReplicationJobFactory {
     switch (replicationOperation) {
       case COPY_UNPARTITIONED_TABLE:
         return new ReplicationJob(
+            conf,
             new CopyUnpartitionedTableTask(conf, destinationObjectFactory, objectConflictHandler,
                 srcCluster, destCluster, spec, tableLocation, directoryCopier, true),
             onStateChangeHandler, persistedJobInfo);
       case COPY_PARTITIONED_TABLE:
         return new ReplicationJob(
+            conf,
             new CopyPartitionedTableTask(conf, destinationObjectFactory, objectConflictHandler,
                 srcCluster, destCluster, spec, tableLocation),
             onStateChangeHandler, persistedJobInfo);
@@ -168,7 +170,7 @@ public class ReplicationJobFactory {
         objectConflictHandler, srcCluster, destCluster, spec, Optional.<Path>empty(),
         Optional.<Path>empty(), directoryCopier, true);
 
-    return new ReplicationJob(replicationTask, onStateChangeHandler, persistedJobInfo);
+    return new ReplicationJob(conf, replicationTask, onStateChangeHandler, persistedJobInfo);
   }
 
   /**
@@ -207,7 +209,7 @@ public class ReplicationJobFactory {
         objectConflictHandler, srcCluster, destCluster, spec,
         ReplicationUtils.getLocation(partition), Optional.<Path>empty(), directoryCopier, true);
 
-    return new ReplicationJob(replicationTask, onStateChangeHandler, persistedJobInfo);
+    return new ReplicationJob(conf, replicationTask, onStateChangeHandler, persistedJobInfo);
   }
 
   /**
@@ -251,7 +253,7 @@ public class ReplicationJobFactory {
         objectConflictHandler, srcCluster, destCluster, tableSpec, partitionNames, commonLocation,
         copyPartitionJobExecutor, directoryCopier);
 
-    return new ReplicationJob(replicationTask, onStateChangeHandler, persistedJobInfo);
+    return new ReplicationJob(conf, replicationTask, onStateChangeHandler, persistedJobInfo);
   }
 
   /**
@@ -300,8 +302,14 @@ public class ReplicationJobFactory {
         Optional.empty(), extras);
 
     return new ReplicationJob(
-        new DropTableTask(srcCluster, destCluster, tableSpec, ReplicationUtils.getTldt(table)),
-        onStateChangeHandler, persistedJobInfo);
+        conf,
+        new DropTableTask(
+            srcCluster,
+            destCluster,
+            tableSpec,
+            ReplicationUtils.getTldt(table)),
+        onStateChangeHandler,
+        persistedJobInfo);
   }
 
   /**
@@ -334,8 +342,14 @@ public class ReplicationJobFactory {
         Optional.empty(), Optional.empty(), extras);
 
     return new ReplicationJob(
-        new DropPartitionTask(srcCluster, destCluster, partitionSpec, partitionTldt),
-        onStateChangeHandler, persistedJobInfo);
+        conf,
+        new DropPartitionTask(
+            srcCluster,
+            destCluster,
+            partitionSpec,
+            partitionTldt),
+        onStateChangeHandler,
+        persistedJobInfo);
   }
 
   /**
@@ -371,10 +385,22 @@ public class ReplicationJobFactory {
         new ArrayList<>(), ReplicationUtils.getTldt(renameFromTable),
         Optional.of(renameToTableSpec), renameToPath, extras);
 
-    return new ReplicationJob(new RenameTableTask(conf, srcCluster, destCluster,
-        destinationObjectFactory, objectConflictHandler, renameFromTableSpec, renameToTableSpec,
-        renameFromPath, renameToPath, ReplicationUtils.getTldt(renameFromTable),
-        copyPartitionJobExecutor, directoryCopier), onStateChangeHandler, persistedJobInfo);
+    return new ReplicationJob(
+        conf,
+        new RenameTableTask(conf,
+            srcCluster,
+            destCluster,
+            destinationObjectFactory,
+            objectConflictHandler,
+            renameFromTableSpec,
+            renameToTableSpec,
+            renameFromPath,
+            renameToPath,
+            ReplicationUtils.getTldt(renameFromTable),
+            copyPartitionJobExecutor,
+            directoryCopier),
+        onStateChangeHandler,
+        persistedJobInfo);
   }
 
   /**
@@ -410,11 +436,21 @@ public class ReplicationJobFactory {
         new ArrayList<>(), ReplicationUtils.getTldt(renameFromPartition.getPartition()),
         Optional.of(renameToPartitionSpec), renameToPath, extras);
 
-    return new ReplicationJob(new RenamePartitionTask(conf, destinationObjectFactory,
-        objectConflictHandler, srcCluster, destCluster, renameFromPartitionSpec,
-        renameToPartitionSpec, renameFromPath, renameToPath,
-        ReplicationUtils.getTldt(renameFromPartition.getPartition()), directoryCopier),
-        onStateChangeHandler, persistedJobInfo);
+    return new ReplicationJob(
+        conf,
+        new RenamePartitionTask(
+            conf,
+            destinationObjectFactory,
+            objectConflictHandler,
+            srcCluster,
+            destCluster,
+            renameFromPartitionSpec,
+            renameToPartitionSpec,
+            renameFromPath,
+            renameToPath,
+            ReplicationUtils.getTldt(renameFromPartition.getPartition()), directoryCopier),
+        onStateChangeHandler,
+        persistedJobInfo);
   }
 
   private enum OperationType {

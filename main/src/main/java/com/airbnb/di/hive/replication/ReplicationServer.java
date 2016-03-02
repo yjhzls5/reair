@@ -265,7 +265,7 @@ public class ReplicationServer implements TReplicationService.Iface {
             "Unhandled operation:" + persistedJobInfo.getOperation());
     }
 
-    return new ReplicationJob(replicationTask, onStateChangeHandler, persistedJobInfo);
+    return new ReplicationJob(conf, replicationTask, onStateChangeHandler, persistedJobInfo);
   }
 
   /**
