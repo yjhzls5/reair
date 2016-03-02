@@ -1,0 +1,52 @@
+allprojects  {
+  group = 'com.airbnb'
+  version = '1.0.0'
+}
+
+subprojects {
+  configurations {
+    checksytleOverride
+    provided
+  }
+
+  apply plugin: 'checkstyle'
+  apply plugin: 'java'
+  apply plugin: 'maven'
+
+  sourceSets {
+    main {
+      compileClasspath += configurations.provided
+    }
+    test {
+      compileClasspath += configurations.provided
+      runtimeClasspath += configurations.provided
+    }
+  }
+
+  dependencies {
+    checksytleOverride('com.puppycrawl.tools:checkstyle:6.11.2')
+  }
+
+  tasks.withType(Checkstyle) {
+    checkstyleClasspath = project.configurations.checksytleOverride
+    configFile rootProject.file('build-config/google_checkstyle.xml')
+    checkstyleMain.exclude '**/thrift/**'
+  }
+  project.gradle.buildFinished { buildResult ->
+    if (buildResult.getFailure() != null) {
+      println "Reports: " + checkstyleMain.reports.getXml().getDestination().text
+    }
+  }
+
+  repositories {
+    mavenLocal()
+    maven { url "http://repo.maven.apache.org/maven2" }
+    maven { url "https://repository.cloudera.com/artifactory/cloudera-repos/" }
+    maven { url "http://repo1.maven.org/maven2" }
+  }
+
+  compileJava {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
+  }
+}

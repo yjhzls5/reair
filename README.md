@@ -37,7 +37,7 @@ To accommodate these use cases, ReAir includes both batch and incremental replic
 
 ```
 cd reair
-mvn clean install -DskipTests
+gradlew install -p main
 ```
 
 * Create a local text file containing the tables that you want to copy. A row in the text file should consist of the DB name and the table name separated by a tab. e.g.
@@ -62,7 +62,7 @@ hadoop jar airbnb-reair-main-1.0.0.jar --config-file my_config_file.xml --table-
 
 ```
 cd reair
-mvn clean install -DskipTests
+gradlew install -p main
 ```
 
 * If HDFS copy logging table does not exist, create using [these commands](main/src/main/resources/create_hdfs_copy_logging_tables.sql)
@@ -100,15 +100,15 @@ hive -e "LOAD  DATA  INPATH  '/user/test/fullrepljob' OVERWRITE INTO TABLE hdfsc
 
 Build and deploy the JAR containing the audit log hook
 
-* Switch to the repository directory and build the JAR. You can skip the unit tests using `-DskipTests` if no changes have been made.
+* Switch to the repository directory and build the JAR.
 
 
 ```
 cd reair
-mvn clean install -DskipTests
+gradlew install -p hive-hooks
 ```
 
-* Once built, the JAR for the audit log hook can be found under `hive-hooks/target/airbnb-reair-hive-hooks-1.0.0.jar`
+* Once built, the JAR for the audit log hook can be found under `hive-hooks/build/libs/airbnb-reair-hive-hooks-1.0.0.jar`
 
 * Copy the JAR to the Hive auxiliary library path. The specifics of the path depending on your setup. Generally, the Hive client's auxiliary library path can be configured using the configuration parameter `hive.aux.jars.path` or through environment variables as defined in shell scripts that launch Hive.
 
@@ -128,10 +128,10 @@ mvn clean install -DskipTests
 
 ```
 cd reair
-mvn clean install -DskipTests
+gradlew install -p main
 ```
 
-Once it finishes, the JAR to run the incremental replication process can be found under `main/target/airbnb-reair-main-1.0.0.jar`
+Once it finishes, the JAR to run the incremental replication process can be found under `main/build/libs/airbnb-reair-main-1.0.0.jar`
 
 * To start replicating, add the directory containing the Hive libraries to the Hadoop classpath and then kick off the replication launcher by using the `hadoop jar` command. Be sure to specify the configuration file that was filled out in the prior step.
 
@@ -165,13 +165,13 @@ The incremental replication process starts a Thrift server that can be used to g
 
 ```
 cd reair
-mvn clean install -DskipTests
+gradlew install -p web-server
 ```
 
 * The JAR containing the web server can be found at
 
 ```
-web-server/target/airbnb-reair-web-server-1.0.0.jar
+web-server/build/libs/airbnb-reair-web-server-1.0.0.jar
 ```
 
 * Start the web server, specifying the appropriate Thrift host and port where the incremental replication process is running.
