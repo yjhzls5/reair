@@ -10,6 +10,7 @@ import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.util.ToolRunner;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,7 +28,9 @@ public class BatchMetastoreCopyTest extends MockClusterTest {
     @BeforeClass
     public static void setupClass() throws IOException, SQLException {
         MockClusterTest.setupClass();
-   }
+        conf.setBoolean(MRJobConfig.MAP_SPECULATIVE, false);
+        conf.setBoolean(MRJobConfig.REDUCE_SPECULATIVE, false);
+    }
 
     @Test
     public void testCopyNewTables() throws Exception {
@@ -67,7 +70,8 @@ public class BatchMetastoreCopyTest extends MockClusterTest {
         String[] args = {};
         jobConf.set(DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR,
                 new Path(destCluster.getFsRoot(), "test_output").toString());
-        jobConf.set(DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS, MockClusterFactory.class.getName());
+        jobConf.set(DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS,
+            MockClusterFactory.class.getName());
 
         ToolRunner.run(jobConf, new MetastoreReplicationJob(), args);
 

@@ -28,6 +28,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -180,6 +181,14 @@ public class MetastoreReplicationJob extends Configured implements Tool {
       LOG.info("Unit test mode, getting configure from caller");
     }
 
+    if (this.getConf().getBoolean(MRJobConfig.MAP_SPECULATIVE, true)) {
+      throw new ConfigurationException(String.format("Speculative execution must be disabled "
+          + "for mappers! Please set %s appropriately.", MRJobConfig.MAP_SPECULATIVE));
+    }
+    if (this.getConf().getBoolean(MRJobConfig.REDUCE_SPECULATIVE, true)) {
+      throw new ConfigurationException(String.format("Speculative execution must be disabled "
+          + "for reducers! Please set %s appropriately.", MRJobConfig.REDUCE_SPECULATIVE));
+    }
 
     int step = -1;
     if (cl.hasOption("step")) {
@@ -268,7 +277,9 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR,
         DeployConfigurationKeys.BATCH_JOB_INPUT_LIST,
         DeployConfigurationKeys.BATCH_JOB_METASTORE_PARALLELISM,
-        DeployConfigurationKeys.BATCH_JOB_COPY_PARALLELISM
+        DeployConfigurationKeys.BATCH_JOB_COPY_PARALLELISM,
+        MRJobConfig.MAP_SPECULATIVE,
+        MRJobConfig.REDUCE_SPECULATIVE
         );
 
     for (String key : mergeKeys) {

@@ -115,5 +115,20 @@
     </comment>
   </property>
 
+  <property>
+    <name>mapreduce.map.speculative</name>
+    <value>false</value>
+    <comment>
+      Speculative execution is currently not supported for batch replication.
+    </comment>
+  </property>
+
+  <property>
+    <name>mapreduce.reduce.speculative</name>
+    <value>false</value>
+    <comment>
+      Speculative execution is currently not supported for batch replication.
+    </comment>
+  </property>
 
 </configuration>
