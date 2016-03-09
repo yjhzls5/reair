@@ -32,12 +32,12 @@ public class HiveCopy {
   private static final Log LOG = LogFactory.getLog(HiveCopy.class);
 
   /**
-   * TODO. Warning suppression needed for the OptionBuilder API
+   * Main entry for copy utility. Warning suppression needed for the OptionBuilder API
    *
-   * @param args TODO
-   * @return TODO
+   * @param args array of command line arguments
+   * @return 0 if copy was successful, non-zero otherwise
    *
-   * @throws Exception TODO
+   * @throws Exception if there is an error with the copy
    */
   @SuppressWarnings("static-access")
   public static int main(String[] args) throws Exception {

@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
+/**
+ * Copies directories on Hadoop filesystems.
+ */
 public class DirectoryCopier {
 
   private Configuration conf;
@@ -22,11 +25,14 @@ public class DirectoryCopier {
   private boolean checkFileModificationTimes;
 
   /**
-   * TODO.
+   * Constructor for the directory copier.
    *
-   * @param conf TODO
-   * @param tmpDir TODO
-   * @param checkFileModificationTimes TODO
+   * @param conf configuration object
+   * @param tmpDir the temporary directory to copy data to before moving to the final destination
+   * @param checkFileModificationTimes Whether to check that the modified times of the files match
+   *                                   after the copy. Some filesystems do not support preservation
+   *                                   of modified file time after a copy, so this check may need to
+   *                                   be disabled.
    */
   public DirectoryCopier(Configuration conf, Path tmpDir, boolean checkFileModificationTimes) {
     this.conf = conf;
@@ -37,12 +43,12 @@ public class DirectoryCopier {
   /**
    * Copy the source directory to the destination directory.
    *
-   * @param srcDir TODO
-   * @param destDir TODO
+   * @param srcDir source directory
+   * @param destDir destination directory
    * @param copyAttributes a list of attributes to use when creating the tmp directory. Doesn't
    *        really matter, but it can make it easier to manually inspect the tmp directory.
-   * @return TODO
-   * @throws IOException TODO
+   * @return the number of bytes copied
+   * @throws IOException if there was an error copying the directory
    */
   public long copy(Path srcDir, Path destDir, List<String> copyAttributes) throws IOException {
     Random random = new Random();
@@ -85,10 +91,12 @@ public class DirectoryCopier {
   }
 
   /**
-   * TODO.
+   * Checks to see if two directories contain the same files. Same is defined as having the same set
+   * of non-empty files with matching file sizes (and matching modified times if set in the
+   * constructor)
    *
-   * @param srcDir TODO
-   * @param destDir TODO
+   * @param srcDir source directory
+   * @param destDir destination directory
    * @return TODO
    *
    * @throws IOException TODO

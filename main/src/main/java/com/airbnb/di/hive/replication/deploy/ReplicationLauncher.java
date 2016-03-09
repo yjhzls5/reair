@@ -12,7 +12,6 @@ import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.ClusterFactory;
 import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import com.airbnb.di.hive.replication.configuration.ConfiguredClusterFactory;
-import com.airbnb.di.hive.replication.configuration.HardCodedCluster;
 import com.airbnb.di.hive.replication.filter.ReplicationFilter;
 import com.airbnb.di.hive.replication.thrift.TReplicationService;
 import org.apache.commons.cli.BasicParser;
@@ -20,6 +19,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -29,8 +29,8 @@ import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Optional;
 
 // TODO: Add a handler to exit on uncaught exceptions
@@ -39,45 +39,21 @@ public class ReplicationLauncher {
       ReplicationLauncher.class);
 
   /**
-   * TODO.
+   * Launches the replication sever process using the passed in configuration.
    *
-   * @param thriftUri TODO
-   * @return TODO
+   * @param conf configuration object
+   * @param startAfterAuditLogId instruct the server to start replicating entries after this ID
+   * @param resetState if there were jobs that were in progress last time the process exited, do not
+   *                   resume them and instead mark them as aborted
    *
-   * @throws ConfigurationException TODO
-   */
-  public static URI makeUri(String thriftUri) throws ConfigurationException {
-    try {
-      URI uri = new URI(thriftUri);
-
-      if (uri.getPort() <= 0) {
-        throw new ConfigurationException("No port specified in "
-            + thriftUri);
-      }
-
-      if (!"thrift".equals(uri.getScheme())) {
-        throw new ConfigurationException("Not a thrift URI; "
-            + thriftUri);
-      }
-      return uri;
-    } catch (URISyntaxException e) {
-      throw new ConfigurationException(e);
-    }
-  }
-
-  /**
-   * TODO.
-   *
-   * @param conf TODO
-   * @param startAfterAuditLogId TODO
-   * @param resetState TODO
-   *
-   * @throws Exception TODO
+   * @throws SQLException if there is an error accessing the DB
+   * @throws ConfigurationException if there is an error with the supplied configuration
+   * @throws IOException if there is an error communicating with services
    */
   public static void launch(Configuration conf,
       Optional<Long> startAfterAuditLogId,
       boolean resetState)
-    throws Exception {
+    throws SQLException, ConfigurationException, IOException {
 
     // Create the audit log reader
     String auditLogJdbcUrl = conf.get(
@@ -148,13 +124,19 @@ public class ReplicationLauncher {
     String objectFilterClassName = conf.get(
         DeployConfigurationKeys.OBJECT_FILTER_CLASS);
     // Instantiate the class
-    Class<?> clazz = Class.forName(objectFilterClassName);
-    Object obj = clazz.newInstance();
-    if (!(obj instanceof ReplicationFilter)) {
-      throw new ConfigurationException(String.format(
+    Object obj = null;
+
+    try {
+      Class<?> clazz = Class.forName(objectFilterClassName);
+      obj = clazz.newInstance();
+      if (!(obj instanceof ReplicationFilter)) {
+        throw new ConfigurationException(String.format(
             "%s is not of type %s",
             obj.getClass().getName(),
             ReplicationFilter.class.getName()));
+      }
+    } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+      throw new ConfigurationException(e);
     }
     ReplicationFilter filter = (ReplicationFilter) obj;
     filter.setConf(conf);
@@ -226,14 +208,13 @@ public class ReplicationLauncher {
   }
 
   /**
-   * TODO. Warning suppression needed for the OptionBuilder API
+   * Launcher entry point.
    *
-   * @param argv TODO
-   *
-   * @throws Exception TODO
+   * @param argv array of string arguments
    */
   @SuppressWarnings("static-access")
-  public static void main(String[] argv) throws Exception {
+  public static void main(String[] argv)
+      throws  SQLException, ConfigurationException, IOException, ParseException {
     Options options = new Options();
 
     options.addOption(OptionBuilder.withLongOpt("config-files")

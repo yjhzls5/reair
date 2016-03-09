@@ -34,9 +34,9 @@ public class ParallelJobExecutor {
   private String workerName = "Worker";
 
   /**
-   * TODO.
+   * Constructor for a job executor that run jobs in multiple threads.
    *
-   * @param numWorkers TODO
+   * @param numWorkers the number of threads (i.e. workers) to create
    */
   public ParallelJobExecutor(int numWorkers) {
     dagManager = new JobDagManager();
@@ -45,10 +45,11 @@ public class ParallelJobExecutor {
   }
 
   /**
-   * TODO.
+   * Constructor for a job executor that run jobs in multiple threads with the option to give a
+   * prefix to the workers' thread names.
    *
-   * @param workerName TODO
-   * @param numWorkers TODO
+   * @param workerName a prefix use for the worker thread name
+   * @param numWorkers the number of threads (i.e. workers) to create
    */
   public ParallelJobExecutor(String workerName, int numWorkers) {
     this.workerName = workerName;
@@ -58,9 +59,11 @@ public class ParallelJobExecutor {
   }
 
   /**
-   * TODO.
+   * Add the given job to run. It will attempt to acquire the locks needed by the job, but if not
+   * possible, it will wait until the jobs that hold the required locks give them up. With this
+   * requirement in mind, jobs will be executed in the order that they are added.
    *
-   * @param job TODO
+   * @param job the job that should be run
    */
   public synchronized void add(Job job) {
     boolean canRunImmediately = dagManager.addJob(job);
@@ -76,7 +79,7 @@ public class ParallelJobExecutor {
    * Should be called by the workers to indicate that a job has finished running. This removes the
    * job from the DAG so that other jobs that depended on the finished job can now be run.
    *
-   * @param doneJob TODO
+   * @param doneJob the job that is done running
    */
   public synchronized void notifyDone(Job doneJob) {
     LOG.debug("Done notification received for " + doneJob);
@@ -122,9 +125,9 @@ public class ParallelJobExecutor {
   }
 
   /**
-   * TODO.
+   * Get the number of jobs that are not done.
    *
-   * @return TODO
+   * @return the number of jobs that are not done
    */
   public long getNotDoneJobCount() {
     countLock.lock();
@@ -173,9 +176,9 @@ public class ParallelJobExecutor {
   }
 
   /**
-   * TODO.
+   * Interrupt the threads that are currently working on the jobs and wait for them to stop.
    *
-   * @throws InterruptedException TODO
+   * @throws InterruptedException if interrupted while waiting for threads to finish
    */
   public synchronized void stop() throws InterruptedException {
     for (Worker w : workers) {

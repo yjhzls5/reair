@@ -14,6 +14,10 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 
 import java.util.Optional;
 
+/**
+ * Task that drops a partition. The expected modified time for the partition is used like a hash to
+ * ensure that the right partition is dropped.
+ */
 public class DropPartitionTask implements ReplicationTask {
   private static final Log LOG = LogFactory.getLog(DropPartitionTask.class);
 
@@ -23,12 +27,14 @@ public class DropPartitionTask implements ReplicationTask {
   private Optional<String> srcTldt;
 
   /**
-   * TODO.
+   * Constructor for a task that drops a partition.
    *
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param spec TODO
-   * @param srcTldt TODO
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param spec specification for the Hive table to drop
+   * @param srcTldt The expected modified time for the table to drop. This should be the
+   *                transient_lastDdlTime value in the parameters field of the Thrift object. If the
+   *                time does not match, the task will not drop the table.
    */
   public DropPartitionTask(
       Cluster srcCluster,

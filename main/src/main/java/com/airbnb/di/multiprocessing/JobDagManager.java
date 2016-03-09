@@ -69,10 +69,11 @@ public class JobDagManager {
   }
 
   /**
-   * TODO.
+   * To keep track of what jobs need what lock, update the internal data structures to indicate that
+   * the supplied job needs the specified lock before running.
    *
-   * @param lock TODO
-   * @param job TODO
+   * @param lock the lock that the job needs
+   * @param job the job that has the lock requirement
    */
   private void addLockToJobsNeedingLock(String lock, Job job) {
     ArrayList<Job> jobs = lockToJobsNeedingLock.get(lock);
@@ -84,11 +85,13 @@ public class JobDagManager {
   }
 
   /**
-   * TODO.
+   * Mark the lock as not being needed by the specified job in the internal data structures.
    *
-   * @param lock TODO
-   * @param job TODO
-   * @param shouldBeAtHead TODO
+   * @param lock the lock that is no longer needed
+   * @param job the job that no longer needs the lock
+   * @param shouldBeAtHead Whether the job should have been at the head of the queue for the log.
+   *                       Note that the job at the head of queue represents the job that has the
+   *                       lock. This is used as a sanity check only.
    */
   private void removeLockToJobsNeedingLock(String lock, Job job, boolean shouldBeAtHead) {
     ArrayList<Job> jobs = lockToJobsNeedingLock.get(lock);
@@ -125,9 +128,9 @@ public class JobDagManager {
   }
 
   /**
-   * TODO.
+   * Add the job to run.
    *
-   * @param jobToAdd TODO
+   * @param jobToAdd the job to add
    * @return true if the job that was added can be run immediately.
    */
   public synchronized boolean addJob(Job jobToAdd) {

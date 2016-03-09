@@ -41,17 +41,19 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
   private boolean allowDataCopy;
 
   /**
-   * TODO.
+   * Constructor for a task that copies an unpartitioned table.
    *
-   * @param conf TODO
-   * @param destObjectFactory TODO
-   * @param objectConflictHandler TODO
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param spec TODO
-   * @param tableLocation TODO
-   * @param directoryCopier TODO
-   * @param allowDataCopy TODO
+   * @param conf configuration object
+   * @param destObjectFactory factory for creating objects for the destination cluster
+   * @param objectConflictHandler handler for addressing conflicting tables/partitions on the
+   *                              destination cluster
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param spec specification for the Hive partitioned table to copy
+   * @param tableLocation the location of the table
+   * @param directoryCopier runs directory copies through MR jobs
+   * @param allowDataCopy Whether to copy data for this partition. If set to false, the task will
+   *                      check to see if the data exists already and if not, it will fail the task.
    */
   public CopyUnpartitionedTableTask(
       Configuration conf,
@@ -60,7 +62,8 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
       Cluster srcCluster,
       Cluster destCluster,
       HiveObjectSpec spec,
-      Optional<Path> tableLocation, DirectoryCopier directoryCopier,
+      Optional<Path> tableLocation,
+      DirectoryCopier directoryCopier,
       boolean allowDataCopy) {
     this.conf = conf;
     this.objectModifier = destObjectFactory;
@@ -73,9 +76,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
     this.allowDataCopy = allowDataCopy;
   }
 
-  /**
-   * TODO.
-   */
+  @Override
   public RunInfo runTask() throws HiveMetastoreException, DistCpException, IOException {
     LOG.debug("Copying " + spec);
 
@@ -168,7 +169,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
         break;
 
       default:
-        // TODO throw an exception
+        throw new RuntimeException("Unhandled case: " + action);
     }
 
     return new RunInfo(RunInfo.RunStatus.SUCCESSFUL, bytesCopied);

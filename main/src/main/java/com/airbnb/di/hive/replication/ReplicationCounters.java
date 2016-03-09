@@ -3,6 +3,9 @@ package com.airbnb.di.hive.replication;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Counters used to track the progress of replication.
+ */
 public class ReplicationCounters {
   public enum Type {
     // Tasks that have completed successfully
@@ -24,9 +27,9 @@ public class ReplicationCounters {
   }
 
   /**
-   * TODO.
+   * Increment the count for the given counter type.
    *
-   * @param type TODO
+   * @param type the type of counter
    */
   public synchronized void incrementCounter(Type type) {
     long currentCount = 0;

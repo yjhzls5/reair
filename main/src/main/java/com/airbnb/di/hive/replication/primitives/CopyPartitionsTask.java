@@ -53,23 +53,25 @@ public class CopyPartitionsTask implements ReplicationTask {
   private ParallelJobExecutor copyPartitionsExecutor;
   private DirectoryCopier directoryCopier;
 
+
   /**
-   * TODO.
+   * Constructor for a task to copy multiple partitions.
    *
-   * @param conf TODO
-   * @param objectModifier TODO
-   * @param objectConflictHandler TODO
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param srcTableSpec TODO
-   * @param partitionNames TODO
-   * @param commonDirectory TODO
-   * @param copyPartitionsExecutor TODO
-   * @param directoryCopier TODO
+   * @param conf configuration object
+   * @param destObjectFactory factory for creating objects for the destination cluster
+   * @param objectConflictHandler handler for addressing conflicting tables/partitions on the
+   *                              destination cluster
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param srcTableSpec Hive specification for the table that these partitions belong to
+   * @param partitionNames names of the partitions to copy
+   * @param commonDirectory the common ancestor directory for the partitions, if applicable
+   * @param copyPartitionsExecutor an executor for copying the partitions of a table
+   * @param directoryCopier runs directory copies through MR jobs
    */
   public CopyPartitionsTask(
       Configuration conf,
-      DestinationObjectFactory objectModifier,
+      DestinationObjectFactory destObjectFactory,
       ObjectConflictHandler objectConflictHandler,
       Cluster srcCluster,
       Cluster destCluster,
@@ -79,7 +81,7 @@ public class CopyPartitionsTask implements ReplicationTask {
       ParallelJobExecutor copyPartitionsExecutor,
       DirectoryCopier directoryCopier) {
     this.conf = conf;
-    this.objectModifier = objectModifier;
+    this.objectModifier = destObjectFactory;
     this.objectConflictHandler = objectConflictHandler;
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
@@ -91,11 +93,13 @@ public class CopyPartitionsTask implements ReplicationTask {
   }
 
   /**
-   * TODO.
+   * Find the common directory for a set of partitions if one exists. For example if the partition
+   * ds=1 has a location /a/b/ds=1 and the partition ds=2 has a location /a/b/ds=2, then the common
+   * directory is /a/b
    *
-   * @param srcTableSpec TODO
-   * @param specToPartition TODO
-   * @return TODO
+   * @param srcTableSpec specification for the Hive table that these partitions belong to
+   * @param specToPartition a map from the Hive partition specification to the partition object
+   * @return the common directory for the partition, if one exists
    */
   public static Optional<Path> findCommonDirectory(
       HiveObjectSpec srcTableSpec,
@@ -128,9 +132,7 @@ public class CopyPartitionsTask implements ReplicationTask {
     return commonDirectory;
   }
 
-  /**
-   * TODO.
-   */
+  @Override
   public RunInfo runTask()
       throws HiveMetastoreException, DistCpException, IOException, HiveMetastoreException {
     LOG.debug("Copying partitions from " + srcTableSpec);
@@ -282,19 +284,20 @@ public class CopyPartitionsTask implements ReplicationTask {
    * copying /a/b/c to the destination directory /d, then /d/a/b/c will be created and contain files
    * from /a/b/c.
    *
-   * @param srcPath TODO
+   * @param srcDir source directory
+   * @param destDir destination directory
    * @return total number of bytes copied
-   * @throws IOException TODO
-   * @throws DistCpException TODO
+   * @throws IOException if there is an error accessing the filesystem
+   * @throws DistCpException if there is an error copying the data
    */
-  private long copyWithStructure(Path srcPath, Path destDir) throws IOException, DistCpException {
+  private long copyWithStructure(Path srcDir, Path destDir) throws IOException, DistCpException {
 
     PathBuilder dirBuilder = new PathBuilder(destDir);
     // Preserve the directory structure within the dest directory
     // Decompose a directory like /a/b/c and add a, b, c as subdirectories
     // within the tmp direcotry
     List<String> pathElements =
-        new ArrayList<>(Arrays.asList(srcPath.toUri().getPath().split("/")));
+        new ArrayList<>(Arrays.asList(srcDir.toUri().getPath().split("/")));
     // When splitting a path like '/a/b/c', the first element is ''
     if (pathElements.get(0).equals("")) {
       pathElements.remove(0);
@@ -305,7 +308,7 @@ public class CopyPartitionsTask implements ReplicationTask {
     Path destPath = dirBuilder.toPath();
 
     // Copy directory
-    long bytesCopied = directoryCopier.copy(srcPath, destPath,
+    long bytesCopied = directoryCopier.copy(srcDir, destPath,
         Arrays.asList(srcCluster.getName(), "copy_with_structure"));
 
     return bytesCopied;

@@ -1,6 +1,8 @@
 package com.airbnb.di.hive.replication.primitives;
 
-
+/**
+ * Counts the number of partitions copied by a replication task.
+ */
 public class CopyPartitionsCounter {
   long completionCount = 0;
   long bytesCopiedCount = 0;

@@ -38,10 +38,10 @@ public class DestinationObjectFactory implements Configurable {
   /**
    * For objects with a location, transform the location through this method.
    *
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param srcLocation TODO
-   * @return TODO
+   * @param srcCluster source cluster object
+   * @param destCluster destination cluster object
+   * @param srcLocation the location on the source
+   * @return the location on the destination that the source location should map to
    */
   public String modifyLocation(Cluster srcCluster, Cluster destCluster, String srcLocation) {
     Path srcPath = new Path(srcLocation);
@@ -71,12 +71,14 @@ public class DestinationObjectFactory implements Configurable {
   }
 
   /**
-   * TODO.
+   * Given the Thrift table object from the source, create the Thrift table object that should be
+   * added to the destination. Note that this does not actually create the object on the destination
+   * metastore - it only makes a local Thrift object.
    *
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param srcTable Table object from the source
-   * @param existingDestTable Table object from the destination, if one already exists
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param srcTable table object from the source
+   * @param existingDestTable table object from the destination, if one already exists
    * @return the table to create or overwrite with on the destination.
    */
   public Table createDestTable(
@@ -108,13 +110,15 @@ public class DestinationObjectFactory implements Configurable {
   }
 
   /**
-   * TODO.
+   * Given the Thrift partition object from the source, create the Thrift partition object that
+   * should be added to the destination. Note that this does not actually create the object on the
+   * destination metastore - it only makes a local Thrift object.
    *
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param srcPartition Partition object from the source
-   * @param existingDestPartition Partition object on the destination, if one already exists
-   * @return Partition object to create or overwrite with on the destination
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param srcPartition partition object from the source
+   * @param existingDestPartition partition object on the destination, if one already exists
+   * @return partition object to create or overwrite with on the destination
    */
   public Partition createDestPartition(
       Cluster srcCluster,
@@ -143,10 +147,8 @@ public class DestinationObjectFactory implements Configurable {
   }
 
   /**
-   * TODO.
-   *
-   * @param srcLocation TODO
-   * @return TODO
+   * @param srcLocation location of the source object to examine
+   * @return whether or not location should be copied to the destination.
    */
   public boolean shouldCopyData(String srcLocation) {
     if (srcLocation.startsWith("s3n://") || srcLocation.startsWith("s3a://")) {

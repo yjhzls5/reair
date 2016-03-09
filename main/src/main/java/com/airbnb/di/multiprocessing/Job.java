@@ -33,7 +33,7 @@ public abstract class Job {
   /**
    * Add the specified job as a parent job.
    *
-   * @param parentJob TODO
+   * @param parentJob the parent job
    */
   public void addParent(Job parentJob) {
     parentJobs.add(parentJob);
@@ -42,7 +42,7 @@ public abstract class Job {
   /**
    * Add the specified job as a child job.
    *
-   * @param childJob TODO
+   * @param childJob the child job
    */
   public void addChild(Job childJob) {
     childJobs.add(childJob);
@@ -66,7 +66,7 @@ public abstract class Job {
    * Removes a parent job from this job's set of parent jobs. This should be called when the parent
    * job has finished running.
    *
-   * @param parentJob TODO
+   * @param parentJob the parent job
    */
   public void removeParentJob(Job parentJob) {
     if (!parentJobs.contains(parentJob)) {
@@ -82,7 +82,7 @@ public abstract class Job {
    * Removes a child job from this job's set of child jobs. This should be called when the this job
    * has finished running and is being removed from the DAG.
    *
-   * @param childJob TODO
+   * @param childJob the child job
    */
   public void removeChildJob(Job childJob) {
     if (!childJobs.contains(childJob)) {
@@ -94,34 +94,11 @@ public abstract class Job {
     }
   }
 
-  // /**
-  // * @param lock
-  // * @return true if this job needs the given lock
-  // */
-  // public boolean requiresLock(String lock) {
-  // return getRequiredExclusiveLocks().contains(lock) ||
-  // getRequiredSharedLocks().contains(lock);
-  // }
-  //
-  // /**
-  // *
-  // * @param lock
-  // * @return the type of lock that this job needs for the lock with the given
-  // * name
-  // */
-  // public LockType getRequiredLockType(String lock) {
-  // if (!requiresLock(lock)) {
-  // throw new RuntimeException("Lock " + lock + " is not required " +
-  // "by this job");
-  // }
-  // if (getRequiredExclusiveLocks().contains(lock)) {
-  // return LockType.EXCLUSIVE;
-  // } else if (getRequiredSharedLocks().contains(lock)) {
-  // return LockType.SHARED;
-  // } else {
-  // throw new RuntimeException("Shouldn't happen!");
-  // }
-  // }
-
+  /**
+   * To handle concurrency issues, jobs should specify a set of locks so that two conflicting jobs
+   * do not run at the same time.
+   *
+   * @return a set of locks that this job should acquire before running
+   */
   public abstract LockSet getRequiredLocks();
 }

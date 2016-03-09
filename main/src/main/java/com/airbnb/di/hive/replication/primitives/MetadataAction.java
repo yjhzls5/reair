@@ -1,5 +1,13 @@
 package com.airbnb.di.hive.replication.primitives;
 
+/**
+ * Enumeration to help simplify logic for running metadata actions in the replication tasks.
+ */
 public enum MetadataAction {
-  NOOP, CREATE, ALTER
+  // No operation
+  NOOP,
+  // Create new metadata
+  CREATE,
+  // Alter existing metadata
+  ALTER
 }

@@ -1,9 +1,16 @@
 package com.airbnb.di.hive.replication;
 
+/**
+ * Class to encapsulate how the run of a replication task / job went.
+ */
 public class RunInfo {
 
   public enum RunStatus {
-    SUCCESSFUL, NOT_COMPLETABLE, FAILED,
+    // See similar definitions for
+    // {@link com.airbnb.di.hive.replication.ReplicationStatus}
+    SUCCESSFUL,
+    NOT_COMPLETABLE,
+    FAILED,
   }
 
   private RunStatus runStatus;

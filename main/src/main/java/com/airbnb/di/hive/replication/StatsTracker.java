@@ -21,19 +21,16 @@ public class StatsTracker {
   private volatile long lastCalculatedLag = 0;
 
   /**
-   * TODO.
+   * Constructor for a stats tracker.
    *
-   * @param jobRegistry TODO
+   * @param jobRegistry the job registry to query
    */
   public StatsTracker(ReplicationJobRegistry jobRegistry) {
     this.jobRegistry = jobRegistry;
-    // this.setDaemon(true);
-    // this.setName(this.getClass().getSimpleName());
-    // timer.se
   }
 
   /**
-   * TODO.
+   * Start printing out stats about the oldest entry.
    */
   public void start() {
     timer.scheduleAtFixedRate(new TimerTask() {
@@ -59,6 +56,12 @@ public class StatsTracker {
     }, 0, PRINT_TIME_INTERVAL);
   }
 
+  /**
+   * Get the most recently calculated lag. The lag is defined as the time difference between now and
+   * the old entry that is not done.
+   *
+   * @return the calculated lag.
+   */
   public long getLastCalculatedLag() {
     return lastCalculatedLag;
   }

@@ -6,7 +6,7 @@ import com.airbnb.di.hive.replication.configuration.Cluster;
 import org.apache.hadoop.fs.Path;
 
 /**
- * A cluster defined with manual hard coded values.
+ * A cluster defined with hard coded values, typically derived from the configuration.
  */
 public class HardCodedCluster implements Cluster {
 
@@ -19,15 +19,15 @@ public class HardCodedCluster implements Cluster {
   private Path tmpDir;
 
   /**
-   * TODO.
+   * Constructor with specific values.
    *
-   * @param name TODO
-   * @param metastoreHost TODO
-   * @param metastorePort TODO
-   * @param jobtrackerHost TODO
-   * @param jobtrackerPort TODO
-   * @param hdfsRoot TODO
-   * @param tmpDir TODO
+   * @param name string to use for identifying this cluster
+   * @param metastoreHost hostname of the metastore Thrift server
+   * @param metastorePort port of the metastore Thrift server
+   * @param jobtrackerHost hostname of the job tracker
+   * @param jobtrackerPort port of the job tracker
+   * @param hdfsRoot the path for the root HDFS directory
+   * @param tmpDir the path for the temporary HDFS directory (should be under root)
    */
   public HardCodedCluster(
       String name,

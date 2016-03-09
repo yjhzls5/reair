@@ -15,6 +15,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * A job that performs a replication task and can be executed in parallel though the
+ * ParallelJobExecutor.
+ */
 public class ReplicationJob extends Job {
   private static final Log LOG = LogFactory.getLog(ReplicationJob.class);
 
@@ -26,11 +30,12 @@ public class ReplicationJob extends Job {
   private PersistedJobInfo persistedJobInfo;
 
   /**
-   * TODO.
+   * Constructor for a replication job that can be run in the ParallelJobExecutor.
    *
-   * @param replicationTask TODO
-   * @param onStateChangeHandler TODO
-   * @param persistedJobInfo TODO
+   * @param replicationTask the task that this job should run
+   * @param onStateChangeHandler The handler to run when the state of this job changes. E.g. start
+   *                             or finish.
+   * @param persistedJobInfo the PersistedJobInfo that should be associated with this job
    */
   public ReplicationJob(
       ReplicationTask replicationTask,
@@ -97,18 +102,18 @@ public class ReplicationJob extends Job {
   }
 
   /**
-   * TODO
+   * Get the ID associated with this job.
    *
-   * @return TODO.
+   * @return this job's ID
    */
   public long getId() {
     return persistedJobInfo.getId();
   }
 
   /**
-   * TODO.
+   * Get the time when this job was created.
    *
-   * @return TODO
+   * @return the create time
    */
   public long getCreateTime() {
     Optional<String> createTime = Optional.ofNullable(
@@ -118,9 +123,9 @@ public class ReplicationJob extends Job {
   }
 
   /**
-   * TODO.
+   * Get the ID's for the jobs that this job is waiting on.
    *
-   * @return TODO
+   * @return a list of job ID's that this job is waiting on
    */
   public Collection<Long> getParentJobIds() {
     Set<Job> parentJobs = getParentJobs();

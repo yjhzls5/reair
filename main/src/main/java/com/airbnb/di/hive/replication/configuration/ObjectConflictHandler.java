@@ -35,15 +35,18 @@ public class ObjectConflictHandler implements Configurable {
   }
 
   /**
-   * TODO.
+   * Handle a conflict on the destination cluster when a table with the same DB and name already
+   * exists. If the conflict was successfully handled so that the caller can go ahead with
+   * copying/overwriting the table, this will return true.
    *
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param srcTable TODO
-   * @param existingDestTable TODO
-   * @return TODO
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param srcTable source table
+   * @param existingDestTable the Hive Thift table object corresponding to the conflicting object on
+   *                          the destination cluster
+   * @return whether or not the conflict was resolved and the table can be copied
    *
-   * @throws HiveMetastoreException TODO
+   * @throws HiveMetastoreException if there an error making a metastore call
    */
   public boolean handleCopyConflict(
       Cluster srcCluster,
@@ -87,7 +90,24 @@ public class ObjectConflictHandler implements Configurable {
     return true;
   }
 
-  public boolean handleCopyConflict(Cluster srcCluster, Cluster destCluster, Partition srcPartition,
+  /**
+   * Handle a conflict on the destination cluster when a table with the same DB and name exists
+   * already. If the conflict was successfully handled so that the caller can go ahead with
+   * copying the table, this will return true.
+   *
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param srcPartition source partition
+   * @param existingDestPartition the Hive Thift table partition corresponding to the conflicting
+   *                              object on the destination cluster
+   * @return whether or not conflict was resolved and the partition can be copied
+   *
+   * @throws HiveMetastoreException if there an error making a metastore call
+   */
+  public boolean handleCopyConflict(
+      Cluster srcCluster,
+      Cluster destCluster,
+      Partition srcPartition,
       Partition existingDestPartition) {
     // Partitions can be usually overwritten without issues
     return true;

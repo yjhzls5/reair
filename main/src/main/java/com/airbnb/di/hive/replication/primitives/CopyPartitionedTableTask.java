@@ -19,6 +19,9 @@ import org.apache.hadoop.hive.metastore.api.Table;
 
 import java.util.Optional;
 
+/**
+ * Task that copies metadata for a partitioned table.
+ */
 public class CopyPartitionedTableTask implements ReplicationTask {
 
   private static final Log LOG = LogFactory.getLog(CopyPartitionedTableTask.class);
@@ -31,16 +34,17 @@ public class CopyPartitionedTableTask implements ReplicationTask {
   private HiveObjectSpec spec;
   private Optional<Path> srcPath;
 
+
   /**
-   * TODO.
-   *
-   * @param conf TODO
-   * @param destObjectFactory TODO
-   * @param objectConflictHandler TODO
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param spec TODO
-   * @param srcPath TODO
+   * Constructor for a task that copies the metadata for a partitioned table.
+   * @param conf configuration object
+   * @param destObjectFactory factory for creating objects for the destination cluster
+   * @param objectConflictHandler handler for addressing conflicting tables/partitions on the
+   *                              destination cluster
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param spec specification for the Hive partitioned table to copy
+   * @param srcPath the path to the partition's data
    */
   public CopyPartitionedTableTask(
       Configuration conf,
@@ -59,11 +63,7 @@ public class CopyPartitionedTableTask implements ReplicationTask {
     this.srcPath = srcPath;
   }
 
-  /**
-   * TODO.
-   *
-   * @throws HiveMetastoreException TODO
-   */
+  @Override
   public RunInfo runTask() throws HiveMetastoreException {
     LOG.debug("Copying " + spec);
     HiveMetastoreClient destMs = destCluster.getMetastoreClient();

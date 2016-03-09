@@ -1,6 +1,5 @@
 package com.airbnb.di.hive.replication;
 
-import com.airbnb.di.hive.replication.primitives.ReplicationTask;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
@@ -12,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * A replication job copies either: HDFS directory, Hive table, or a Hive partition.
+ * Information about a replication job that gets persisted to a DB.
  */
 public class PersistedJobInfo {
 
@@ -55,23 +54,24 @@ public class PersistedJobInfo {
   }
 
   /**
-   * TODO.
+   * Constructor for a persisted job info.
    *
-   * @param id TODO
-   * @param createTime TODO
-   * @param operation TODO
-   * @param status TODO
-   * @param srcPath TODO
-   * @param srcClusterName TODO
-   * @param srcDbName TODO
-   * @param srcTableName TODO
-   * @param srcPartitionNames TODO
-   * @param srcObjectTldt TODO
-   * @param renameToDb TODO
-   * @param renameToTable TODO
-   * @param renameToPartition TODO
-   * @param renameToPath TODO
-   * @param extras TODO
+   * @param id unique ID for this job
+   * @param createTime time that the job was created
+   * @param operation the type of operation that the job performs
+   * @param status the status of the job
+   * @param srcPath the path of the source object
+   * @param srcClusterName the name of the source cluster
+   * @param srcDbName the name of the source database
+   * @param srcTableName the name of the source table
+   * @param srcPartitionNames the names of the source partitions
+   * @param srcObjectTldt the source object's last modified time (transient_lastDdlTime in
+   *                      the parameters field of the Hive Thrift object)
+   * @param renameToDb if renaming an object, the new database name
+   * @param renameToTable if renaming an object, the new table name
+   * @param renameToPartition if renaming an object, the new partition name
+   * @param renameToPath if renaming an object, the new object's new location
+   * @param extras a key value map of any extra information that is not critical to replication
    */
   public PersistedJobInfo(
       Long id,
@@ -114,29 +114,6 @@ public class PersistedJobInfo {
     } else {
       this.extras = extras;
     }
-  }
-
-  /**
-   * TODO.
-   *
-   * @param persistedJobInfo TODO
-   */
-  public void copy(PersistedJobInfo persistedJobInfo) {
-    this.id = persistedJobInfo.id;
-    this.createTime = persistedJobInfo.createTime;
-    this.operation = persistedJobInfo.operation;
-    this.status = persistedJobInfo.status;
-    this.srcPath = persistedJobInfo.srcPath;
-    this.srcClusterName = persistedJobInfo.srcClusterName;
-    this.srcDbName = persistedJobInfo.srcDbName;
-    this.srcTableName = persistedJobInfo.srcDbName;
-    this.srcPartitionNames = persistedJobInfo.srcPartitionNames;
-    this.srcObjectTldt = persistedJobInfo.srcObjectTldt;
-    this.renameToDb = persistedJobInfo.renameToDb;
-    this.renameToTable = persistedJobInfo.renameToTable;
-    this.renameToPartition = persistedJobInfo.renameToPartition;
-    this.renameToPath = persistedJobInfo.renameToPath;
-    this.extras = extras == null ? null : new HashMap<>(extras);
   }
 
   public void setId(Long id) {

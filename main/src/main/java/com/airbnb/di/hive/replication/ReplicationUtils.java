@@ -49,23 +49,10 @@ public class ReplicationUtils {
   private static final int DEFAULT_MAX_WAIT_TIME = 3600;
 
   /**
-   * TODO.
+   * Remove (or set to 0) fields in the table object that should not be compared.
    *
-   * @param spec TODO
-   * @param table TODO
-   */
-  public static void checkSpecMatch(HiveObjectSpec spec, Table table) {
-    if (table != null && (!spec.getDbName().equals(table.getDbName())
-        || !spec.getTableName().equals(table.getTableName()))) {
-      throw new RuntimeException("Mismatch between spec and Thrift " + "object");
-    }
-  }
-
-  /**
-   * TODO.
-   *
-   * @param table TODO
-   * @return TODO
+   * @param table the table to remove non-comparable fields
+   * @return the table with non-comparable fields removed
    */
   public static Table stripNonComparables(Table table) {
     Table newTable = new Table(table);
@@ -75,10 +62,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Remove (or set to 0) fields in the partition object that should not be compared.
    *
-   * @param partition TODO
-   * @return TODO
+   * @param partition the partition to remove non-comparable fields
+   * @return the partition with non-comparable fields removed
    */
   public static Partition stripNonComparables(Partition partition) {
     Partition newPartition = new Partition(partition);
@@ -88,34 +75,33 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Deserialize a Thrift object from JSON.
    *
-   * @param serializedObject TODO
-   * @param obj TODO
-   * @return TODO
+   * @param serializedObject the JSON string representation of the object
+   * @param obj the Thrift object to populate fields
    *
-   * @throws MetadataException TODO
+   * @throws MetadataException if there is an error deserializing
    */
-  public static <T extends TBase> T deserializeObject(String serializedObject, T obj)
+  public static <T extends TBase> void deserializeObject(String serializedObject, T obj)
       throws MetadataException {
     TDeserializer deserializer = new TDeserializer(new TJSONProtocol.Factory());
 
     try {
       deserializer.deserialize(obj, serializedObject, "UTF-8");
-      return obj;
     } catch (TException e) {
       throw new MetadataException(e);
     }
   }
 
   /**
-   * TODO
+   * Create the database on the destination if it exists on the source but it does not exist on the
+   * destination metastore.
    *
-   * @param srcMs TODO
-   * @param destMs TODO
-   * @param dbName TODO
+   * @param srcMs source Hive metastore
+   * @param destMs destination Hive metastore
+   * @param dbName DB to create
    *
-   * @throws HiveMetastoreException TODO.
+   * @throws HiveMetastoreException if there's an error creating the DB.
    */
   public static void createDbIfNecessary(HiveMetastoreClient srcMs, HiveMetastoreClient destMs,
       String dbName) throws HiveMetastoreException {
@@ -135,13 +121,13 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Check if the specified Hive object exists.
    *
-   * @param ms TODO
-   * @param spec TODO
-   * @return TODO
+   * @param ms Hive metastore
+   * @param spec specification for the Hive object
+   * @return whether or not the object exists
    *
-   * @throws HiveMetastoreException TODO
+   * @throws HiveMetastoreException if there is an error querying the metastore
    */
   public static boolean exists(HiveMetastoreClient ms, HiveObjectSpec spec)
       throws HiveMetastoreException {
@@ -153,11 +139,11 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Check if the schema between two tables match.
    *
-   * @param srcTable TODO
-   * @param destTable TODO
-   * @return TODO
+   * @param srcTable source table
+   * @param destTable destination table
+   * @return whether or not the schemas of the tables match
    */
   public static boolean schemasMatch(Table srcTable, Table destTable) {
     return srcTable.getSd().getCols().equals(destTable.getSd().getCols())
@@ -165,45 +151,33 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Check if the table has the expected modified time.
    *
-   * @param srcTable TODO
-   * @param destTable TODO
-   * @return TODO
-   */
-  public static boolean similarEnough(Table srcTable, Table destTable) {
-    return ReplicationUtils.stripNonComparables(srcTable)
-        .equals(ReplicationUtils.stripNonComparables(destTable));
-  }
-
-  /**
-   * TODO.
-   *
-   * @param expectedTldt TODO
-   * @param table TODO
-   * @return TODO
+   * @param expectedTldt expected modified time
+   * @param table table to check
+   * @return whether or not table has the expected modified time
    */
   public static boolean transientLastDdlTimesMatch(String expectedTldt, Table table) {
     return StringUtils.equals(expectedTldt, table.getParameters().get(HiveParameterKeys.TLDT));
   }
 
   /**
-   * TODO.
+   * Check if the partition has the expected modified time.
    *
-   * @param expectedTldt TODO
-   * @param partition TODO
-   * @return TODO
+   * @param expectedTldt expected modified time.
+   * @param partition partition to check
+   * @return whether or not partition has the expected modified time
    */
   public static boolean transientLastDdlTimesMatch(String expectedTldt, Partition partition) {
     return StringUtils.equals(expectedTldt, partition.getParameters().get(HiveParameterKeys.TLDT));
   }
 
   /**
-   * TODO.
+   * Check if two tables have matching modified times.
    *
-   * @param table1 TODO
-   * @param table2 TODO
-   * @return TODO
+   * @param table1 reference table to compare
+   * @param table2 other table to compare
+   * @return whether or not the two tables have matching modified times
    */
   public static boolean transientLastDdlTimesMatch(Table table1, Table table2) {
     if (table1 == null || table2 == null) {
@@ -215,11 +189,11 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Check if two partitions have matching modified times.
    *
-   * @param partition1 TODO
-   * @param partition2 TODO
-   * @return TODO
+   * @param partition1 reference partition to compare
+   * @param partition2 other partition to compare
+   * @return whether or not the two partitions have matching modified times
    */
   public static boolean transientLastDdlTimesMatch(Partition partition1, Partition partition2) {
     if (partition1 == null || partition2 == null) {
@@ -231,10 +205,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Convert JSON representation of a list into a Java string list.
    *
-   * @param json TODO
-   * @return TODO
+   * @param json JSON representation of a list
+   * @return Java string list
    */
   public static List<String> convertToList(String json) {
     try {
@@ -246,10 +220,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Convert JSON representation of a map into a Java string map.
    *
-   * @param json TODO
-   * @return TODO
+   * @param json JSON representation of a map
+   * @return Java string map
    */
   public static Map<String, String> convertToMap(String json) {
     try {
@@ -261,12 +235,12 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Convert a Java list to a JSON list.
    *
-   * @param list TODO
-   * @return TODO
+   * @param list list to convert
+   * @return JSON representation of the list
    *
-   * @throws IOException TODO
+   * @throws IOException if there is an error converting the list
    */
   public static String convertToJson(List<String> list) throws IOException {
     // writerWithDefaultPrettyPrinter() bundled in with CDH is not present,
@@ -277,12 +251,12 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Convert a Java map to a JSON map.
    *
-   * @param map TODO
-   * @return TODO
+   * @param map map to convert
+   * @return the JSON representation of the map
    *
-   * @throws IOException TODO
+   * @throws IOException if there's an error converting the map
    */
   public static String convertToJson(Map<String, String> map) throws IOException {
     // writerWithDefaultPrettyPrinter() bundled in with CDH is not present,
@@ -293,10 +267,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Get the data location of a Hive table.
    *
-   * @param table TODO
-   * @return TODO
+   * @param table Thrift Hive table
+   * @return the data location of the given table, if present
    */
   public static Optional<Path> getLocation(Table table) {
     if (table == null || table.getSd() == null || table.getSd().getLocation() == null) {
@@ -307,10 +281,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Get the data location of a Hive partition.
    *
-   * @param partition TODO
-   * @return TODO
+   * @param partition Thrift Hive partition
+   * @return the data location of the given partition, if present
    */
   public static Optional<Path> getLocation(Partition partition) {
     if (partition == null || partition.getSd() == null || partition.getSd().getLocation() == null) {
@@ -320,10 +294,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Get the last modified time of a Hive table.
    *
-   * @param table TODO
-   * @return TODO
+   * @param table Thrift Hive table
+   * @return the last modified time as a string
    */
   public static Optional<String> getTldt(Table table) {
     if (table == null || table.getParameters() == null) {
@@ -333,10 +307,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Get the last modified time of a Hive partition.
    *
-   * @param partition TODO
-   * @return TODO
+   * @param partition Thrift Hive partition
+   * @return the last modified time as a string
    */
   public static Optional<String> getTldt(Partition partition) {
     if (partition == null || partition.getParameters() == null) {
@@ -346,28 +320,9 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Sleep the current thread.
    *
-   * @param runStatus TODO
-   * @return TODO
-   */
-  public static ReplicationStatus toReplicationStatus(RunInfo.RunStatus runStatus) {
-    switch (runStatus) {
-      case SUCCESSFUL:
-        return ReplicationStatus.SUCCESSFUL;
-      case NOT_COMPLETABLE:
-        return ReplicationStatus.NOT_COMPLETABLE;
-      case FAILED:
-        return ReplicationStatus.FAILED;
-      default:
-        throw new RuntimeException("State not handled: " + runStatus);
-    }
-  }
-
-  /**
-   * TODO.
-   *
-   * @param sleepTime TODO
+   * @param sleepTime number of miliseconds to sleep for
    */
   public static void sleep(long sleepTime) {
     try {
@@ -378,10 +333,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Check to see that all of the partitions are from the same table.
    *
-   * @param partitions TODO
-   * @return TODO
+   * @param partitions partitions to check
+   * @return whether or not all the partitions are from the same table
    */
   public static boolean fromSameTable(Collection<Partition> partitions) {
     if (partitions.size() == 0) {
@@ -407,10 +362,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Return a common parent directory of the given directories.
    *
-   * @param dirs TODO
-   * @return TODO
+   * @param dirs directories to check
+   * @return the common parent directory
    */
   public static Optional<Path> getCommonDirectory(Set<Path> dirs) {
     if (dirs.size() == 0) {
@@ -452,10 +407,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Get the most specific common directory.
    *
-   * @param dir1 TODO
-   * @param dir2 TODO
+   * @param dir1 first directory
+   * @param dir2 second directory
    * @return the most specific directory that contains both dir1 and dir2. e.g /a/b/c, /a/d/e => /a
    */
   public static String commonDir(String dir1, String dir2) {
@@ -476,10 +431,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Get the locations of the specified partitions.
    *
-   * @param partitions TODO
-   * @return TODO
+   * @param partitions partitions to get the locations of
+   * @return a set of locations corresponding to the partitions
    */
   public static Set<Path> getLocations(Collection<Partition> partitions) {
     Set<Path> paths = new HashSet<>();
@@ -497,42 +452,18 @@ public class ReplicationUtils {
   }
 
   /**
-   * TODO.
+   * Sleep for a period of time that relates exponentially to the attempt number.
    *
-   * @param attempt TODO
-   * @param base TODO
-   * @param max TODO
+   * @param attempt attempt number
+   * @param base the wait time in ms when attempt is 0
+   * @param max the maximum wait time in ms
    *
-   * @throws InterruptedException TODO
+   * @throws InterruptedException if the waiting thread gets interrupted
    */
   public static void exponentialSleep(int attempt, int base, int max) throws InterruptedException {
     long sleepSeconds = (long) Math.min(max, Math.pow(base, attempt));
     LOG.debug(String.format("Attempt %d: sleeping for %d seconds", attempt, sleepSeconds));
     Thread.sleep(1000 * sleepSeconds);
-  }
-
-  /**
-   * TODO.
-   *
-   * @param table1 TODO
-   * @param table2 TODO
-   * @return TODO
-   */
-  public static boolean equalLocations(Table table1, Table table2) {
-    return StringUtils.equals(getLocation(table1).toString(), getLocation(table2).toString());
-  }
-
-  /**
-   * TODO.
-   *
-   * @param partition1 TODO
-   * @param partition2 TODO
-   * @return TODO
-   */
-  public static boolean equalLocations(Partition partition1, Partition partition2) {
-    return StringUtils.equals(
-        getLocation(partition1).toString(),
-        getLocation(partition2).toString());
   }
 
   /**

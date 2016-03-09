@@ -39,6 +39,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Creates replication jobs and persists initial information into the DB.
+ */
 public class ReplicationJobFactory {
 
   private static final Log LOG = LogFactory.getLog(ReplicationJobFactory.class);
@@ -54,17 +57,18 @@ public class ReplicationJobFactory {
   private DirectoryCopier directoryCopier;
 
   /**
-   * TODO.
+   * Constructor.
    *
-   * @param conf TODO
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param jobInfoStore TODO
-   * @param destinationObjectFactory TODO
-   * @param onStateChangeHandler TODO
-   * @param objectConflictHandler TODO
-   * @param copyPartitionJobExecutor TODO
-   * @param directoryCopier TODO
+   * @param conf configuration
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param jobInfoStore persistant store for jobs
+   * @param destinationObjectFactory factory for creating objects for the destination cluster
+   * @param onStateChangeHandler handler for when a job's state changes
+   * @param objectConflictHandler handler for addressing conflicting tables/partitions on the
+   *                              destination cluster
+   * @param copyPartitionJobExecutor executor for copying partitions
+   * @param directoryCopier copies directories using MR jobs
    */
   public ReplicationJobFactory(
       Configuration conf,
@@ -88,20 +92,19 @@ public class ReplicationJobFactory {
   }
 
   /**
-   * TODO.
+   * Create a replication job to copy a table.
    *
-   * @param auditLogId TODO
-   * @param auditLogEntryCreateTime TODO
-   * @param table TODO
-   * @return TODO
+   * @param auditLogId ID of the audit log entry where this table was created
+   * @param auditLogEntryCreateTime when the audit log entry was created
+   * @param table the table to copy
+   * @return job to copy the table
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws SQLException if there's an error writing to the DB
    */
   public ReplicationJob createJobForCopyTable(
       long auditLogId,
       long auditLogEntryCreateTime,
-      Table table) throws IOException, SQLException {
+      Table table) throws SQLException {
     ReplicationOperation replicationOperation =
         HiveUtils.isPartitioned(table) ? ReplicationOperation.COPY_PARTITIONED_TABLE
             : ReplicationOperation.COPY_UNPARTITIONED_TABLE;
@@ -136,12 +139,12 @@ public class ReplicationJobFactory {
   }
 
   /**
-   * TODO.
+   * Create a replication job to copy a partition.
    *
-   * @param auditLogId TODO
-   * @param auditLogEntryCreateTime TODO
-   * @param spec TODO
-   * @return TODO
+   * @param auditLogId ID of the audit log entry where this partition was created
+   * @param auditLogEntryCreateTime when the audit log entry was created
+   * @param spec specification for the partition
+   * @return the job to copy the partition
    */
   public ReplicationJob createJobForCopyPartition(
       long auditLogId,
@@ -169,20 +172,19 @@ public class ReplicationJobFactory {
   }
 
   /**
-   * TODO.
+   * Create a replication job to copy a partition.
    *
-   * @param auditLogId TODO
-   * @param auditLogEntryCreateTime TODO
-   * @param namedPartition TODO
-   * @return TODO
+   * @param auditLogId ID of the audit log entry where this partition was created
+   * @param auditLogEntryCreateTime when the audit log entry was created
+   * @param namedPartition partition to copy
+   * @return the job to copy the partition
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws SQLException if there's an error writing to the DB
    */
   public ReplicationJob createJobForCopyPartition(
       long auditLogId,
       long auditLogEntryCreateTime,
-      NamedPartition namedPartition) throws IOException, SQLException {
+      NamedPartition namedPartition) throws SQLException {
     String partitionName = namedPartition.getName();
     List<String> partitionNames = new ArrayList<>();
     partitionNames.add(partitionName);
@@ -209,31 +211,30 @@ public class ReplicationJobFactory {
   }
 
   /**
-   * TODO.
+   * Create a replication job to copy many partitions that were created by dynamic partitioning.
    *
-   * @param auditLogId TODO
-   * @param auditLogEntryCreateTime TODO
-   * @param namedPartition TODO
-   * @return TODO
+   * @param auditLogId ID of the audit log entry where the partitions were created
+   * @param auditLogEntryCreateTime when the audit log entry was created
+   * @param namedPartitions partitions to copy
+   * @return the job to copy all of the specified partitions
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws SQLException if there's an error writing to the DB
    */
   public ReplicationJob createJobForCopyDynamicPartitions(
       long auditLogId,
       long auditLogEntryCreateTime,
-      List<NamedPartition> namedPartition) throws IOException, SQLException {
+      List<NamedPartition> namedPartitions) throws SQLException {
 
     ReplicationOperation replicationOperation = ReplicationOperation.COPY_PARTITIONS;
 
-    List<Partition> partitions = NamedPartition.toPartitions(namedPartition);
-    List<String> partitionNames = NamedPartition.toNames(namedPartition);
+    List<Partition> partitions = NamedPartition.toPartitions(namedPartitions);
+    List<String> partitionNames = NamedPartition.toNames(namedPartitions);
 
     // The common location is the common path that all the partitions share.
     Optional<Path> commonLocation =
         ReplicationUtils.getCommonDirectory(ReplicationUtils.getLocations(partitions));
 
-    Partition samplePartition = namedPartition.get(0).getPartition();
+    Partition samplePartition = namedPartitions.get(0).getPartition();
     HiveObjectSpec tableSpec =
         new HiveObjectSpec(samplePartition.getDbName(), samplePartition.getTableName());
 
@@ -254,10 +255,10 @@ public class ReplicationJobFactory {
   }
 
   /**
-   * TODO.
+   * Create a mapping from a Hive object specification to the Thrift Hive Table object.
    *
-   * @param tables TODO
-   * @return TODO
+   * @param tables tables to include in the map
+   * @return a map from the Hive object specification to the Thrift Hive Table object
    */
   private Map<HiveObjectSpec, Table> createTableLookupMap(List<Table> tables) {
     // Create a map from the table spec to the table object. We'll need this
@@ -271,20 +272,19 @@ public class ReplicationJobFactory {
   }
 
   /**
-   * TODO.
+   * Create a replication job to drop a table.
    *
-   * @param auditLogId TODO
-   * @param auditLogEntryCreateTime TODO
-   * @param table TODO
-   * @return TODO
+   * @param auditLogId ID of the audit log entry where this table was dropped
+   * @param auditLogEntryCreateTime when the audit log entry was created
+   * @param table the table to drop
+   * @return the job to drop the table
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws SQLException if there's an error writing to the DB
    */
   public ReplicationJob createJobForDropTable(
       long auditLogId,
       long auditLogEntryCreateTime,
-      Table table) throws IOException, SQLException {
+      Table table) throws SQLException {
     ReplicationOperation replicationOperation = ReplicationOperation.DROP_TABLE;
 
     Map<String, String> extras = new HashMap<>();
@@ -305,20 +305,19 @@ public class ReplicationJobFactory {
   }
 
   /**
-   * TODO.
+   * Create a job to drop a partition.
    *
-   * @param auditLogId TODO
-   * @param auditLogEntryCreateTime TODO
-   * @param namedPartition TODO
-   * @return TODO
+   * @param auditLogId ID of the audit log entry where this partition was dropped
+   * @param auditLogEntryCreateTime when the audit log entry was created
+   * @param namedPartition the partition to drop
+   * @return the job to drop the partition
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws SQLException if there is an error writing to the DB
    */
   public ReplicationJob createJobForDropPartition(
       long auditLogId,
       long auditLogEntryCreateTime,
-      NamedPartition namedPartition) throws IOException, SQLException {
+      NamedPartition namedPartition) throws SQLException {
     Map<String, String> extras = new HashMap<>();
     extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY, Long.toString(auditLogId));
     extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
@@ -340,22 +339,21 @@ public class ReplicationJobFactory {
   }
 
   /**
-   * TODO.
+   * Create a job to rename a table.
    *
-   * @param auditLogId TODO
-   * @param auditLogEntryCreateTime TODO
-   * @param renameFromTable TODO
-   * @param renameToTable TODO
-   * @return TODO
+   * @param auditLogId ID of the audit log entry where this partition was dropped
+   * @param auditLogEntryCreateTime when the audit log entry was created
+   * @param renameFromTable the table to rename from
+   * @param renameToTable the table to rename to
+   * @return the job to rename the specified table
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws SQLException if there's an error writing to the DB
    */
   public ReplicationJob createJobForRenameTable(
       long auditLogId,
       long auditLogEntryCreateTime,
       Table renameFromTable,
-      Table renameToTable) throws IOException, SQLException {
+      Table renameToTable) throws SQLException {
     ReplicationOperation replicationOperation = ReplicationOperation.RENAME_TABLE;
 
     Map<String, String> extras = new HashMap<>();
@@ -380,16 +378,15 @@ public class ReplicationJobFactory {
   }
 
   /**
-   * TODO.
+   * Create a job to rename a partition.
    *
-   * @param auditLogId TODO
-   * @param auditLogEntryCreateTime TODO
-   * @param renameFromPartition TODO
-   * @param renameToPartition TODO
-   * @return TODO
+   * @param auditLogId ID of the audit log entry where this partition was dropped
+   * @param auditLogEntryCreateTime when the audit log entry was created
+   * @param renameFromPartition partition to rename from
+   * @param renameToPartition partition to rename to
+   * @return a job to rename the partition
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws SQLException if there's an error writing to the DB
    */
   public ReplicationJob createJobForRenamePartition(
       long auditLogId,
@@ -428,9 +425,9 @@ public class ReplicationJobFactory {
    * Converts the audit log entry into a set of replication jobs that have the persisted elements
    * properly set.
    *
-   * @param auditLogEntry TODO
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @param auditLogEntry the audit log entry associated with the actions that need to be replicated
+
+   * @throws SQLException if there's an error writing to the DB
    */
   public List<ReplicationJob> createReplicationJobs(
       AuditLogEntry auditLogEntry,
@@ -590,9 +587,9 @@ public class ReplicationJobFactory {
   /**
    * Based on the supplied filter, remove tables and partitions that should not be replicated.
    *
-   * @param filter TODO
-   * @param tables TODO
-   * @param partitions TODO
+   * @param filter the filter to remove undesired objects
+   * @param tables the tables to filter
+   * @param partitions the partitions to filter
    */
   private void filterObjects(
       ReplicationFilter filter,

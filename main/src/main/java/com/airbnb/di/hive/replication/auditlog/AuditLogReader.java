@@ -42,15 +42,13 @@ public class AuditLogReader {
   private RetryingTaskRunner retryingTaskRunner;
 
   /**
-   * TODO.
+   * Constructs an AuditLogReader.
    *
-   * @param dbConnectionFactory TODO
-   * @param auditLogTableName TODO
-   * @param outputObjectsTableName TODO
-   * @param mapRedStatsTableName TODO
-   * @param getIdsAfter TODO
-   *
-   * @throws SQLException TODO
+   * @param dbConnectionFactory factory for creating connections to the DB where the log resides
+   * @param auditLogTableName name of the table on the DB that contains the audit log entries
+   * @param outputObjectsTableName name of the table on the DB that contains serialized objects
+   * @param mapRedStatsTableName name of the table on the DB that contains job stats
+   * @param getIdsAfter start reading entries from the audit log after this ID value
    */
   public AuditLogReader(
       DbConnectionFactory dbConnectionFactory,
@@ -68,29 +66,12 @@ public class AuditLogReader {
   }
 
   /**
-   * TODO.
+   * Return the next audit log entry from the DB. If there is an error connecting to the DB, retry
+   * until successful.
    *
-   * @param dbConnectionFactory TODO
-   * @param auditLogTableName TODO
-   * @param outputObjectsTableName TODO
+   * @return the next audit log entry
    *
-   * @throws SQLException TODO
-   */
-  public AuditLogReader(DbConnectionFactory dbConnectionFactory, String auditLogTableName,
-      String outputObjectsTableName) throws SQLException {
-    this.dbConnectionFactory = dbConnectionFactory;
-    this.auditLogTableName = auditLogTableName;
-    this.outputObjectsTableName = outputObjectsTableName;
-    this.lastReadId = -1;
-    auditLogEntries = new LinkedList<>();
-  }
-
-  /**
-   * TODO.
-   *
-   * @return TODO
-   *
-   * @throws SQLException TODO
+   * @throws SQLException if there is an error querying the DB
    */
   public synchronized Optional<AuditLogEntry> resilientNext() throws SQLException {
     final Container<Optional<AuditLogEntry>> ret = new Container<>();
@@ -105,12 +86,12 @@ public class AuditLogReader {
   }
 
   /**
-   * TODO.
+   * Return the next audit log entry from the DB.
    *
-   * @return TODO
+   * @return the next audit log entry
    *
-   * @throws SQLException TODO
-   * @throws AuditLogEntryException TODO
+   * @throws SQLException if there is an error querying the DB
+   * @throws AuditLogEntryException if there is an error reading the audit log entry
    */
   public synchronized Optional<AuditLogEntry> next() throws SQLException, AuditLogEntryException {
     if (auditLogEntries.size() > 0) {
@@ -132,7 +113,7 @@ public class AuditLogReader {
    * From the output column in the audit log table, return the partition name. An example is
    * "default.table/ds=1" => "ds=1".
    *
-   * @param outputCol TODO
+   * @param outputCol the output column in the audit log table
    * @return the partition name
    */
   private String getPartitionNameFromOutputCol(String outputCol) {
@@ -158,9 +139,10 @@ public class AuditLogReader {
   /**
    * Given that we start reading after lastReadId and need to get
    * ROW_FETCH_SIZE rows from the audit log, figure out the min and max row
-   * ID's to read.
+   * IDs to read.
    *
-   * @throws SQLException TODO
+   * @returns a range of ID's to read from the audit log table based on the fetch size
+   * @throws SQLException if there is an error reading from the DB
    */
   private LongRange getIdsToRead() throws SQLException {
     String queryFormatString = "SELECT MIN(id) min_id, MAX(id) max_id "
@@ -367,10 +349,10 @@ public class AuditLogReader {
   /**
    * Change the reader to start reading entries after this ID.
    *
-   * @param lastReadId TODO
+   * @param readAfterId ID to configure the reader to read after
    */
-  public synchronized void setReadAfterId(long lastReadId) {
-    this.lastReadId = lastReadId;
+  public synchronized void setReadAfterId(long readAfterId) {
+    this.lastReadId = readAfterId;
     // Clear the audit log entries since it's possible that the reader
     // fetched a bunch of entries in advance, and the ID of those entries
     // may not line up with the new read-after ID.
@@ -378,11 +360,10 @@ public class AuditLogReader {
   }
 
   /**
-   * TODO.
+   * Return the highest value ID in the audit log table.
    *
-   * @return TODO
-   *
-   * @throws SQLException TODO
+   * @return the highest value ID in the audit log table or empty if it does not exist
+   * @throws SQLException if there an exception reading from the DB
    */
   public synchronized Optional<Long> getMaxId() throws SQLException {
     String query = String.format("SELECT MAX(id) FROM %s", auditLogTableName);

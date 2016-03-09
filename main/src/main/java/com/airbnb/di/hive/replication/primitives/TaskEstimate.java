@@ -7,9 +7,10 @@ import org.apache.hadoop.fs.Path;
 import java.util.Optional;
 
 /**
- * Stores information about the estimated task required to replicate a Hive object.
+ * Stores estimates about what's required for a task to replicate a Hive object.
  */
 public class TaskEstimate {
+
   public enum TaskType {
     COPY_UNPARTITIONED_TABLE,
     COPY_PARTITIONED_TABLE,
@@ -27,13 +28,13 @@ public class TaskEstimate {
   private Optional<Path> destPath;
 
   /**
-   * TODO.
+   * Constructor for a task estimate.
    *
-   * @param taskType TODO
-   * @param updateMetadata TODO
-   * @param updateData TODO
-   * @param srcPath TODO
-   * @param destPath TODO
+   * @param taskType type of task
+   * @param updateMetadata whether the task needs to update Hive metadata
+   * @param updateData where the task needs to update data files
+   * @param srcPath the source path if the task needs to update data files
+   * @param destPath the destination path if the task needs to update files
    */
   public TaskEstimate(TaskType taskType,
       boolean updateMetadata,

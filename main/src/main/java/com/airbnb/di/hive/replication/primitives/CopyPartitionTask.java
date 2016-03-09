@@ -26,7 +26,9 @@ import java.util.Arrays;
 import java.util.Optional;
 
 /**
- * Known 'issue': if multiple copy partition jobs are kicked off, and the partitioned table doesn't
+ * Task that copies a single Hive partition - both data and metadata.
+ *
+ * <p>Known issue: if multiple copy partition jobs are kicked off, and the partitioned table doesn't
  * exist on the destination, then it's possible that multiple copy partition jobs try to create the
  * same partitioned table.
  *
@@ -48,20 +50,24 @@ public class CopyPartitionTask implements ReplicationTask {
   private DirectoryCopier directoryCopier;
   private boolean allowDataCopy;
 
-
   /**
-   * TODO.
+   * Constructor for a task that copies a single Hive partition.
    *
-   * @param conf TODO
-   * @param destObjectFactory TODO
-   * @param objectConflictHandler TODO
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param spec TODO
-   * @param partitionLocation TODO
-   * @param optimisticCopyRoot TODO
-   * @param directoryCopier TODO
-   * @param allowDataCopy TODO
+   * @param conf configuration object
+   * @param destObjectFactory factory for creating objects for the destination cluster
+   * @param objectConflictHandler handler for addressing conflicting tables/partitions on the
+   *                              destination cluster
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param spec specification for the Hive partition to copy
+   * @param partitionLocation the location for the partition, if applicable
+   * @param optimisticCopyRoot if data for this partitioned was copied in advance, the root
+   *                           directory where the data was copied to. For example, if the partition
+   *                           data was located in /a/b/c and /a was copied to /tmp/copy/a, then the
+   *                           copy root directory is /tmp/copy
+   * @param directoryCopier runs directory copies through MR jobs
+   * @param allowDataCopy Whether to copy data for this partition. If set to false, the task will
+   *                      check to see if the data exists already and if not, it will fail the task.
    */
   public CopyPartitionTask(
       Configuration conf,
@@ -86,9 +92,7 @@ public class CopyPartitionTask implements ReplicationTask {
     this.allowDataCopy = allowDataCopy;
   }
 
-  /**
-   * TODO.
-   */
+  @Override
   public RunInfo runTask() throws HiveMetastoreException, DistCpException, IOException {
     LOG.debug("Copying " + spec);
 

@@ -47,21 +47,22 @@ public class CopyCompleteTableTask implements ReplicationTask {
   private DirectoryCopier directoryCopier;
 
   /**
-   * TODO.
+   * Constructs a task for copying an entire table.
    *
-   * @param conf TODO
-   * @param objectModifier TODO
-   * @param objectConflictHandler TODO
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param spec TODO
-   * @param tableLocation TODO
-   * @param copyPartitionsExecutor TODO
-   * @param directoryCopier TODO
+   * @param conf configuration object
+   * @param objectFactory factory for creating objects for the destination cluster
+   * @param objectConflictHandler handler for addressing conflicting tables/partitions on the
+   *                              destination cluster
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param spec the Hive table specification
+   * @param tableLocation the location of the table
+   * @param copyPartitionsExecutor an executor for copying the partitions of a table
+   * @param directoryCopier runs directory copies through MR jobs
    */
   public CopyCompleteTableTask(
       Configuration conf,
-      DestinationObjectFactory objectModifier,
+      DestinationObjectFactory objectFactory,
       ObjectConflictHandler objectConflictHandler,
       Cluster srcCluster,
       Cluster destCluster,
@@ -70,7 +71,7 @@ public class CopyCompleteTableTask implements ReplicationTask {
       ParallelJobExecutor copyPartitionsExecutor,
       DirectoryCopier directoryCopier) {
     this.conf = conf;
-    this.objectModifier = objectModifier;
+    this.objectModifier = objectFactory;
     this.objectConflictHandler = objectConflictHandler;
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
@@ -80,13 +81,7 @@ public class CopyCompleteTableTask implements ReplicationTask {
     this.directoryCopier = directoryCopier;
   }
 
-  /**
-   * TODO.
-   *
-   * @throws DistCpException TODO
-   * @throws HiveMetastoreException TODO
-   * @throws IOException TODO
-   */
+  @Override
   public RunInfo runTask() throws DistCpException, HiveMetastoreException, IOException {
     LOG.debug("Copying " + spec);
 

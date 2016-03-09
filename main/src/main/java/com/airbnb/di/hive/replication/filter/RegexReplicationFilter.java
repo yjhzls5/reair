@@ -38,19 +38,11 @@ public class RegexReplicationFilter implements ReplicationFilter {
 
   @Override
   public boolean accept(Table table, NamedPartition partition) {
-    return accept(table.getDbName(), table.getTableName(),
+    return matchesRegex(table.getDbName(), table.getTableName(),
         partition == null ? null : partition.getName());
   }
 
-  /**
-   * TODO.
-   *
-   * @param dbName TODO
-   * @param tableName TODO
-   * @param partitionName TODO
-   * @return TODO
-   */
-  public boolean accept(String dbName, String tableName, String partitionName) {
+  private boolean matchesRegex(String dbName, String tableName, String partitionName) {
     HiveObjectSpec spec = new HiveObjectSpec(dbName, tableName, partitionName);
     String objectName = spec.toString();
 

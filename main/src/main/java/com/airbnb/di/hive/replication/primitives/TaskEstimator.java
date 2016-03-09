@@ -34,13 +34,13 @@ public class TaskEstimator {
   private DirectoryCopier directoryCopier;
 
   /**
-   * TODO.
+   * Constructor for a task estimator.
    *
-   * @param conf TODO
-   * @param destObjectFactory TODO
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param directoryCopier TODO
+   * @param conf configuration object
+   * @param destObjectFactory factory for creating objects for the destination cluster
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param directoryCopier runs directory copies through MR jobs
    */
   public TaskEstimator(
       Configuration conf,
@@ -59,8 +59,8 @@ public class TaskEstimator {
    * Returns an estimate of what kind of task should be run to replicate the given object.
    *
    * @param spec The Hive object that should be replicated from the source to the destination.
-   * @throws HiveMetastoreException TODO
-   * @throws IOException TODO
+   * @throws HiveMetastoreException if there is an error connecting to the metastore
+   * @throws IOException if there is an error accessing the filesystem
    */
   public TaskEstimate analyze(HiveObjectSpec spec) throws HiveMetastoreException, IOException {
     if (!spec.isPartition()) {

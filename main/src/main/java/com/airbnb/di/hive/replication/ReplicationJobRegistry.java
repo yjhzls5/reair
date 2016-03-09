@@ -30,9 +30,10 @@ public class ReplicationJobRegistry {
   }
 
   /**
-   * TODO.
+   * Get the job with the smallest ID value in the registry. The job with the smallest ID is
+   * generally the oldest job.
    *
-   * @return TODO
+   * @return the job with the smallest ID in the registry
    */
   public synchronized ReplicationJob getJobWithSmallestId() {
     if (idToReplicationJob.size() == 0) {
@@ -53,12 +54,11 @@ public class ReplicationJobRegistry {
   }
 
   /**
-   * TODO.
+   * Remove this job from the main internal data structures to another retired job datastructure.
    *
-   * @param job TODO
-   * @return TODO
+   * @param job the job to remove
    */
-  public synchronized boolean retireJob(ReplicationJob job) {
+  public synchronized void retireJob(ReplicationJob job) {
     ReplicationJob removedJob = idToReplicationJob.remove(job.getId());
 
     if (removedJob == null) {
@@ -73,7 +73,6 @@ public class ReplicationJobRegistry {
       retiredJobs.remove(0);
     }
     retiredJobs.add(removedJob);
-    return true;
   }
 
   public synchronized Collection<ReplicationJob> getRetiredJobs() {

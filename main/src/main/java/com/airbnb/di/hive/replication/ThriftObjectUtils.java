@@ -51,10 +51,10 @@ public class ThriftObjectUtils {
   }
 
   /**
-   * TODO.
+   * Convert a ReplicationJob to the Thrift equivalent.
    *
-   * @param job TODO
-   * @return TODO
+   * @param job the job to convert
+   * @return the corresponding Thrift replication job
    */
   public static TReplicationJob convert(ReplicationJob job) {
     PersistedJobInfo jobInfo = job.getPersistedJobInfo();
@@ -62,7 +62,8 @@ public class ThriftObjectUtils {
 
     return new TReplicationJob(job.getId(), job.getCreateTime(),
         // TODO: Maybe fetch the update time from the DB?
-        0, convert(jobInfo.getOperation()), convert(jobInfo.getStatus()),
+        0,
+        convert(jobInfo.getOperation()), convert(jobInfo.getStatus()),
         jobInfo.getSrcPath() == null ? null : jobInfo.getSrcPath().toString(),
         jobInfo.getSrcClusterName(), jobInfo.getSrcDbName(), jobInfo.getSrcTableName(),
         jobInfo.getSrcPartitionNames() == null ? new ArrayList<>() : jobInfo.getSrcPartitionNames(),

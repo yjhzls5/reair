@@ -1,5 +1,8 @@
 package com.airbnb.di.hive.replication;
 
+/**
+ * Exception related to Hive metadata.
+ */
 public class MetadataException extends Exception {
   public MetadataException(String message) {
     super(message);

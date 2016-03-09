@@ -1,5 +1,9 @@
 package com.airbnb.di.multiprocessing;
 
+/**
+ * Represents a lock that jobs need to get before running. Shared locks are locks where multiple
+ * jobs can acquire them where as exclusive locks can only be acquired by one job.
+ */
 public class Lock {
 
   public enum Type {

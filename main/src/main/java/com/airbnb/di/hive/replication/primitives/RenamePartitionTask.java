@@ -24,6 +24,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Task that renames a partition. The expected modified time of the partition to rename on the
+ * destination needs to be passed in to ensure that a newer partition with the same name is not
+ * renamed.
+ */
 public class RenamePartitionTask implements ReplicationTask {
 
   private static final Log LOG = LogFactory.getLog(RenamePartitionTask.class);
@@ -41,19 +46,23 @@ public class RenamePartitionTask implements ReplicationTask {
   private DirectoryCopier directoryCopier;
 
   /**
-   * TODO.
+   * Constructor for a task a that renames a partition.
    *
-   * @param conf TODO
-   * @param destObjectFactory TODO
-   * @param objectConflictHandler TODO
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param renameFromSpec TODO
-   * @param renameToSpec TODO
-   * @param renameFromPath TODO
-   * @param renameToPath TODO
-   * @param renameFromPartitionTdlt TODO
-   * @param directoryCopier TODO
+   * @param conf configuration object
+   * @param destObjectFactory factory for creating objects for the destination cluster
+   * @param objectConflictHandler handler for addressing conflicting tables/partitions on the
+   *                              destination cluster
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param renameFromSpec specification for the Hive partition to rename from
+   * @param renameToSpec specification for the Hive partition to rename to
+   * @param renameFromPath the path for the partition to rename from
+   * @param renameToPath the path to the partition to rename to
+   * @param renameFromPartitionTdlt The expected modified time for the partitions. This should be
+   *                                the transient_lastDdlTime value in the parameters field of the
+   *                                Thrift object. If the time does not match, the task will not
+   *                                rename the table.
+   * @param directoryCopier runs directory copies through MR jobs
    */
   public RenamePartitionTask(
       Configuration conf,
@@ -176,7 +185,7 @@ public class RenamePartitionTask implements ReplicationTask {
       case EXCHANGE_PARTITION:
         // TODO: Exchange partition can't be done without HIVE-12865
         // Just do a copy instead.
-
+        // fallthrough
       case COPY_PARTITION:
         return copyPartition(renameToSpec, renameToPath);
 
@@ -199,6 +208,4 @@ public class RenamePartitionTask implements ReplicationTask {
     lockSet.add(new Lock(Lock.Type.EXCLUSIVE, renameToSpec.toString()));
     return lockSet;
   }
-
-
 }

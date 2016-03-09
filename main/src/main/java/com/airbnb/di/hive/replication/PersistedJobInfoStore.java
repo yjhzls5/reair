@@ -28,7 +28,11 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Note: to simplify programming, all methods are synchronized. This could be slow, so another
+ * A store for managing and persisting PersistedJobInfo objects. The objects are stored though a
+ * state table that generally has a separate column for each field in PersistedJobInfo. This avoids
+ * the use of ORM as the use case is relatively simple.
+ *
+ * <p>Note: to simplify programming, all methods are synchronized. This could be slow, so another
  * approach is for each thread to use a different DB connection for higher parallelism.
  */
 public class PersistedJobInfoStore {
@@ -48,10 +52,11 @@ public class PersistedJobInfoStore {
   }
 
   /**
-   * TODO.
+   * Make the `create table` statement that can be run on the DB to create the table containing the
+   * information required for a PersistedJobInfo object.
    *
-   * @param tableName TODO
-   * @return TODO
+   * @param tableName the table name to use in the DB
+   * @return a SQL command that could be executed to create the state table
    */
   public static String getCreateTableSql(String tableName) {
     return String.format("CREATE TABLE `%s` (\n" + "  `id` bigint(20) NOT NULL AUTO_INCREMENT,\n"
@@ -74,28 +79,9 @@ public class PersistedJobInfoStore {
   }
 
   /**
-   * TODO.
+   * Changes the state for all jobs that are not finished to ABORTED.
    *
-   * @return TODO
-   *
-   * @throws SQLException TODO
-   */
-  public synchronized List<PersistedJobInfo> getRunnableFromDbResilient() throws SQLException {
-    final List<PersistedJobInfo> ret = new ArrayList<>();
-    retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
-      @Override
-      public void run() throws Exception {
-        List<PersistedJobInfo> runnable = getRunnableFromDb();
-        ret.addAll(runnable);
-      }
-    });
-    return ret;
-  }
-
-  /**
-   * TODO.
-   *
-   * @throws SQLException TODO
+   * @throws SQLException if there is an error querying the DB
    */
   public synchronized void abortRunnableFromDb() throws SQLException {
     // Convert from ['a', 'b'] to "'a', 'b'"
@@ -113,11 +99,10 @@ public class PersistedJobInfoStore {
   }
 
   /**
-   * TODO.
+   * Gets all the jobs that have a not completed status (and therefore should be run) from the DB.
    *
-   * @return TODO
-   *
-   * @throws SQLException TODO
+   * @return a list of jobs in the DB that should be run
+   * @throws SQLException if there's an error querying the DB
    */
   public synchronized List<PersistedJobInfo> getRunnableFromDb() throws SQLException {
     // Convert from ['a', 'b'] to "'a', 'b'"
@@ -173,19 +158,19 @@ public class PersistedJobInfoStore {
   }
 
   /**
-   * TODO.
+   * Create an entry in the state table containing the supplied information. Retry until successful.
    *
-   * @param operation TODO
-   * @param status TODO
-   * @param srcPath TODO
-   * @param srcClusterName TODO
-   * @param srcTableSpec TODO
-   * @param srcPartitionNames TODO
-   * @param srcTldt TODO
-   * @param renameToObject TODO
-   * @param renameToPath TODO
-   * @param extras TODO
-   * @return TODO
+   * @param operation type of operation
+   * @param status status of the job
+   * @param srcPath the source path
+   * @param srcClusterName the source cluster name
+   * @param srcTableSpec the source Hive table specification
+   * @param srcPartitionNames a list of partition names to copy
+   * @param srcTldt the source object's last modified time (transient_lastDdlTime)
+   * @param renameToObject if renaming, the specification for the new object
+   * @param renameToPath if renaming, the data path for the new object
+   * @param extras any extra, non-essential key/values that should be stored with the job
+   * @return a PersistedJobInfo containing the supplied parameters
    */
   public synchronized PersistedJobInfo resilientCreate(
       final ReplicationOperation operation,
@@ -214,22 +199,22 @@ public class PersistedJobInfoStore {
   }
 
   /**
-   * TODO.
+   * Create an entry in the state table containing the supplied information.
    *
-   * @param operation TODO
-   * @param status TODO
-   * @param srcPath TODO
-   * @param srcClusterName TODO
-   * @param srcTableSpec TODO
-   * @param srcPartitionNames TODO
-   * @param srcTldt TODO
-   * @param renameToObject TODO
-   * @param renameToPath TODO
-   * @param extras TODO
-   * @return TODO
+   * @param operation type of operation
+   * @param status status of the job
+   * @param srcPath the source path
+   * @param srcClusterName the source cluster name
+   * @param srcTableSpec the source Hive table specification
+   * @param srcPartitionNames a list of partition names to copy
+   * @param srcTldt the source object's last modified time (transient_lastDdlTime)
+   * @param renameToObject if renaming, the specification for the new object
+   * @param renameToPath if renaming, the data path for the new object
+   * @param extras any extra, non-essential key/values that should be stored with the job
+   * @return a PersistedJobInfo containing the supplied parameters
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws IOException if there is an error converting to JSON
+   * @throws SQLException if there's an error querying the DB
    */
   public synchronized PersistedJobInfo create(
       ReplicationOperation operation,
@@ -299,15 +284,7 @@ public class PersistedJobInfoStore {
     }
   }
 
-  /**
-   * TODO.
-   *
-   * @param job TODO
-   *
-   * @throws SQLException TODO
-   * @throws IOException TODO
-   */
-  public synchronized void persistHelper(PersistedJobInfo job) throws SQLException, IOException {
+  private synchronized void persistHelper(PersistedJobInfo job) throws SQLException, IOException {
     String query = "INSERT INTO " + dbTableName + " SET " + "id = ?, " + "create_time = ?, "
         + "operation = ?, " + "status = ?, " + "src_path = ?, " + "src_cluster = ?, "
         + "src_db = ?, " + "src_table = ?, " + "src_partitions = ?, " + "src_tldt = ?, "
@@ -317,15 +294,7 @@ public class PersistedJobInfoStore {
         + "src_db = ?, " + "src_table = ?, " + "src_partitions = ?, " + "src_tldt = ?, "
         + "rename_to_db = ?, " + "rename_to_table = ?, " + "rename_to_partition = ?, "
         + "rename_to_path = ?, " + "extras = ?";
-    /*
-     * String query = "INSERT INTO replication_jobs SET " + "id = ?, " + "operation = ?, " +
-     * "status = ?, " + "src_path = ?, " + "src_cluster = ?, " + "src_db = ?, " + "src_table = ?, "
-     * + "src_partition = ?, " + "src_object_serialized = ?, " + "rename_to_db = ?, " +
-     * "rename_to_table = ?, " + "rename_to_partition = ? " + "ON DUPLICATE KEY UPDATE " +
-     * "operation = ?, " + "status = ?, " + "src_path = ?, " + "src_cluster = ?, " + "src_db = ?, "
-     * + "src_table = ?, " + "src_partition = ?, " + "src_object_serialized = ?, " +
-     * "rename_to_db = ?, " + "rename_to_table = ?, " + "rename_to_partition = ?";
-     */
+
     Connection connection = dbConnectionFactory.getConnection();
     PreparedStatement ps = connection.prepareStatement(query);
     try {
@@ -375,9 +344,9 @@ public class PersistedJobInfoStore {
   }
 
   /**
-   * TODO.
+   * Persist the data from the job into the DB.
    *
-   * @param job TODO
+   * @param job the job to persist
    */
   public synchronized void persist(final PersistedJobInfo job) {
     retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
@@ -388,7 +357,7 @@ public class PersistedJobInfoStore {
     });
   }
 
-  synchronized PersistedJobInfo getJob(long id) throws SQLException {
+  private synchronized PersistedJobInfo getJob(long id) throws SQLException {
     String query = "SELECT id, create_time, operation, status, src_path, " + "src_cluster, src_db, "
         + "src_table, src_partitions, src_tldt, "
         + "rename_to_db, rename_to_table, rename_to_partition, " + "rename_to_path, extras "

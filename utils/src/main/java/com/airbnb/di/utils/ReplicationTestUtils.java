@@ -30,9 +30,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Utilities for running replication tests.
@@ -63,8 +65,8 @@ public class ReplicationTestUtils {
   /**
    * Creates the specified text file using Hadoop API's.
    *
-   * @param conf TODO
-   * @param directory TODO
+   * @param conf configuration object
+   * @param directory directory where to create some files
    * @param filename TODO
    * @param contents TODO
    * @throws IOException TODO

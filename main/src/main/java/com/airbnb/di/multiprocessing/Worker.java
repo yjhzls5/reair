@@ -21,10 +21,10 @@ public class Worker<T extends Job> extends Thread {
   private Job job = null;
 
   /**
-   * TODO.
+   * Constructor for a worker that gets and runs jobs from the input queue.
    *
-   * @param inputQueue TODO
-   * @param parallelJobExecutor TODO
+   * @param inputQueue the queue to get jobs from
+   * @param parallelJobExecutor the executor to notify when the job is done
    */
   public Worker(BlockingQueue<T> inputQueue, ParallelJobExecutor parallelJobExecutor) {
     this.inputQueue = inputQueue;
@@ -35,11 +35,12 @@ public class Worker<T extends Job> extends Thread {
   }
 
   /**
-   * TODO.
+   * Constructor for a worker that gets and runs jobs from the input queue with the option to
+   * specify a prefix for the worker thread name.
    *
-   * @param workerNamePrefix TODO
-   * @param inputQueue TODO
-   * @param parallelJobExecutor TODO
+   * @param workerNamePrefix prefix for the thread name
+   * @param inputQueue the queue to get jobs from
+   * @param parallelJobExecutor the executor to notify when the job is done
    */
   public Worker(
       String workerNamePrefix,

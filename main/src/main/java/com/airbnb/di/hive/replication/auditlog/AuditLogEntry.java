@@ -24,23 +24,20 @@ public class AuditLogEntry {
   private Table renameFromTable;
   private NamedPartition renameFromPartition;
 
-  public AuditLogEntry() {
-
-  }
-
   /**
-   * TODO.
+   * Constructs AuditLogEntry using specific values.
    *
-   * @param id TODO
-   * @param createTime TODO
-   * @param commandType TODO
-   * @param command TODO
-   * @param outputDirectories TODO
-   * @param referenceTables TODO
-   * @param outputTables TODO
-   * @param outputPartitions TODO
-   * @param renameFromTable TODO
-   * @param renameFromPartition TODO
+   * @param id ID of the row in the DB
+   * @param createTime time that the audit log entry was created
+   * @param commandType type of Hive command e.g QUERY
+   * @param command the command string e.g. 'CREATE TABLE...'
+   * @param outputDirectories for queries that write to directories, the directories that were
+   *                          written
+   * @param referenceTables the partition's table if the outputs include partitions
+   * @param outputTables tables that were changed
+   * @param outputPartitions partitions that were changed
+   * @param renameFromTable if renaming a table, the table that was renamed from
+   * @param renameFromPartition if renaming a partition, the partition that was renamed from.
    */
   public AuditLogEntry(
       long id,
@@ -77,9 +74,7 @@ public class AuditLogEntry {
     return commandType;
   }
 
-  /**
-   * TODO.
-   */
+  @Override
   public String toString() {
 
     List<String> outputTableStrings = new ArrayList<>();
@@ -99,19 +94,6 @@ public class AuditLogEntry {
         + commandType + ", outputDirectories=" + outputDirectories + ", referenceTables="
         + referenceTableStrings + ", outputTables=" + outputTableStrings + ", outputPartitions="
         + outputPartitionStrings + ", renameFromTable=" + renameFromTable + ", renameFromPartition="
-        + renameFromPartition + '}';
-  }
-
-  /**
-   * TODO.
-   *
-   * @return TODO
-   */
-  public String toDetailedString() {
-    return "AuditLogEntry{" + "id=" + id + ", createTime=" + createTime + ", commandType="
-        + commandType + ", outputDirectories=" + outputDirectories + ", referenceTables="
-        + referenceTables + ", outputTables=" + outputTables + ", outputPartitions="
-        + outputPartitions + ", renameFromTable=" + renameFromTable + ", renameFromPartition="
         + renameFromPartition + '}';
   }
 
