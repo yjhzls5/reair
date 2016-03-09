@@ -13,16 +13,6 @@ public class NamedPartition {
   private String name;
   private Partition partition;
 
-  /**
-   * TODO.
-   *
-   * @param namedPartition TODO
-   */
-  public NamedPartition(NamedPartition namedPartition) {
-    this.name = namedPartition.name;
-    this.partition = new Partition(namedPartition.partition);
-  }
-
   public NamedPartition(String name, Partition partition) {
     this.name = name;
     this.partition = partition;
@@ -37,10 +27,10 @@ public class NamedPartition {
   }
 
   /**
-   * TODO.
+   * Convert a collection of NamedPartitions to a list of Partitions.
    *
-   * @param collection TODO
-   * @return TODO
+   * @param collection collection of partitions to convert
+   * @return a list of converted partitions
    */
   public static List<Partition> toPartitions(Collection<NamedPartition> collection) {
     List<Partition> partitions = new ArrayList<>();
@@ -51,10 +41,10 @@ public class NamedPartition {
   }
 
   /**
-   * TODO.
+   * Convert a list of NamedPartitions to partition names.
    *
-   * @param collection TODO
-   * @return TODO
+   * @param collection collection of partitions to convert
+   * @return a list of partitio names
    */
   public static List<String> toNames(Collection<NamedPartition> collection) {
     List<String> partitionNames = new ArrayList<>();

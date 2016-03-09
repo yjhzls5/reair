@@ -25,18 +25,18 @@ public class HiveObjectSpec {
   private String partitionName = null;
 
   /**
-   * TODO.
+   * Constructor using a Thrift Hive table.
    *
-   * @param table TODO
+   * @param table Hive table
    */
   public HiveObjectSpec(Table table) {
     this(table.getDbName(), table.getTableName());
   }
 
   /**
-   * TODO.
+   * Constructor using a Thrift Hive partition.
    *
-   * @param namedPartition TODO
+   * @param namedPartition Hive partition
    */
   public HiveObjectSpec(NamedPartition namedPartition) {
     this(
@@ -51,11 +51,11 @@ public class HiveObjectSpec {
   }
 
   /**
-   * TODO.
+   * Constructor using specified names.
    *
-   * @param dbName TODO
-   * @param tableName TODO
-   * @param partitionName TODO
+   * @param dbName Hive database name
+   * @param tableName Hive table name
+   * @param partitionName Hive partition name
    */
   public HiveObjectSpec(String dbName, String tableName, String partitionName) {
     this.dbName = dbName;
@@ -67,11 +67,6 @@ public class HiveObjectSpec {
     return this.partitionName != null;
   }
 
-  /**
-   * TODO.
-   *
-   * @return TODO
-   */
   @Override
   public String toString() {
     if (partitionName == null) {
@@ -82,9 +77,10 @@ public class HiveObjectSpec {
   }
 
   /**
-   * TODO.
+   * When this specifies a partition, return the specification for the table that this partition
+   * resides in.
    *
-   * @return TODO
+   * @return specification for this partition's table
    */
   public HiveObjectSpec getTableSpec() {
     if (!isPartition()) {

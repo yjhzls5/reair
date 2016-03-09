@@ -15,6 +15,9 @@ import org.apache.thrift.transport.TTransportException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Concrete implementation of a HiveMetastoreClient using Thrift RPC's.
+ */
 public class ThriftHiveMetastoreClient implements HiveMetastoreClient {
 
   private static int DEFAULT_SOCKET_TIMEOUT = 600;

@@ -2,7 +2,9 @@ package com.airbnb.di.common;
 
 import org.apache.hadoop.fs.Path;
 
-
+/**
+ * A class to encapsulate various options required for running DistCp.
+ */
 public class DistCpWrapperOptions {
 
   // The source directory to copy
@@ -33,12 +35,12 @@ public class DistCpWrapperOptions {
   private long distCpPollInterval = 2500;
 
   /**
-   * TODO.
+   * Constructor for DistCp options.
    *
-   * @param srcDir TODO
-   * @param destDir TODO
-   * @param distCpTmpDir TODO
-   * @param distCpLogDir TODO
+   * @param srcDir the source directory to copy from
+   * @param destDir the destination directory to copy to
+   * @param distCpTmpDir the temporary directory to use when copying
+   * @param distCpLogDir the log directory to use when copying
    */
   public DistCpWrapperOptions(Path srcDir, Path destDir, Path distCpTmpDir, Path distCpLogDir) {
     this.srcDir = srcDir;

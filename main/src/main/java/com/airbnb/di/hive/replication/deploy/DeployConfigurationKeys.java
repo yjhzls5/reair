@@ -56,7 +56,11 @@ public class DeployConfigurationKeys {
   public static final String MAX_JOBS_IN_MEMORY = "airbnb.reair.jobs.in_memory_count";
   // The port for the Thrift server to listen on
   public static final String THRIFT_SERVER_PORT = "airbnb.reair.thrift.port";
-
+  // When copying tables or partitions using an MR job, fail the job and retry if the job takes
+  // longer than this many seconds.
+  public static final String COPY_JOB_TIMEOUT_SECONDS = "airbnb.reair.copy.timeout.seconds";
+  // If a replication job fails, the number of times to retry the job.
+  public static final String JOB_RETRIES = "airbnb.reair.job.retries";
 
   // Following are settings pertinent to batch replication only.
 
@@ -76,11 +80,4 @@ public class DeployConfigurationKeys {
   // The number of reducers to use for jobs where reducers perform file copies
   public static final String BATCH_JOB_COPY_PARALLELISM =
       "airbnb.reair.batch.copy.parallelism";
-
-  // If a replication job fails, the number of times to retry the job.
-  public static final String JOB_RETRIES = "airbnb.reair.job.retries";
-
-  // When copying tables or partitions using an MR job, fail the job and retry if the job takes
-  // longer than this many seconds.
-  public static final String COPY_JOB_TIMEOUT_SECONDS = "airbnb.reair.copy.timeout.seconds";
 }

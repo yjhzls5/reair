@@ -24,12 +24,12 @@ public class RetryingProcessRunner {
   }
 
   /**
-   * TODO.
+   * Run a shell command.
    *
-   * @param args TODO
-   * @return TODO
+   * @param args shell arguments to call
+   * @return the result of running the command
    *
-   * @throws ProcessRunException TODO
+   * @throws ProcessRunException if there's an error running the process
    */
   public RunResult run(List<String> args) throws ProcessRunException {
 

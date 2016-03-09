@@ -1,5 +1,8 @@
 package com.airbnb.di.common;
 
+/**
+ * An exception thrown when there's an error running DistCp.
+ */
 public class DistCpException extends Exception {
 
   public DistCpException(String message) {

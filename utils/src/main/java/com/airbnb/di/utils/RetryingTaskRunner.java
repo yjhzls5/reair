@@ -39,11 +39,11 @@ public class RetryingTaskRunner {
   }
 
   /**
-   * TODO.
+   * Run a task, retrying a fixed number of times if there is a failure.
    *
-   * @param task TODO
+   * @param task the task to run.
    *
-   * @throws Exception TODO
+   * @throws Exception if there's an error with running the task
    */
   public void runWithRetries(RetryableTask task) throws Exception {
     boolean maxSleepIntervalHit = false;
@@ -76,9 +76,9 @@ public class RetryingTaskRunner {
   }
 
   /**
-   * TODO.
+   * Run a task and retry until it succeeds.
    *
-   * @param task TODO
+   * @param task the task to run
    */
   public void runUntilSuccessful(RetryableTask task) {
     boolean maxSleepIntervalHit = false;

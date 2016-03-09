@@ -9,6 +9,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+/**
+ * A factory that creates connections to a DB based on connection information supplied in the
+ * constructor.
+ */
 public class StaticDbConnectionFactory implements DbConnectionFactory {
 
   private static final Log LOG = LogFactory.getLog(StaticDbConnectionFactory.class);
@@ -21,11 +25,11 @@ public class StaticDbConnectionFactory implements DbConnectionFactory {
   private RetryingTaskRunner retryingTaskRunner;
 
   /**
-   * TODO.
+   * Constructor using specified connection information.
    *
-   * @param jdbcUrl TODO
-   * @param username TODO
-   * @param password TODO
+   * @param jdbcUrl the JDBC connection URL
+   * @param username the username
+   * @param password the password associated with the username
    */
   public StaticDbConnectionFactory(String jdbcUrl, String username, String password) {
     this.jdbcUrl = jdbcUrl;

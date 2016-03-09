@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+/**
+ * An embedded MySQL DB for testing.
+ */
 public class EmbeddedMySqlDb {
 
   private static final Log LOG = LogFactory.getLog(EmbeddedMySqlDb.class);
@@ -23,11 +26,10 @@ public class EmbeddedMySqlDb {
   private MysqldResource mysqldResource;
 
   /**
-   * TODO.
+   * Constructor for a MySQL DB with a random database name and running on a random port.
    */
   public EmbeddedMySqlDb() {
     databaseDir = System.getProperty("java.io.tmpdir");
-    databaseName = "test_db_" + System.nanoTime();
     databaseName = "test_db_" + System.nanoTime();
     host = "localhost";
     port = new Random().nextInt(10000) + 3306;
@@ -36,7 +38,7 @@ public class EmbeddedMySqlDb {
   }
 
   /**
-   * TODO.
+   * Start the database.
    */
   public void startDb() {
     Map<String, String> databaseOptions = new HashMap<>();
@@ -53,6 +55,9 @@ public class EmbeddedMySqlDb {
     LOG.debug("MySQL started successfully");
   }
 
+  /**
+   * Stop the database.
+   */
   public void stopDb() {
     mysqldResource.shutdown();
     LOG.debug("MySQL stoppped succcessfully");

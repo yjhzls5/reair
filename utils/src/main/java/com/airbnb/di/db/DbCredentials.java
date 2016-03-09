@@ -2,30 +2,33 @@ package com.airbnb.di.db;
 
 import java.io.IOException;
 
+/**
+ * Interface for classes that can return username / passwords for connecting to a DB.
+ */
 public interface DbCredentials {
 
   /**
    * Called if the credentials should be refreshed (e.g. re-read from file).
    *
-   * @throws IOException TODO
+   * @throws IOException if there's an error reading the credentials
    */
   public void refreshCredsIfNecessary() throws IOException;
 
   /**
-   * TODO.
+   * Get the username that has read and write privileges.
    *
    * @return the username that has read / write access to the DB
    *
-   * @throws IOException TODO
+   * @throws IOException if there an error reading the credentials
    */
   public String getReadWriteUsername() throws IOException;
 
   /**
-   * TODO.
+   * Get the password associated with the user that has read / write access to the DB.
    *
    * @return the password for the user that has read / write access to the DB
    *
-   * @throws IOException TODO
+   * @throws IOException if there's an error reading the credentials
    */
   public String getReadWritePassword() throws IOException;
 }

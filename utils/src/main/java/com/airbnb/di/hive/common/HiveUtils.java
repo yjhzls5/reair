@@ -9,9 +9,9 @@ import java.util.Map;
 
 public class HiveUtils {
   /**
-   * TODO.
+   * Checks to see if a table is partitioned.
    *
-   * @param table TODO
+   * @param table table to check
    * @return true if the given table is partitioned.
    */
   public static boolean isPartitioned(Table table) {
@@ -19,9 +19,9 @@ public class HiveUtils {
   }
 
   /**
-   * TODO.
+   * Checks to see if a table is a view.
    *
-   * @param table TODO
+   * @param table table to check
    * @return true if the given table is a view.
    */
   public static boolean isView(Table table) {
@@ -29,11 +29,11 @@ public class HiveUtils {
   }
 
   /**
-   * TODO.
+   * Convert a partition name into a list of partition values. e.g. 'ds=1/hr=2' -> ['1', '2']
    *
-   * @param ms TODO
-   * @param partitionName TODO
-   * @return TODO
+   * @param ms Hive metastore client
+   * @param partitionName the partition name to convert
+   * @return a list of partition values
    *
    * @throws HiveMetastoreException TODO
    */

@@ -13,11 +13,22 @@ public class PathBuilder {
     this.currentPath = currentPath;
   }
 
+  /**
+   * Add another path element.
+   *
+   * @param element the element to add
+   * @return a PathBuilder that includes the added element
+   */
   public PathBuilder add(String element) {
     currentPath = new Path(currentPath, element);
     return this;
   }
 
+  /**
+   * Convert the path elements accumulated so far into a single path.
+   *
+   * @return a Path that includes all added path elements
+   */
   public Path toPath() {
     return currentPath;
   }

@@ -9,10 +9,19 @@ package com.airbnb.di.common;
 public class Container<T> {
   private volatile T item;
 
+  /**
+   * Put the item into this container.
+   *
+   * @param item the item to put in
+   */
   public void set(T item) {
     this.item = item;
   }
 
+  /**
+   * Get the item that was put into this container.
+   * @return the item that was last put in
+   */
   public T get() {
     return item;
   }

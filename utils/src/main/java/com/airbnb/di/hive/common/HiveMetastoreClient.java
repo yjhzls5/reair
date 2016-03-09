@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-
+/**
+ * A client for the Hive Metastore Thrift service.
+ */
 public interface HiveMetastoreClient {
 
   public Partition addPartition(Partition partition) throws HiveMetastoreException;

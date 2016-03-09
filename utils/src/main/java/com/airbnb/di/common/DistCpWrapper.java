@@ -28,13 +28,13 @@ public class DistCpWrapper {
   }
 
   /**
-   * TODO.
+   * Constructor using the specified options.
    *
-   * @param options TODO
-   * @return TODO
+   * @param options the options to use when copying
+   * @return the number of bytes copied
    *
-   * @throws IOException TODO
-   * @throws DistCpException TODO
+   * @throws IOException if there's an error accessing the filesystem
+   * @throws DistCpException if there is an error running DistCp
    */
   public long copy(DistCpWrapperOptions options) throws IOException, DistCpException {
 
@@ -204,12 +204,13 @@ public class DistCpWrapper {
   /**
    * Run distcp in a separate thread, but kill the thread if runtime exceeds timeout.
    *
-   * @param distCp TODO
-   * @param options TODO
-   * @param timeout TODO
-   * @param pollInterval TODO
-   * @return TODO
-   * @throws InterruptedException TODO
+   * @param distCp directory copier object
+   * @param options the command line arguments to pass to DistCp
+   * @param timeout the maximum number of miliseconds that DistCp should run
+   * @param pollInterval how frequently to check if DistCp is done
+   * @return the value returned by DistCp
+   *
+   * @throws InterruptedException if this thread is interrupted while waiting for DistCp
    */
   private int runDistCp(final DistCp distCp, final List<String> options, long timeout,
       long pollInterval) throws DistCpException {

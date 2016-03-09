@@ -1,28 +1,22 @@
 package com.airbnb.di.common;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileChecksum;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.Trash;
-import org.apache.hadoop.tools.DistCp;
-import org.apache.hadoop.util.ToolRunner;
-import org.datanucleus.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
@@ -35,40 +29,25 @@ public class FsUtils {
 
   private static final Log LOG = LogFactory.getLog(FsUtils.class);
 
-  /**
-   * @param input string to sanitize
-   * @return the same string with non alphanumeric characters replaced by underscores - needed as
-   *         filesystems don't support all characters well. E.g. : in HDFS
-   */
-  public static String sanitize(String input) {
-    return input.replaceAll("[^\\w\\-=]", "_");
-  }
-
   public static boolean sameFs(Path p1, Path p2) {
-    return StringUtils.areStringsEqual(p1.toUri().getScheme(), p2.toUri().getScheme())
-        && StringUtils.areStringsEqual(p1.toUri().getAuthority(), p2.toUri().getAuthority());
-  }
-
-  public static long getSize(Configuration conf, Path path) throws IOException {
-    return getSize(conf, path, Optional.empty());
+    return StringUtils.equals(p1.toUri().getScheme(), p2.toUri().getScheme())
+        && StringUtils.equals(p1.toUri().getAuthority(), p2.toUri().getAuthority());
   }
 
   /**
-   * TODO.
+   * Get the total size of the files under the specified path.
    *
-   * @param conf TODO
-   * @param path TODO
+   * @param conf the configuration object
+   * @param path the path to get the size of
    * @param filter use this to filter out files and directories
-   * @return the size of the given location in bytes, including the size of any subdirectories.
-   * @throws java.io.IOException TODO
+   * @return the size of the given location in bytes, including the size of any subdirectories
+   *
+   * @throws IOException if there's an error accessing the filesystem
    */
   public static long getSize(Configuration conf, Path path, Optional<PathFilter> filter)
       throws IOException {
     long totalSize = 0;
-    /*
-     * // This approach is simpler, but not as memory efficient for (FileStatus s :
-     * getFileStatusesRecursive(conf, p, skipPrefix)) { totalSize += s.getLen(); } return totalSize;
-     */
+
     FileSystem fs = FileSystem.get(path.toUri(), conf);
 
     Queue<Path> pathsToCheck = new LinkedList<>();
@@ -96,14 +75,14 @@ public class FsUtils {
   }
 
   /**
-   * TODO.
+   * Check if a directory exceeds the specified size.
    *
-   * @param conf TODO
-   * @param path TODO
-   * @param maxSize TODO
-   * @return TODO
+   * @param conf configuration object
+   * @param path the path to check the size of
+   * @param maxSize max size for comparison
+   * @return whether the specified size exceeds the max size
    *
-   * @throws IOException TODO
+   * @throws IOException if there's an error accessing the filesystem
    */
   public static boolean exceedsSize(Configuration conf, Path path, long maxSize)
       throws IOException {
@@ -134,12 +113,13 @@ public class FsUtils {
   }
 
   /**
-   * TODO.
+   * Get the file statuses of all the files in the path, including subdirectories.
    *
-   * @param conf TODO
-   * @param path TODO
-   * @return Fetches the FileStatus of all the files in the supplied path, including subdirectories
-   * @throws IOException TODO
+   * @param conf configuration object
+   * @param path the path to examine
+   *
+   * @return the FileStatus of all the files in the supplied path, including subdirectories
+   * @throws IOException if there's an error accessing the filesystem
    */
   public static Set<FileStatus> getFileStatusesRecursive(
       Configuration conf,
@@ -173,9 +153,9 @@ public class FsUtils {
   }
 
   /**
-   * TODO.
+   * Get the sizes of the files under the specified path.
    *
-   * @param root TODO
+   * @param root the path to check
    * @param statuses a set of statuses for all the files in the root directory
    * @return a map from the path to a file relative to the root (e.g. a/b.txt) to the associated
    *         file size
@@ -190,9 +170,9 @@ public class FsUtils {
   }
 
   /**
-   * TODO.
+   * Get the modified times of the files under the specified path.
    *
-   * @param root TODO
+   * @param root the path to check
    * @param statuses a set of statuses for all the files in the root directory
    * @return a map from the path to a file relative to the root (e.g. a/b.txt) to the associated
    *         modification time
@@ -207,10 +187,10 @@ public class FsUtils {
   }
 
   /**
-   * TODO.
+   * Get the path relative to another path.
    *
-   * @param root TODO
-   * @param child TODO
+   * @param root the reference path
+   * @param child a path under root
    * @return The relative path of the child given the root. For example, if the root was '/a' and
    *         the file was '/a/b/c.txt', the relative path would be 'b/c.txt'
    */
@@ -223,8 +203,7 @@ public class FsUtils {
   }
 
   /**
-   * TODO.
-
+   * Get the total size of the paths.
    *
    * @param relPathToSize a map from the relative path to a file to the file size
    * @return the total size of the files described in the map
@@ -241,13 +220,13 @@ public class FsUtils {
    * Checks to see if filenames exist on a destination directory that don't exist in the source
    * directory. Mainly used for checking if a distcp -update can work.
    *
-   * @param conf TODO
-   * @param src TODO
-   * @param dest TODO
+   * @param conf configuration object
+   * @param src source path
+   * @param dest destination path
    * @param filter filter to use when traversing through the directories
    * @return true if there are any file names on the destination directory that are not in the
    *         source directory
-   * @throws IOException TODO
+   * @throws IOException if there's an error accesing the filesystem
    */
   public static boolean filesExistOnDestButNotSrc(Configuration conf, Path src, Path dest,
       Optional<PathFilter> filter) throws IOException {
@@ -278,15 +257,16 @@ public class FsUtils {
   }
 
   /**
-   * TODO
+   * Checks to see if two directories are equal. The directories are considered equal if they have
+   * the same non-zero files with the same sizes in the same paths.
    *
-   * @param conf TODO
-   * @param src TODO
-   * @param dest TODO
-   * @param filter files or directories starting with this name are not checked
+   * @param conf configuration object
+   * @param src source directory
+   * @param dest destination directory
+   * @param filter files or directories rejected by this fileter are not checked
    * @return true if the files in the source and the destination are the 'same'. 'same' is defined
    *         as having the same set of files with matching sizes.
-   * @throws IOException TODO
+   * @throws IOException if there's an error accessing the filesystem
    */
   public static boolean equalDirs(Configuration conf, Path src, Path dest,
       Optional<PathFilter> filter) throws IOException {
@@ -294,16 +274,18 @@ public class FsUtils {
   }
 
   /**
-   * TODO.
+   * Checks to see if two directories are equal. The directories are considered equal if they have
+   * the same non-zero files with the same sizes in the same paths (with the same modification times
+   * if applicable)
    *
-   * @param conf TODO
-   * @param src TODO
-   * @param dest TODO
-   * @param filter TODO
-   * @param compareModificationTimes TODO
-   * @return TODO
+   * @param conf configuration object
+   * @param src source directory
+   * @param dest destination directory
+   * @param filter filter for excluding some files from comparison
+   * @param compareModificationTimes whether to compare modification times.
+   * @return true if the two directories are equal
    *
-   * @throws IOException TODO
+   * @throws IOException if there is an error accessing the filesystem
    */
   public static boolean equalDirs(Configuration conf, Path src, Path dest,
       Optional<PathFilter> filter, boolean compareModificationTimes) throws IOException {
@@ -384,14 +366,15 @@ public class FsUtils {
   }
 
   /**
-   * TODO.
+   * Set the file modification times for the files on the destination to be the same as the
+   * modification times for the file on the source.
    *
-   * @param conf TODO
-   * @param src TODO
-   * @param dest TODO
-   * @param filter TODO
+   * @param conf configuration object
+   * @param src source directory
+   * @param dest destination directory
+   * @param filter a filter for excluding some files from modification
    *
-   * @throws IOException TODO
+   * @throws IOException if there's an error
    */
   public static void syncModificationTimes(Configuration conf, Path src, Path dest,
       Optional<PathFilter> filter) throws IOException {
@@ -416,10 +399,10 @@ public class FsUtils {
    * Moves the directory from the src to dest, creating the parent directory for the dest if one
    * does not exist.
    *
-   * @param conf TODO
-   * @param src TODO
-   * @param dest TODO
-   * @throws IOException TODO
+   * @param conf configuration object
+   * @param src source directory
+   * @param dest destination directory
+   * @throws IOException if there's an error moving the directory
    */
   public static void moveDir(Configuration conf, Path src, Path dest) throws IOException {
     FileSystem srcFs = FileSystem.get(src.toUri(), conf);
@@ -446,12 +429,13 @@ public class FsUtils {
   }
 
   /**
-   * TODO.
+   * Checks to see if a directory exists.
    *
-   * @param conf TODO
-   * @param path TODO
+   * @param conf configuration object
+   * @param path the path to check
    * @return true if the path specifies a directory that exists
-   * @throws IOException TODO
+   *
+   * @throws IOException if there's an error accessing the filesystem
    */
   public static boolean dirExists(Configuration conf, Path path) throws IOException {
     FileSystem fs = FileSystem.get(path.toUri(), conf);
@@ -459,12 +443,12 @@ public class FsUtils {
   }
 
   /**
-   * Delete the specified directory.
+   * Delete the specified directory, using the trash as available.
    *
-   * @param conf TODO
-   * @param path TODO
+   * @param conf configuration object
+   * @param path path to delete
    *
-   * @throws IOException TODO
+   * @throws IOException if there's an error deleting the directory.
    */
   public static void deleteDirectory(Configuration conf, Path path) throws IOException {
 
@@ -489,24 +473,25 @@ public class FsUtils {
   }
 
   /**
-   * TODO.
+   * Checks to see if one directory is a subdirectory of another.
    *
-   * @param p1 TODO
-   * @param p2 TODO
+   * @param p1 directory
+   * @param p2 potential subdirectory
    * @return true if p2 is a subdirectory of p1
    */
   public static boolean isSubDirectory(Path p1, Path p2) {
-    return p2.toString().startsWith(p1.toString() + "/");
+    URI relativizedUri = p1.toUri().relativize(p2.toUri());
+    return !relativizedUri.equals(p2.toUri());
   }
 
   /**
-   * TODO.
+   * Replace a directory with another directory.
    *
-   * @param conf TODO
-   * @param src TODO
-   * @param dest TODO
+   * @param conf configuration object
+   * @param src source directory
+   * @param dest destination directory
    *
-   * @throws IOException TODO
+   * @throws IOException if there's an error with the filesystem
    */
   public static void replaceDirectory(Configuration conf, Path src, Path dest) throws IOException {
     FileSystem fs = dest.getFileSystem(conf);

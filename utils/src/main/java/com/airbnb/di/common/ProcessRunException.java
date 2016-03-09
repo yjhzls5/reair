@@ -1,5 +1,8 @@
 package com.airbnb.di.common;
 
+/**
+ * Exception related to running a (Linux) process.
+ */
 public class ProcessRunException extends Exception {
 
   public ProcessRunException(String message) {
