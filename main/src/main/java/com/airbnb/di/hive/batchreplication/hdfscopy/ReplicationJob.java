@@ -50,7 +50,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -125,9 +124,11 @@ public class ReplicationJob extends Configured implements Tool {
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
-      this.rootUris = Stream.of((context.getConfiguration().get(DST_PATH_CONF) + ","
-              + context.getConfiguration().get(SRC_PATH_CONF)).split(","))
-              .map(root -> new Path(root).toUri()).toArray(size -> new URI[size]);
+      this.rootUris = Stream.concat(
+          Stream.of(context.getConfiguration().get(DST_PATH_CONF)),
+          Stream.of(context.getConfiguration().get(SRC_PATH_CONF).split(","))).map(
+            root -> new Path(root).toUri()).toArray(size -> new URI[size]
+          );
       this.folderBlackList = context.getConfiguration().get(DIRECTORY_BLACKLIST_REGEX);
     }
 
@@ -196,9 +197,11 @@ public class ReplicationJob extends Configured implements Tool {
             }
           }),
         Operation.class);
-      this.rootUris = Stream.of((context.getConfiguration().get(DST_PATH_CONF) + ","
-              + context.getConfiguration().get(SRC_PATH_CONF)).split(","))
-              .map(root -> new Path(root).toUri()).toArray(size -> new URI[size]);
+      this.rootUris = Stream.concat(
+              Stream.of(context.getConfiguration().get(DST_PATH_CONF)),
+              Stream.of(context.getConfiguration().get(SRC_PATH_CONF).split(","))).map(
+              root -> new Path(root).toUri()).toArray(size -> new URI[size]
+      );
     }
 
     @Override
@@ -370,7 +373,7 @@ public class ReplicationJob extends Configured implements Tool {
 
     options.addOption(OptionBuilder.withLongOpt("operation")
             .withDescription("checking options: comma separated option"
-                    + " including a(add),d(delete),u(update)")
+                    + " including a(add), d(delete), u(update)")
             .hasArg()
             .withArgName("P")
             .create());
@@ -405,10 +408,10 @@ public class ReplicationJob extends Configured implements Tool {
     try {
       commandLine = cmdLineParser.parse(options, args);
     } catch (ParseException e) {
-      System.err.println("Encountered exception while parsing using GnuParser:\n" + e.getMessage());
+      LOG.error("Encountered exception while parsing using GnuParser:", e);
       printUsage("Usage: hadoop jar ...", options, System.out);
       System.out.println();
-      ToolRunner.printGenericCommandUsage(System.err);
+      ToolRunner.printGenericCommandUsage(System.out);
       return 1;
     }
 
