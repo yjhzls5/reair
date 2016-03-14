@@ -200,7 +200,7 @@ public class ReplicationJob extends Configured implements Tool {
       this.rootUris = Stream.concat(
               Stream.of(context.getConfiguration().get(DST_PATH_CONF)),
               Stream.of(context.getConfiguration().get(SRC_PATH_CONF).split(","))).map(
-              root -> new Path(root).toUri()).toArray(size -> new URI[size]
+                  root -> new Path(root).toUri()).toArray(size -> new URI[size]
       );
     }
 
