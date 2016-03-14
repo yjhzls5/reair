@@ -23,15 +23,15 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 
 /**
- * Stage 2 Mapper to handle folder hdfs folder copy
+ * Stage 2 Mapper to handle directory hdfs directory copy
  *
  * <p>Input of this job is stage1 output. It contains action of table and partition. We only care
  * about COPY action in this stage. In the mapper, it will enumerate the directories and figure what
- * files needs to be copied. Since each folder can have unbalanced number files, we use shuffle
+ * files needs to be copied. Since each directory can have unbalanced number files, we use shuffle
  * again to load balance file copy actions. In reducer we actually copy the file.
  */
-public class Stage2FolderCopyMapper extends Mapper<LongWritable, Text, LongWritable, Text> {
-  private static final Log LOG = LogFactory.getLog(Stage2FolderCopyMapper.class);
+public class Stage2DirectoryCopyMapper extends Mapper<LongWritable, Text, LongWritable, Text> {
+  private static final Log LOG = LogFactory.getLog(Stage2DirectoryCopyMapper.class);
   private static final PathFilter hiddenFileFilter = new PathFilter() {
     public boolean accept(Path path) {
       String name = path.getName();
@@ -65,7 +65,7 @@ public class Stage2FolderCopyMapper extends Mapper<LongWritable, Text, LongWrita
     }
   }
 
-  private static void hdfsCleanFolder(
+  private static void hdfsCleanDirectory(
       String db,
       String table,
       String part,
@@ -76,11 +76,11 @@ public class Stage2FolderCopyMapper extends Mapper<LongWritable, Text, LongWrita
 
     FileSystem fs = dstPath.getFileSystem(conf);
     if (fs.exists(dstPath) && !fs.delete(dstPath, true)) {
-      throw new IOException("Failed to delete dstFolder: " + dstPath.toString());
+      throw new IOException("Failed to delete destination directory: " + dstPath.toString());
     }
 
     if (fs.exists(dstPath)) {
-      throw new IOException("Validate delete dstFolder failed: " + dstPath.toString());
+      throw new IOException("Validate delete destination directory failed: " + dstPath.toString());
     }
 
     if (!recreate) {
@@ -90,7 +90,8 @@ public class Stage2FolderCopyMapper extends Mapper<LongWritable, Text, LongWrita
     fs.mkdirs(dstPath);
 
     if (!fs.exists(dstPath)) {
-      throw new IOException("Validate recreate dstFolder failed: " + dstPath.toString());
+      throw new IOException("Validate recreate destination directory failed: "
+          + dstPath.toString());
     }
   }
 
@@ -104,7 +105,7 @@ public class Stage2FolderCopyMapper extends Mapper<LongWritable, Text, LongWrita
 
     LOG.info("updateDirectory:" + dst.toString());
 
-    hdfsCleanFolder(db, table, partition, dst.toString(), this.conf, true);
+    hdfsCleanDirectory(db, table, partition, dst.toString(), this.conf, true);
 
     try {
       FileSystem srcFs = src.getFileSystem(this.conf);

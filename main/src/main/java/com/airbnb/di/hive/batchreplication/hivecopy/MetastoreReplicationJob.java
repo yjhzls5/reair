@@ -67,11 +67,11 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
 
   /**
-   * TODO.
+   * Serialize TaskEstimate and HiveObjectSpec into a String. The String is passed between MR jobs.
    *
-   * @param estimate TODO
-   * @param spec TODO
-   * @return TODO
+   * @param estimate TaskEstimate object
+   * @param spec     HiveObjectSpec
+   * @return  serialized output for estimate and spec object
    */
   public static String serializeJobResult(TaskEstimate estimate, HiveObjectSpec spec) {
     return ReplicationUtils.genValue(estimate.getTaskType().name(),
@@ -85,10 +85,10 @@ public class MetastoreReplicationJob extends Configured implements Tool {
   }
 
   /**
-   * TODO.
+   * Deserialize TaskEstimate and HiveObjectSpec from a String.
    *
-   * @param result TODO
-   * @return TODO
+   * @param result serialized string
+   * @return Pair of TaskEstimate and HiveObjectSpec
    */
   public static Pair<TaskEstimate, HiveObjectSpec> deseralizeJobResult(String result) {
     String [] fields = result.split("\t");
@@ -109,11 +109,12 @@ public class MetastoreReplicationJob extends Configured implements Tool {
   }
 
   /**
-   * TODO.
+   /**
+   * Print usage information to provided OutputStream.
    *
-   * @param applicationName TODO
-   * @param options TODO
-   * @param out TODO
+   * @param applicationName Name of application to list in usage.
+   * @param options Command-line options to be part of usage.
+   * @param out OutputStream to which to write the usage information.
    */
   public static void printUsage(String applicationName, Options options, OutputStream out) {
     PrintWriter writer = new PrintWriter(out);
@@ -123,12 +124,18 @@ public class MetastoreReplicationJob extends Configured implements Tool {
   }
 
   /**
-   * TODO.
+   * Run hive metastore based batch replication.
+   *  1. Parse input args.
+   *  2. Run three MR jobs in sequences.
    *
-   * @param args TODO
-   * @return TODO
+   * @param args program input args
+   * @return 1 failed
+   *         0 succeeded.
    *
-   * @throws Exception TODO
+   * @throws Exception  InterruptedException,
+   *                    IOException,
+   *                    ClassNotFoundException,
+   *                    TemplateRenderException
    */
   @SuppressWarnings("static-access")
   public int run(String[] args) throws Exception {
@@ -412,8 +419,8 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     job.setJarByClass(this.getClass());
     job.setInputFormatClass(TextInputFormat.class);
-    job.setMapperClass(Stage2FolderCopyMapper.class);
-    job.setReducerClass(Stage2FolderCopyReducer.class);
+    job.setMapperClass(Stage2DirectoryCopyMapper.class);
+    job.setReducerClass(Stage2DirectoryCopyReducer.class);
 
     FileInputFormat.setInputPaths(job, input);
     FileInputFormat.setMaxInputSplitSize(job,
@@ -478,11 +485,14 @@ public class MetastoreReplicationJob extends Configured implements Tool {
   }
 
   /**
-   * TODO.
+   * main function, Invoke ToolRunner.run.
    *
-   * @param args TODO
+   * @param args program args
    *
-   * @throws Exception TODO
+   * @throws Exception  InterruptedException,
+   *                    IOException,
+   *                    ClassNotFoundException,
+   *                    TemplateRenderException
    */
   public static void main(String[] args) throws Exception {
     int res = ToolRunner.run(new MetastoreReplicationJob(), args);

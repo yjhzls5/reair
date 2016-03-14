@@ -12,11 +12,12 @@ public class SimpleFileStatus {
   private final Path path;
 
   /**
-   * TODO.
+   * Class to track file size, modification time, and Path. It is used
+   * to serialize between mapper and reducer.
    *
-   * @param path TODO
-   * @param fileSize TODO
-   * @param modificationTime TODO
+   * @param path             file path
+   * @param fileSize         file size
+   * @param modificationTime file modification time
    */
   public SimpleFileStatus(String path, long fileSize, long modificationTime) {
     this.fileSize = fileSize;
@@ -25,11 +26,12 @@ public class SimpleFileStatus {
   }
 
   /**
-   * TODO.
+   * Class to track file size, modification time, and Path. It is used
+   * to serialize between mapper and reducer.
    *
-   * @param path TODO
-   * @param fileSize TODO
-   * @param modificationTime TODO
+   * @param path             file path
+   * @param fileSize         file size
+   * @param modificationTime file modification time
    */
   public SimpleFileStatus(Path path, long fileSize, long modificationTime) {
     this.fileSize = fileSize;

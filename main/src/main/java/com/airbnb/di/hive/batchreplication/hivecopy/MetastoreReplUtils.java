@@ -3,8 +3,6 @@ package com.airbnb.di.hive.batchreplication.hivecopy;
 import com.airbnb.di.hive.replication.configuration.ClusterFactory;
 import com.airbnb.di.hive.replication.configuration.ConfiguredClusterFactory;
 import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
@@ -17,12 +15,13 @@ public class MetastoreReplUtils {
   }
 
   /**
-   * TODO.
+   * static function to create ClusterFactory object based on configuration. For test environment it
+   * will create a mock ClusterFactory.
    *
-   * @param conf TODO
-   * @return TODO
+   * @param conf configuration for the cluster
+   * @return ClusterFactory implementation
    *
-   * @throws IOException TODO
+   * @throws IOException Java reflection exceptions are wrapped in IOException
    */
   public static ClusterFactory createClusterFactory(Configuration conf) throws IOException {
     String clusterFactoryClassName =

@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 
 /**
  * InputFormat that scan directories breadth first. It will stop at a level when it gets enough
- * splits. The InputSplit it returns will keep track if the folder needs further scan. If it does
+ * splits. The InputSplit it returns will keep track if the directory needs further scan. If it does
  * the recursive scan will be done in RecorderReader. The InputFormat will return file path as key,
  * and file size information as value.
  */
@@ -45,9 +45,9 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
     }
   };
   private static final int NUMBER_OF_THREADS = 16;
-  private static final int NUMBER_OF_FOLDER_PER_MAPPER = 10;
+  private static final int NUMBER_OF_DIRECTORY_PER_MAPPER = 10;
   public static final String NO_HIDDEN_FILE_FILTER = "replication.inputformat.nohiddenfilefilter";
-  public static final String FOLDER_TRAVERSE_MAX_LEVEL =
+  public static final String DIRECTORY_TRAVERSE_MAX_LEVEL =
           "replication.inputformat.max.traverse.level";
 
   @Override
@@ -57,7 +57,8 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
   }
 
   private List<FileStatus> getInitialSplits(JobContext job) throws IOException {
-    String folderBlackList = job.getConfiguration().get(ReplicationJob.DIRECTORY_BLACKLIST_REGEX);
+    String directoryBlackList = job.getConfiguration()
+        .get(ReplicationJob.DIRECTORY_BLACKLIST_REGEX);
     boolean nofilter = job.getConfiguration().getBoolean(NO_HIDDEN_FILE_FILTER, false);
     ArrayList result = new ArrayList();
     Path[] dirs = getInputPaths(job);
@@ -79,8 +80,8 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
         } else {
           for (FileStatus globStat : matches) {
             if (globStat.isDirectory()) {
-              if (folderBlackList == null
-                  || !globStat.getPath().getName().matches(folderBlackList)) {
+              if (directoryBlackList == null
+                  || !globStat.getPath().getName().matches(directoryBlackList)) {
                 result.add(globStat);
               }
             }
@@ -105,7 +106,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
     List<FileStatus> dirToProcess = getInitialSplits(context);
     int level = 0;
     final int numberOfMappers = context.getConfiguration().getInt("mapreduce.job.maps", 500);
-    final int max_level = context.getConfiguration().getInt(FOLDER_TRAVERSE_MAX_LEVEL, 3);
+    final int max_level = context.getConfiguration().getInt(DIRECTORY_TRAVERSE_MAX_LEVEL, 3);
 
     try {
       splits.addAll(Lists.transform(dirToProcess, new Function<FileStatus, DirInputSplit>() {
@@ -120,9 +121,9 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
       while (!finished) {
         List<Future<List<FileStatus>>> splitfutures = new ArrayList<Future<List<FileStatus>>>();
 
-        final int foldersPerThread = Math.max(dirToProcess.size() / NUMBER_OF_THREADS, 1);
+        final int directoriesPerThread = Math.max(dirToProcess.size() / NUMBER_OF_THREADS, 1);
 
-        for (List<FileStatus> range : Lists.partition(dirToProcess, foldersPerThread)) {
+        for (List<FileStatus> range : Lists.partition(dirToProcess, directoriesPerThread)) {
           // for each range, pick a live owner and ask it to compute bite-sized splits
           splitfutures
               .add(executor.submit(new SplitCallable(range, context.getConfiguration(), level)));
@@ -138,10 +139,10 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
           }
         }
 
-        // at least explore max_level or if we can generate numberOfMappers with 10 folder each.
+        // at least explore max_level or if we can generate numberOfMappers with 10 directory each.
         if (level >= max_level && (dirToProcess.size() == 0
                 || (splits.size() + dirToProcess.size())
-                    > NUMBER_OF_FOLDER_PER_MAPPER * numberOfMappers)) {
+                    > NUMBER_OF_DIRECTORY_PER_MAPPER * numberOfMappers)) {
           finished = true;
         }
 
@@ -154,7 +155,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
           }
         }));
 
-        LOG.info(String.format("Running: folder to process size is %d, split size is %d, ",
+        LOG.info(String.format("Running: directory to process size is %d, split size is %d, ",
             dirToProcess.size(), splits.size()));
         level++;
       }
@@ -165,9 +166,9 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
     assert splits.size() > 0;
     Collections.shuffle(splits, new Random(System.nanoTime()));
 
-    final int foldersPerSplit = Math.max(splits.size() / numberOfMappers, 1);
+    final int directoriesPerSplit = Math.max(splits.size() / numberOfMappers, 1);
 
-    return Lists.transform(Lists.partition(splits, foldersPerSplit),
+    return Lists.transform(Lists.partition(splits, directoriesPerSplit),
         new Function<List<InputSplit>, InputSplit>() {
           @Override
           public InputSplit apply(@Nullable List<InputSplit> inputSplits) {
@@ -177,20 +178,20 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
   }
 
   /**
-   * Get list of folders. Find next level of folders and return.
+   * Get list of directories. Find next level of directories and return.
    */
   class SplitCallable implements Callable<List<FileStatus>> {
     private final Configuration conf;
     private final List<FileStatus> candidates;
     private final int level;
-    private final String folderBlackList;
+    private final String directoryBlackList;
     private final boolean nofilter;
 
     public SplitCallable(List<FileStatus> candidates, Configuration conf, int level) {
       this.candidates = candidates;
       this.conf = conf;
       this.level = level;
-      this.folderBlackList = conf.get(ReplicationJob.DIRECTORY_BLACKLIST_REGEX);
+      this.directoryBlackList = conf.get(ReplicationJob.DIRECTORY_BLACKLIST_REGEX);
       this.nofilter = conf.getBoolean(NO_HIDDEN_FILE_FILTER, false);
     }
 
@@ -207,7 +208,8 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
           for (FileStatus child : nofilter ? fs.listStatus(f.getPath())
               : fs.listStatus(f.getPath(), hiddenFileFilter)) {
             if (child.isDirectory()) {
-              if (folderBlackList == null || !child.getPath().getName().matches(folderBlackList)) {
+              if (directoryBlackList == null
+                  || !child.getPath().getName().matches(directoryBlackList)) {
                 nextLevel.add(child);
               }
             }
@@ -218,7 +220,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
       }
 
       LOG.info("Thread " + Thread.currentThread().getId() + ", level " + level + ":processed "
-          + candidates.size() + " folders");
+          + candidates.size() + " directories");
 
       return nextLevel;
     }

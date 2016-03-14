@@ -55,7 +55,7 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
- * A Map/Reduce job copy hdfs files from source folders, merge the source folders,
+ * A Map/Reduce job copy hdfs files from source directories, merge the source directories,
  * and copy to destination. In case of conflict in sources, the source with largest
  * timestamp value is picked.
  */
@@ -64,7 +64,7 @@ public class ReplicationJob extends Configured implements Tool {
   private static final String SRC_PATH_CONF = "replication.src.path";
   private static final String DST_PATH_CONF = "replication.dst.path";
   private static final String COMPARE_OPTION_CONF = "replication.compare.option";
-  public static final String DIRECTORY_BLACKLIST_REGEX = "replication.folder.blacklist";
+  public static final String DIRECTORY_BLACKLIST_REGEX = "replication.directory.blacklist";
 
   private enum Operation {
     ADD,
@@ -97,22 +97,23 @@ public class ReplicationJob extends Configured implements Tool {
   }
 
   public static class ListFileMapper extends Mapper<Text, Boolean, Text, FileStatus> {
-    private String folderBlackList;
-    // Store root URI for sources and destination folder
+    private String directoryBlackList;
+    // Store root URI for sources and destination directory
     private URI [] rootUris;
 
-    private void enumDirectories(FileSystem fs, URI rootUri, Path folder, boolean recursive,
+    private void enumDirectories(FileSystem fs, URI rootUri, Path directory, boolean recursive,
         Mapper.Context context) throws IOException, InterruptedException {
       try {
-        for (FileStatus status : fs.listStatus(folder, hiddenFileFilter)) {
+        for (FileStatus status : fs.listStatus(directory, hiddenFileFilter)) {
           if (status.isDirectory()) {
             if (recursive) {
-              if (folderBlackList == null || !status.getPath().getName().matches(folderBlackList)) {
+              if (directoryBlackList == null
+                  || !status.getPath().getName().matches(directoryBlackList)) {
                 enumDirectories(fs,rootUri, status.getPath(), recursive, context);
               }
             }
           } else {
-            context.write(new Text(rootUri.relativize(folder.toUri()).getPath()),
+            context.write(new Text(rootUri.relativize(directory.toUri()).getPath()),
                     new FileStatus(status));
           }
         }
@@ -129,16 +130,16 @@ public class ReplicationJob extends Configured implements Tool {
           Stream.of(context.getConfiguration().get(SRC_PATH_CONF).split(","))).map(
             root -> new Path(root).toUri()).toArray(size -> new URI[size]
           );
-      this.folderBlackList = context.getConfiguration().get(DIRECTORY_BLACKLIST_REGEX);
+      this.directoryBlackList = context.getConfiguration().get(DIRECTORY_BLACKLIST_REGEX);
     }
 
     @Override
     protected void map(Text key, Boolean value, Context context)
         throws IOException, InterruptedException {
-      Path folder = new Path(key.toString());
-      FileSystem fileSystem = folder.getFileSystem(context.getConfiguration());
+      Path directory = new Path(key.toString());
+      FileSystem fileSystem = directory.getFileSystem(context.getConfiguration());
 
-      enumDirectories(fileSystem, findRootUri(rootUris, folder), folder, value, context);
+      enumDirectories(fileSystem, findRootUri(rootUris, directory), directory, value, context);
       LOG.info(key.toString() + " processed.");
     }
   }
@@ -157,9 +158,9 @@ public class ReplicationJob extends Configured implements Tool {
   /**
    * Compare source1 + source2 with destination.
    */
-  public static class FolderCompareReducer extends Reducer<Text, FileStatus, Text, Text> {
+  public static class DirectoryCompareReducer extends Reducer<Text, FileStatus, Text, Text> {
     private URI dstRoot;
-    // Store root URI for sources and destination folder
+    // Store root URI for sources and destination directory
     private URI [] rootUris;
     private Predicate<SimpleFileStatus> underDstRootPred;
     private EnumSet<Operation> operationSet;
@@ -354,13 +355,13 @@ public class ReplicationJob extends Configured implements Tool {
 
     options.addOption(OptionBuilder.withLongOpt("source")
             .withDescription(
-                    "Comma separated list of source folders")
+                    "Comma separated list of source directories")
             .hasArg()
             .withArgName("S")
             .create());
 
     options.addOption(OptionBuilder.withLongOpt("destination")
-            .withDescription("Copy desitnation folder")
+            .withDescription("Copy desitnation directory")
             .hasArg()
             .withArgName("D")
             .create());
@@ -379,7 +380,7 @@ public class ReplicationJob extends Configured implements Tool {
             .create());
 
     options.addOption(OptionBuilder.withLongOpt("blacklist")
-            .withDescription("Folder blacklist regex")
+            .withDescription("Directory blacklist regex")
             .hasArg()
             .withArgName("B")
             .create());
@@ -392,14 +393,17 @@ public class ReplicationJob extends Configured implements Tool {
   }
 
   /**
-   * TODO.
+   * Method to run HDFS copy job.
+   *  1. Parse program args.
+   *  2. Run two MR jobs in sequence.
    *
-   * @param args TODO
-   * @return TODO
+   * @param args program arguments
+   * @return 1 failed
+   *         0 succeeded
    *
-   * @throws Exception TODO
+   * @throws Exception IOException, InterruptedException, ClassNotFoundException
    */
-  public int run(String[] args) throws Exception {
+  public int run(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
     final CommandLineParser cmdLineParser = new BasicParser();
 
     final Options options = constructOptions();
@@ -444,22 +448,22 @@ public class ReplicationJob extends Configured implements Tool {
       if (runReplicationCompareJob(commandLine.getOptionValue("source"),
           commandLine.getOptionValue("destination"), tmpPath,
               commandLine.getOptionValue("operation")) == 0) {
-        Path tmpFolder = new Path(tmpPath);
-        FileSystem fs = tmpFolder.getFileSystem(getConf());
-        if (!fs.exists(tmpFolder)) {
-          LOG.error(tmpFolder.toString() + " folder does not exist");
+        Path tmpDirectory = new Path(tmpPath);
+        FileSystem fs = tmpDirectory.getFileSystem(getConf());
+        if (!fs.exists(tmpDirectory)) {
+          LOG.error(tmpDirectory.toString() + " directory does not exist");
           return 1;
         }
-        LOG.info("output exists: " + fs.getFileStatus(tmpFolder).toString());
+        LOG.info("output exists: " + fs.getFileStatus(tmpDirectory).toString());
         retVal = runSyncJob(commandLine.getOptionValue("source"),
                 commandLine.getOptionValue("destination"), tmpPath + "/part*",
                 commandLine.getOptionValue("output-path"));
       }
 
-      Path tmpFolder = new Path(tmpPath);
-      FileSystem fs = tmpFolder.getFileSystem(getConf());
-      if (fs.exists(tmpFolder)) {
-        fs.delete(tmpFolder, true);
+      Path tmpDirectory = new Path(tmpPath);
+      FileSystem fs = tmpDirectory.getFileSystem(getConf());
+      if (fs.exists(tmpDirectory)) {
+        fs.delete(tmpDirectory, true);
       }
       return retVal;
     }
@@ -473,9 +477,9 @@ public class ReplicationJob extends Configured implements Tool {
     job.setInputFormatClass(DirScanInputFormat.class);
     job.setMapperClass(ListFileMapper.class);
 
-    job.setReducerClass(FolderCompareReducer.class);
+    job.setReducerClass(DirectoryCompareReducer.class);
 
-    // last folder is destination, all other folders are source folder
+    // last directory is destination, all other directories are source directory
     job.getConfiguration().set(SRC_PATH_CONF, source);
     job.getConfiguration().set(DST_PATH_CONF, destination);
     job.getConfiguration().set("mapred.input.dir", Joiner.on(",").join(source, destination));

@@ -69,12 +69,12 @@ gradlew shadowjar -p main -x test
 
 * CLI options:
 ```
-  -s, --source: source folder
-  -d, --destination: destination folder. source and destination must have same relative path.
-  -o, --output: logging folder
+  -s, --source: source directory
+  -d, --destination: destination directory. source and destination must have same relative path.
+  -o, --output: logging directory
   -p, --option: checking options: comma separated option including a(add),d(delete),u(update)
   -l, --list: list file size only
-  -b, --blacklist: folder name blacklist regex
+  -b, --blacklist: directory name blacklist regex
   -dry, --dryrun: dry run mode
 ```
 

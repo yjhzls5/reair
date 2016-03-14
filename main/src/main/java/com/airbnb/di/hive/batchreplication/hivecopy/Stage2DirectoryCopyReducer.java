@@ -15,13 +15,13 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 
 /**
- * Stage 2 reducer to handle folder copy.
+ * Stage 2 reducer to handle directory copy.
  *
  * <p>Input is the files needs to be copied. Load balance is done through shuffle. Output of the job
  * is file copied or skipped.
  */
-public class Stage2FolderCopyReducer extends Reducer<LongWritable, Text, Text, Text> {
-  private static final Log LOG = LogFactory.getLog(Stage2FolderCopyReducer.class);
+public class Stage2DirectoryCopyReducer extends Reducer<LongWritable, Text, Text, Text> {
+  private static final Log LOG = LogFactory.getLog(Stage2DirectoryCopyReducer.class);
   private Configuration conf;
 
   enum CopyStatus {
@@ -29,7 +29,7 @@ public class Stage2FolderCopyReducer extends Reducer<LongWritable, Text, Text, T
     SKIPPED
   }
 
-  public Stage2FolderCopyReducer() {
+  public Stage2DirectoryCopyReducer() {
   }
 
   protected void setup(Context context) throws IOException, InterruptedException {
@@ -41,16 +41,16 @@ public class Stage2FolderCopyReducer extends Reducer<LongWritable, Text, Text, T
     for (Text value : values) {
       String[] fields = value.toString().split("\t");
       String srcFileName = fields[0];
-      String dstFolder = fields[1];
+      String dstDirectory = fields[1];
       long size = Long.valueOf(fields[2]);
       SimpleFileStatus fileStatus = new SimpleFileStatus(srcFileName, size, 0L);
       FileSystem srcFs = (new Path(srcFileName)).getFileSystem(this.conf);
-      FileSystem dstFs = (new Path(dstFolder)).getFileSystem(this.conf);
+      FileSystem dstFs = (new Path(dstDirectory)).getFileSystem(this.conf);
       String result = ReplicationUtils.doCopyFileAction(
           conf,
           fileStatus,
           srcFs,
-          dstFolder,
+          dstDirectory,
           dstFs,
           context,
           false,

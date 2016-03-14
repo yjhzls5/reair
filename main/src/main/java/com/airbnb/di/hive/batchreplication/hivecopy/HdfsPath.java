@@ -15,9 +15,9 @@ public class HdfsPath {
   private final String path;
 
   /**
-   * TODO.
+   * Construct hdfs path from a full path.
    *
-   * @param fullPath TODO
+   * @param fullPath file full path
    */
   public HdfsPath(String fullPath) {
     Matcher matcher = locationPattern.matcher(fullPath.trim());

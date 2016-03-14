@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 
 /**
  * InputFormat that scan directories bread first. It will stop at a level when it gets enough
- * splits. The InputSplit it returns will keep track if the folder needs further scan. If it does
+ * splits. The InputSplit it returns will keep track if the directory needs further scan. If it does
  * the recursive scan will be done in RecorderReader. The InputFormat will return file path as key,
  * and file size information as value.
  */
@@ -116,7 +116,7 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
   }
 
   /**
-   * Get list of folders. Find next level of folders and return.
+   * Get list of directories. Find next level of directories and return.
    */
   class SplitCallable implements Callable<List<String>> {
     private final HiveMetastoreClient client;
