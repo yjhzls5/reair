@@ -94,8 +94,7 @@ public abstract class MockClusterTest {
     srcWarehouseRoot.getFileSystem(conf).mkdirs(srcWarehouseRoot);
     destWarehouseRoot.getFileSystem(conf).mkdirs(destWarehouseRoot);
 
-    System.out
-        .println(String.format("src root: %s, dest root: %s", srcWarehouseRoot, destWarehouseRoot));
+    LOG.info(String.format("src root: %s, dest root: %s", srcWarehouseRoot, destWarehouseRoot));
 
     final Path srcTmp = new Path(makeFileUri(this.srcLocalTmp), "tmp");
     final Path destTmp = new Path(makeFileUri(this.destLocalTmp), "tmp");

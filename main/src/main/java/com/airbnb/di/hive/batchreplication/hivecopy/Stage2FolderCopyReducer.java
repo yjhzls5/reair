@@ -1,6 +1,6 @@
 package com.airbnb.di.hive.batchreplication.hivecopy;
 
-import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
+import com.airbnb.di.hive.batchreplication.SimpleFileStatus;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 
 import org.apache.commons.logging.Log;
@@ -43,7 +43,7 @@ public class Stage2FolderCopyReducer extends Reducer<LongWritable, Text, Text, T
       String srcFileName = fields[0];
       String dstFolder = fields[1];
       long size = Long.valueOf(fields[2]);
-      ExtendedFileStatus fileStatus = new ExtendedFileStatus(srcFileName, size, 0L);
+      SimpleFileStatus fileStatus = new SimpleFileStatus(srcFileName, size, 0L);
       FileSystem srcFs = (new Path(srcFileName)).getFileSystem(this.conf);
       FileSystem dstFs = (new Path(dstFolder)).getFileSystem(this.conf);
       String result = ReplicationUtils.doCopyFileAction(

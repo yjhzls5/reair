@@ -12,7 +12,7 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
 
-import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
+import com.airbnb.di.hive.batchreplication.SimpleFileStatus;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 
 import org.apache.commons.cli.BasicParser;
@@ -143,7 +143,7 @@ public class ReplicationJob extends Configured implements Tool {
     }
   }
 
-  private static Text generateValue(String action, ExtendedFileStatus fileStatus) {
+  private static Text generateValue(String action, SimpleFileStatus fileStatus) {
     ArrayList<String> fields = new ArrayList<>();
 
     fields.add(action);
@@ -161,14 +161,14 @@ public class ReplicationJob extends Configured implements Tool {
     private URI dstRoot;
     // Store root URI for sources and destination folder
     private URI [] rootUris;
-    private Predicate<ExtendedFileStatus> underDstRootPred;
+    private Predicate<SimpleFileStatus> underDstRootPred;
     private EnumSet<Operation> operationSet;
 
-    private ExtendedFileStatus findSrcFileStatus(List<ExtendedFileStatus> fileStatuses) {
+    private SimpleFileStatus findSrcFileStatus(List<SimpleFileStatus> fileStatuses) {
       // pick copy source. The source is the one with largest timestamp value
-      return Ordering.from(new Comparator<ExtendedFileStatus>() {
+      return Ordering.from(new Comparator<SimpleFileStatus>() {
         @Override
-        public int compare(ExtendedFileStatus o1, ExtendedFileStatus o2) {
+        public int compare(SimpleFileStatus o1, SimpleFileStatus o2) {
           return Long.compare(o1.getModificationTime(), o2.getModificationTime());
         }
       }).max(fileStatuses);
@@ -178,11 +178,11 @@ public class ReplicationJob extends Configured implements Tool {
     protected void setup(Context context) throws IOException, InterruptedException {
       super.setup(context);
       this.dstRoot = new Path(context.getConfiguration().get(DST_PATH_CONF)).toUri();
-      this.underDstRootPred = new Predicate<ExtendedFileStatus>() {
+      this.underDstRootPred = new Predicate<SimpleFileStatus>() {
         @Override
-        public boolean apply(@Nullable ExtendedFileStatus extendedFileStatus) {
-          return !dstRoot.relativize(extendedFileStatus.getUri())
-                  .equals(extendedFileStatus.getUri());
+        public boolean apply(@Nullable SimpleFileStatus simpleFileStatus) {
+          return !dstRoot.relativize(simpleFileStatus.getUri())
+                  .equals(simpleFileStatus.getUri());
         }
       };
 
@@ -207,21 +207,21 @@ public class ReplicationJob extends Configured implements Tool {
     @Override
     protected void reduce(Text key, Iterable<FileStatus> values, Context context)
         throws IOException, InterruptedException {
-      ListMultimap<String, ExtendedFileStatus> fileStatusHashMap = LinkedListMultimap.create();
+      ListMultimap<String, SimpleFileStatus> fileStatusHashMap = LinkedListMultimap.create();
 
       for (FileStatus fs : values) {
-        ExtendedFileStatus efs =
-            new ExtendedFileStatus(fs.getPath(), fs.getLen(), fs.getModificationTime());
+        SimpleFileStatus efs =
+            new SimpleFileStatus(fs.getPath(), fs.getLen(), fs.getModificationTime());
         URI rootUris = findRootUri(this.rootUris, fs.getPath());
         fileStatusHashMap.put(rootUris.relativize(fs.getPath().toUri()).getPath(), efs);
       }
 
       for (String relativePath : fileStatusHashMap.keySet()) {
-        List<ExtendedFileStatus> fileStatuses = fileStatusHashMap.get(relativePath);
-        ArrayList<ExtendedFileStatus> srcFileStatus =
+        List<SimpleFileStatus> fileStatuses = fileStatusHashMap.get(relativePath);
+        ArrayList<SimpleFileStatus> srcFileStatus =
             Lists.newArrayList(Iterables.filter(fileStatuses,
                     Predicates.not(this.underDstRootPred)));
-        ArrayList<ExtendedFileStatus> dstFileStatus =
+        ArrayList<SimpleFileStatus> dstFileStatus =
             Lists.newArrayList(Iterables.filter(fileStatuses, this.underDstRootPred));
 
         // If destination has file,
@@ -233,7 +233,7 @@ public class ReplicationJob extends Configured implements Tool {
           //     update or delete.
           if (srcFileStatus.size() > 0) {
             // pick source first. The source is the one with largest timestamp value
-            ExtendedFileStatus finalSrcFileStatus = findSrcFileStatus(srcFileStatus);
+            SimpleFileStatus finalSrcFileStatus = findSrcFileStatus(srcFileStatus);
 
             // If file size is different we need to copy
             if (finalSrcFileStatus.getFileSize() != dstFileStatus.get(0).getFileSize()) {
@@ -254,7 +254,7 @@ public class ReplicationJob extends Configured implements Tool {
           // Destination does not exist. So we need to add the file if needed.
           if (operationSet.contains(Operation.ADD)) {
             // if no destination, then this is a new file.
-            ExtendedFileStatus src = findSrcFileStatus(srcFileStatus);
+            SimpleFileStatus src = findSrcFileStatus(srcFileStatus);
             context.write(new Text(relativePath),
                     generateValue(Operation.ADD.toString(), src));
           }
@@ -300,8 +300,8 @@ public class ReplicationJob extends Configured implements Tool {
 
         // We only support add operation for now.
         if (operation == Operation.ADD || operation == Operation.UPDATE) {
-          ExtendedFileStatus fileStatus =
-              new ExtendedFileStatus(fields[2], Long.valueOf(fields[3]), Long.valueOf(fields[4]));
+          SimpleFileStatus fileStatus =
+              new SimpleFileStatus(fields[2], Long.valueOf(fields[3]), Long.valueOf(fields[4]));
           Path dstFile = new Path(dstRoot, fields[0]);
 
           FileSystem srcFs = (new Path(fileStatus.getFullPath()))
@@ -509,7 +509,7 @@ public class ReplicationJob extends Configured implements Tool {
 
     FileInputFormat.setInputPaths(job, new Path(input));
     FileInputFormat.setMaxInputSplitSize(job,
-            this.getConf().getLong("mapreduce.input.fileinputformat.split.maxsize", 60000L));
+            this.getConf().getLong( FileInputFormat.SPLIT_MAXSIZE, 60000L));
     FileOutputFormat.setOutputPath(job, new Path(output));
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
 

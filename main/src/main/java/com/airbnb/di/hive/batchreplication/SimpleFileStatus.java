@@ -6,7 +6,7 @@ import org.apache.hadoop.fs.Path;
 
 import java.net.URI;
 
-public class ExtendedFileStatus {
+public class SimpleFileStatus {
   private final long fileSize;
   private final long modificationTime;
   private final Path path;
@@ -18,7 +18,7 @@ public class ExtendedFileStatus {
    * @param fileSize TODO
    * @param modificationTime TODO
    */
-  public ExtendedFileStatus(String path, long fileSize, long modificationTime) {
+  public SimpleFileStatus(String path, long fileSize, long modificationTime) {
     this.fileSize = fileSize;
     this.modificationTime = modificationTime;
     this.path = new Path(path);
@@ -31,14 +31,10 @@ public class ExtendedFileStatus {
    * @param fileSize TODO
    * @param modificationTime TODO
    */
-  public ExtendedFileStatus(Path path, long fileSize, long modificationTime) {
+  public SimpleFileStatus(Path path, long fileSize, long modificationTime) {
     this.fileSize = fileSize;
     this.modificationTime = modificationTime;
     this.path = path;
-  }
-
-  public String getHostName() {
-    return path.toUri().getHost();
   }
 
   public String getPath() {

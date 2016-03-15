@@ -3,14 +3,12 @@ package com.airbnb.di.hive.replication;
 import com.google.common.base.Joiner;
 
 import com.airbnb.di.common.FsUtils;
-import com.airbnb.di.hive.batchreplication.ExtendedFileStatus;
+import com.airbnb.di.hive.batchreplication.SimpleFileStatus;
 import com.airbnb.di.hive.common.HiveMetastoreClient;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveParameterKeys;
-import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 
-import org.apache.commons.cli.Option;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -562,7 +560,7 @@ public class ReplicationUtils {
    */
   public static String doCopyFileAction(
       Configuration conf,
-      ExtendedFileStatus srcFileStatus,
+      SimpleFileStatus srcFileStatus,
       FileSystem srcFs,
       String dstFolderPath,
       FileSystem dstFs,
