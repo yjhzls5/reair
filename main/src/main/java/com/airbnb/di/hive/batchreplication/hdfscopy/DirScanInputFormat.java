@@ -139,7 +139,8 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
           }
         }
 
-        // at least explore max_level or if we can generate numberOfMappers with 10 directory each.
+        // at least explore max_level or if we can generate numberOfMappers with NUMBER_OF_DIRECTORY_PER_MAPPER
+        // directories for each mapper.
         if (level >= max_level && (dirToProcess.size() == 0
                 || (splits.size() + dirToProcess.size())
                     > NUMBER_OF_DIRECTORY_PER_MAPPER * numberOfMappers)) {
