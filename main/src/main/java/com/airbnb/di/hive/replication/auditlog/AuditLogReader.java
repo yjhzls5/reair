@@ -41,6 +41,23 @@ public class AuditLogReader {
   private Queue<AuditLogEntry> auditLogEntries;
   private RetryingTaskRunner retryingTaskRunner;
 
+  // Set the isolation level to serializable to prevent an issue where two writers insert a row into
+  // a table, but the order of visibility of the rows don't correlate with the id - an
+  // auto-incrementing column in MySQL. The case that was seemingly observed was related to the
+  // follow scenario:
+  //
+  // writer 1 starts a transaction to insert a row with auto-assigned id=1,
+  // writer 2 starts a transaction insert a row with auto-assigned id=2
+  // writer 2 commits a transaction row with id=2
+  // ...
+  //
+  // After writer 2 starts a transaction to write the row with id=2, it's apparently possible to
+  // observe a row with id=2 but not id=1 using a query like "SELECT ... WHERE id > 0" with the
+  // default transaction isolation level. If this happens, then the reader could inadvertently skip
+  // entries. By setting the level to serializable, the query should get read locks on the
+  // appropriate rows to prevent observation of inconsistent data.
+  private int isolationLevel = Connection.TRANSACTION_SERIALIZABLE;
+
   /**
    * Constructs an AuditLogReader.
    *
@@ -153,6 +170,7 @@ public class AuditLogReader {
         + " subquery";
     String query = String.format(queryFormatString, auditLogTableName, lastReadId, ROW_FETCH_SIZE);
     Connection connection = dbConnectionFactory.getConnection();
+    connection.setTransactionIsolation(isolationLevel);
 
     PreparedStatement ps = connection.prepareStatement(query);
     LOG.debug("Executing: " + query);
@@ -190,6 +208,7 @@ public class AuditLogReader {
         idsToRead.getMinimumLong(), idsToRead.getMaximumLong());
 
     Connection connection = dbConnectionFactory.getConnection();
+    connection.setTransactionIsolation(isolationLevel);
     PreparedStatement ps = connection.prepareStatement(query);
 
     int index = 1;
@@ -368,6 +387,7 @@ public class AuditLogReader {
   public synchronized Optional<Long> getMaxId() throws SQLException {
     String query = String.format("SELECT MAX(id) FROM %s", auditLogTableName);
     Connection connection = dbConnectionFactory.getConnection();
+    connection.setTransactionIsolation(isolationLevel);
     PreparedStatement ps = connection.prepareStatement(query);
 
     ResultSet rs = ps.executeQuery();
