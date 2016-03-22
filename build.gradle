@@ -5,8 +5,16 @@ allprojects  {
 
 subprojects {
   configurations {
-    checksytleOverride
+    checkstyleOverride
     provided
+    testCompileOverride
+  }
+
+  configurations.all {
+    // Version conflict between velocity:1.7 (depends on common-lang:2.4) and various hadoop
+    // libraries, e.g. hadoop-common:jar:2.5.0-cdh5.3.3 (depend on common-lang2.6). Here we force
+    // common-lang:2.6 to be used. This is dangerous, but common-lang:2.6 seems to be compatible
+    // with velocity:1.7, so keep it for now, until the conflict can be fixed.
   }
 
   apply plugin: 'checkstyle'
@@ -16,22 +24,27 @@ subprojects {
   sourceSets {
     main {
       compileClasspath += configurations.provided
+      runtimeClasspath += configurations.provided
     }
     test {
-      compileClasspath += configurations.provided
-      runtimeClasspath += configurations.provided
+      compileClasspath = configurations.testCompileOverride +
+        sourceSets.test.compileClasspath + configurations.provided
+      runtimeClasspath = configurations.testCompileOverride +
+        sourceSets.test.runtimeClasspath + configurations.provided
     }
   }
 
   dependencies {
-    checksytleOverride('com.puppycrawl.tools:checkstyle:6.11.2')
+    checkstyleOverride('com.puppycrawl.tools:checkstyle:6.11.2')
   }
 
   tasks.withType(Checkstyle) {
-    checkstyleClasspath = project.configurations.checksytleOverride
+    checkstyleClasspath = project.configurations.checkstyleOverride
     configFile rootProject.file('build-config/google_checkstyle.xml')
     checkstyleMain.exclude '**/thrift/**'
   }
+  // TODO Not ideal because linting information is displayed even when the build failed for a
+  // different reason
   project.gradle.buildFinished { buildResult ->
     if (buildResult.getFailure() != null) {
       println "Reports: " + checkstyleMain.reports.getXml().getDestination().text

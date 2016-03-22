@@ -1,4 +1,5 @@
 description = 'Airbnb ReAir Thrift Bindings'
+
 dependencies {
-  compile(group: 'org.apache.thrift', name: 'libthrift', version:'0.9.1')
+  provided(group: 'org.apache.thrift', name: 'libthrift', version:'0.9.1')
 }
