@@ -57,6 +57,4 @@ service TReplicationService {
 
   // Get the lag for replication process in ms
   i64 getLag();
-
-
 }

@@ -24,7 +24,6 @@ CREATE TABLE `replication_jobs` (
 )
 
 -- Holds misc. key value pairs
-
 CREATE TABLE `key_value` (
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `key_string` varchar(256) NOT NULL,
