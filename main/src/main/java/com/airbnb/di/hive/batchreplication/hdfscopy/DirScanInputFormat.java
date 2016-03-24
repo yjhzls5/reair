@@ -32,9 +32,9 @@ import javax.annotation.Nullable;
 
 /**
  * InputFormat that scan directories breadth first. It will stop at a level when it gets enough
- * splits. The InputSplit it returns will keep track if the directory needs further scan. If it does
- * the recursive scan will be done in RecorderReader. The InputFormat will return file path as key,
- * and file size information as value.
+ * splits. The InputSplit it returns will keep track if the directory needs further scanning.
+ * If it does, the recursive scan will be done in RecorderReader. The InputFormat will return
+ * file path as key and file size information as value.
  */
 public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
   private static final Log LOG = LogFactory.getLog(DirScanInputFormat.class);
@@ -45,7 +45,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
     }
   };
   private static final int NUMBER_OF_THREADS = 16;
-  private static final int NUMBER_OF_DIRECTORY_PER_MAPPER = 10;
+  private static final int NUMBER_OF_DIRECTORIES_PER_MAPPER = 10;
   public static final String NO_HIDDEN_FILE_FILTER = "replication.inputformat.nohiddenfilefilter";
   public static final String DIRECTORY_TRAVERSE_MAX_LEVEL =
           "replication.inputformat.max.traverse.level";
@@ -140,10 +140,10 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
         }
 
         // at least explore max_level or if we can generate numberOfMappers with
-        // NUMBER_OF_DIRECTORY_PER_MAPPER directories for each mapper.
+        // NUMBER_OF_DIRECTORIES_PER_MAPPER directories for each mapper.
         if (level >= max_level && (dirToProcess.size() == 0
                 || (splits.size() + dirToProcess.size())
-                    > NUMBER_OF_DIRECTORY_PER_MAPPER * numberOfMappers)) {
+                    > NUMBER_OF_DIRECTORIES_PER_MAPPER * numberOfMappers)) {
           finished = true;
         }
 

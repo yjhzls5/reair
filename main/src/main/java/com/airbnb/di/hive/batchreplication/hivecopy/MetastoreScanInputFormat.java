@@ -116,7 +116,8 @@ public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
   }
 
   /**
-   * Get list of directories. Find next level of directories and return.
+   * Get list of tables from databases in parallel. Each thread will work on database candidates
+   * and generate list of table names in those databases.
    */
   class SplitCallable implements Callable<List<String>> {
     private final HiveMetastoreClient client;

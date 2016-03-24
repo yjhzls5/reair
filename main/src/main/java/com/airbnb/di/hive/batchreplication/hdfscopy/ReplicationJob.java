@@ -55,9 +55,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
- * A Map/Reduce job copy hdfs files from source directories, merge the source directories,
- * and copy to destination. In case of conflict in sources, the source with largest
- * timestamp value is picked.
+ * A Map/Reduce job that copies HDFS files from source directories to a destination directory.
+ * In case of conflict in sources, the source with largest timestamp value is picked.
  */
 public class ReplicationJob extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(ReplicationJob.class);
@@ -398,8 +397,7 @@ public class ReplicationJob extends Configured implements Tool {
    *  2. Run two MR jobs in sequence.
    *
    * @param args program arguments
-   * @return 1 failed
-   *         0 succeeded
+   * @return 0 on success, 1 on failure
    *
    * @throws Exception IOException, InterruptedException, ClassNotFoundException
    */
