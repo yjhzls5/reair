@@ -7,12 +7,14 @@ import org.apache.hadoop.hive.ql.hooks.Entity;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TJSONProtocol;
 
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,15 +42,15 @@ public class ObjectLogModule extends BaseLogModule {
   private final long auditLogId;
 
   /**
-   * TODO.
+   * Constructor.
    *
-   * @param connection TODO
-   * @param sessionState TODO
-   * @param readEntities TODO
-   * @param writeEntities TODO
-   * @param auditLogId TODO
+   * @param connection the connection to use for connecting to the DB
+   * @param sessionState session information from Hive for this queyr
+   * @param readEntities the entities that were read by the query
+   * @param writeEntities the entities that were written by the query
+   * @param auditLogId the audit log ID from the core log module that's associated with this query
    *
-   * @throws ConfigurationException TODO
+   * @throws ConfigurationException if there's an error with the configuration
    */
   public ObjectLogModule(final Connection connection,
                          final SessionState sessionState,
@@ -63,11 +65,12 @@ public class ObjectLogModule extends BaseLogModule {
   }
 
   /**
-   * TODO.
+   * Insert serialized forms of the entities into the DB.
    *
-   * @throws Exception TODO
+   * @throws EntityException if there's an error processing the entity
+   * @throws SQLException if there's an error inserting into the DB
    */
-  public void run() throws Exception {
+  public void run() throws SQLException, EntityException {
     // Write out the serialized output objects to a separate table
     // in separate statements. Attempting to write all the objects
     // in a single statement can result in MySQL packet size errors.
@@ -88,8 +91,7 @@ public class ObjectLogModule extends BaseLogModule {
     // technically changed as well. Record this in the output
     // objects table as a REFERENCE_TABLE
     Set<org.apache.hadoop.hive.ql.metadata.Table>
-        tableForPartition =
-        new HashSet<org.apache.hadoop.hive.ql.metadata.Table>();
+        tableForPartition = new HashSet<>();
 
     String commandType = sessionState.getCommandType();
     // TODO: ALTERTABLE_EXCHANGEPARTITION is not yet implemented in Hive
@@ -153,23 +155,26 @@ public class ObjectLogModule extends BaseLogModule {
 
   /**
    * Insert the given entity into the objects table using the given {@code ps}.
-   * @param ps TODO
-   * @param auditLogId TODO
-   * @param category TODO
-   * @param entity TODO
-   * @throws Exception TODO
+   *
+   * @param ps the prepared statemtn to use
+   * @param auditLogId the audit log ID associated with the Hive query for this audit log entry
+   * @param category the category of the object
+   * @param entity the entity associated with this query
+   *
+   * @throws EntityException if there's an error processing this entity
+   * @throws SQLException if there's an error inserting into the DB.
    */
   private static void addToObjectsTable(
                           PreparedStatement ps,
                           long auditLogId,
                           ObjectCategory category,
-                          Entity entity) throws Exception {
+                          Entity entity) throws SQLException, EntityException {
     int psIndex = 1;
     ps.setLong(psIndex++, auditLogId);
     ps.setString(psIndex++, category.toString());
     ps.setString(psIndex++, entity.getType().toString());
     ps.setString(psIndex++, toIdentifierString(entity));
-    ps.setString(psIndex++, toJson(entity));
+    ps.setString(psIndex, toJson(entity));
     ps.executeUpdate();
   }
 
@@ -177,11 +182,12 @@ public class ObjectLogModule extends BaseLogModule {
    * Convert the given entity into a string that can be used to identify the
    * object in the audit log table.
    *
-   * @param entity TODO
+   * @param entity the entity to convert
    * @return a string representing {@code e}
-   * @throws Exception TODO
+   *
+   * @throws EntityException if there's an error getting the location for the entity
    */
-  private static String toIdentifierString(Entity entity) throws Exception {
+  private static String toIdentifierString(Entity entity) throws EntityException {
     switch (entity.getType()) {
       case DATABASE:
         return entity.getDatabase().getName();
@@ -197,9 +203,13 @@ public class ObjectLogModule extends BaseLogModule {
             entity.getPartition().getName());
       case LOCAL_DIR:
       case DFS_DIR:
-        return entity.getLocation().toString();
+        try {
+          return entity.getLocation().toString();
+        } catch (Exception e) {
+          throw new EntityException(e);
+        }
       default:
-        throw new UnhandledTypeExecption("Unhandled type: "
+        throw new EntityException("Unhandled type: "
             + entity.getType() + " entity: " + entity);
     }
   }
@@ -209,35 +219,51 @@ public class ObjectLogModule extends BaseLogModule {
    * @param entity the entity to convert.
    *
    * @return a JSON representation of {@code e}
-   * @throws Exception@
+   * @throws EntityException if there's an error getting the location for the entity
    */
-  private static String toJson(Entity entity)
-      throws Exception {
-    TSerializer serializer = new TSerializer(new TJSONProtocol.Factory());
-    switch (entity.getType()) {
-      case DATABASE:
-        Database db = entity.getDatabase();
-        return serializer.toString(db);
-      case TABLE:
-        Table tableWithLocation = new Table(
-            entity.getTable().getTTable());
-        URI dataLocation = entity.getLocation();
-        tableWithLocation.getSd().setLocation(
-            dataLocation == null ? null : dataLocation.toString());
-        return serializer.toString(entity.getTable().getTTable());
-      case PARTITION:
-      case DUMMYPARTITION:
-        Partition partitionWithLocation = new Partition(
-            entity.getPartition().getTPartition());
-        partitionWithLocation.getSd().setLocation(
-            entity.getPartition().getDataLocation().toString());
-        return serializer.toString(entity.getPartition().getTPartition());
-      case LOCAL_DIR:
-      case DFS_DIR:
-        return entity.getLocation().toString();
-      default:
-        throw new UnhandledTypeExecption("Unhandled type: "
-            + entity.getType() + " entity: " + entity);
+  private static String toJson(Entity entity) throws EntityException {
+    try {
+      TSerializer serializer = new TSerializer(new TJSONProtocol.Factory());
+      switch (entity.getType()) {
+        case DATABASE:
+          Database db = entity.getDatabase();
+          return serializer.toString(db);
+        case TABLE:
+          Table tableWithLocation = new Table(
+              entity.getTable().getTTable());
+
+          URI dataLocation;
+
+          try {
+            dataLocation = entity.getLocation();
+          } catch (Exception e) {
+            throw new EntityException(e);
+          }
+
+          tableWithLocation.getSd().setLocation(
+              dataLocation == null ? null : dataLocation.toString());
+          return serializer.toString(entity.getTable().getTTable());
+        case PARTITION:
+        case DUMMYPARTITION:
+          Partition partitionWithLocation = new Partition(
+              entity.getPartition().getTPartition());
+          partitionWithLocation.getSd().setLocation(
+              entity.getPartition().getDataLocation().toString());
+          return serializer.toString(entity.getPartition().getTPartition());
+        case LOCAL_DIR:
+        case DFS_DIR:
+          try {
+            return entity.getLocation().toString();
+          } catch (Exception e) {
+            throw new EntityException(e);
+          }
+        default:
+          throw new EntityException("Unhandled type: "
+              + entity.getType() + " entity: " + entity);
+      }
+    } catch (TException e) {
+      throw new EntityException(e);
     }
+
   }
 }

@@ -13,11 +13,11 @@ public class ConfigurationDbCredentials implements DbCredentials {
   private String passwordKey;
 
   /**
-   * TODO.
+   * Constructor.
    *
-   * @param conf TODO
-   * @param usernameKey TODO
-   * @param passwordKey TODO
+   * @param conf configuration object that contain the credentials
+   * @param usernameKey the key to use for fetching the username
+   * @param passwordKey the key to use for feting the password
    */
   public ConfigurationDbCredentials(Configuration conf, String usernameKey, String passwordKey) {
     this.conf = conf;

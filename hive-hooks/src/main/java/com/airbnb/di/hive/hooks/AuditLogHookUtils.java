@@ -23,12 +23,17 @@ public class AuditLogHookUtils {
   /**
    * In the MySQL DB, setup the DB and the tables for the audit log to work
    * properly.
-   * @param connectionFactory TODO
-   * @param dbName TODO
-   * @param auditCoreLogTableName TODO
-   * @param objectsTableName TODO
-   * @param mapRedStatsTableName TODO
-   * @throws java.sql.SQLException TODO
+   * @param connectionFactory a factory for creating connections to the DB that should contain the
+   *                          tables
+   * @param dbName the name of the MySQL DB
+   * @param auditCoreLogTableName the name of the table containing core audit log data (e.g. query
+   *                              string)
+   * @param objectsTableName the name of the table containing the serialized Thrift objects
+   *                         associated with the query.
+   * @param mapRedStatsTableName the name of the table containing the stats about the map-reduce
+   *                             jobs associated with the query
+   *
+   * @throws SQLException if there's an error creating the tables on the DB
    */
   public static void setupAuditLogTables(
       DbConnectionFactory connectionFactory,
@@ -106,19 +111,19 @@ public class AuditLogHookUtils {
   }
 
   /**
-   * TODO.
+   * Insert an audit log entry that represent a query with the supplied values.
    *
-   * @param auditLogHook TODO
-   * @param operation TODO
-   * @param command TODO
-   * @param inputTables TODO
-   * @param inputPartitions TODO
-   * @param outputTables TODO
-   * @param outputPartitions TODO
-   * @param mapRedStatsPerStage TODO
-   * @param hiveConf TODO
+   * @param auditLogHook the audit log hook to use
+   * @param operation the type of Hive operation (e.g. ALTER TABLE, QUERY, etc)
+   * @param command the command / query string that was run
+   * @param inputTables the tables that were read by the query
+   * @param inputPartitions the partitions that were read by the query
+   * @param outputTables the tables that were modified by the query
+   * @param outputPartitions the partitions that were modified by the query
+   * @param mapRedStatsPerStage map between the name of the stage and map-reduce job statistics
+   * @param hiveConf Hive configuration
    *
-   * @throws Exception TODO
+   * @throws Exception if there's an error inserting into the audit log
    */
   public static void insertAuditLogEntry(
       AuditLogHook auditLogHook,

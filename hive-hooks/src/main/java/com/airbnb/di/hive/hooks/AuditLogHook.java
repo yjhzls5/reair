@@ -30,9 +30,9 @@ public class AuditLogHook implements PostExecute {
   public static Logger LOG = Logger.getLogger(AuditLogHook.class);
 
   // Number of attempts to make
-  private static int NUM_ATTEMPTS = 10;
+  private static final int NUM_ATTEMPTS = 10;
   // Will wait BASE_SLEEP * 2 ^ (attempt no.) between attempts
-  private static int BASE_SLEEP = 1;
+  private static final int BASE_SLEEP = 1;
 
   public static String DB_USERNAME =
       "airbnb.hive.audit_log.db.username";
@@ -110,14 +110,14 @@ public class AuditLogHook implements PostExecute {
   /**
    * Runs the individual audit log modules that make up this hook.
    *
-   * @param connection TODO
-   * @param sessionState TODO
-   * @param readEntities TODO
-   * @param writeEntities TODO
-   * @param userGroupInformation TODO
+   * @param connection connection to the DB for inserting data
+   * @param sessionState Hive session information associated with the query
+   * @param readEntities the entities that were read by the query
+   * @param writeEntities the entities that were written by the query
+   * @param userGroupInformation information about the user that ran the query
    * @return the id column in sql for the core audit log entry for the query
    *
-   * @throws Exception TODO
+   * @throws Exception if there's an error running the modules
    */
   protected long runLogModules(final Connection connection,
                                final SessionState sessionState,

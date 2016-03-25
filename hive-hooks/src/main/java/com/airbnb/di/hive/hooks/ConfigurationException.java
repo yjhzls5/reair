@@ -1,5 +1,8 @@
 package com.airbnb.di.hive.hooks;
 
+/**
+ * An exception thrown when there is an error with the configuration.
+ */
 public class ConfigurationException extends Exception {
   public ConfigurationException() {}
 

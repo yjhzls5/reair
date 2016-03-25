@@ -9,16 +9,17 @@ import java.io.IOException;
  */
 public class TestDbCredentials implements DbCredentials {
   @Override
-  public void refreshCredsIfNecessary() throws IOException {
+
+  public void refreshCredsIfNecessary() {
   }
 
   @Override
-  public String getReadWriteUsername() throws IOException {
+  public String getReadWriteUsername() {
     return "root";
   }
 
   @Override
-  public String getReadWritePassword() throws IOException {
+  public String getReadWritePassword() {
     return "";
   }
 }

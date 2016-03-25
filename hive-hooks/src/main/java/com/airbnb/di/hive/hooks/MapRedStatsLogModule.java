@@ -15,6 +15,7 @@ import org.apache.hadoop.mapred.Counters.Group;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Map;
 
 /**
@@ -37,9 +38,9 @@ public class MapRedStatsLogModule extends BaseLogModule {
   /**
    * Runs the log module, writing the relevant audit data to the DB.
    *
-   * @throws Exception TODO
+   * @throws SerializationException if there's an error serializing data.
    */
-  public void run() throws Exception {
+  public void run() throws SerializationException, SQLException {
     final String query = String.format("INSERT INTO %s ("
         + "audit_log_id, "
         + "stage, "
@@ -61,7 +62,7 @@ public class MapRedStatsLogModule extends BaseLogModule {
       ps.setLong(psIndex++, stats.getNumMap());
       ps.setLong(psIndex++, stats.getNumReduce());
       ps.setLong(psIndex++, stats.getCpuMSec());
-      ps.setString(psIndex++, toJson(stats.getCounters()));
+      ps.setString(psIndex, toJson(stats.getCounters()));
       ps.executeUpdate();
     }
   }
@@ -72,10 +73,10 @@ public class MapRedStatsLogModule extends BaseLogModule {
    * @param counters the Hadoop counters to convert
    * @return the JSON representation of the given counters
    *
-   * @throws JsonProcessingException if mapping the counters to JSON fails
+   * @throws SerializationException if mapping the counters to JSON fails
    */
   @VisibleForTesting
-  static String toJson(Counters counters) throws JsonProcessingException {
+  static String toJson(Counters counters) throws SerializationException {
     ArrayNode countersJsonNode = JsonNodeFactory.instance.arrayNode();
 
     ArrayNode groupsJsonNode = JsonNodeFactory.instance.arrayNode();
@@ -93,6 +94,10 @@ public class MapRedStatsLogModule extends BaseLogModule {
     }
 
     ObjectMapper mapper = new ObjectMapper();
-    return mapper.writeValueAsString(groupsJsonNode);
+    try {
+      return mapper.writeValueAsString(groupsJsonNode);
+    } catch (JsonProcessingException e) {
+      throw new SerializationException(e);
+    }
   }
 }

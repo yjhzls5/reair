@@ -9,15 +9,19 @@ import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
+import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Log module for adding core query audit data to the DB.
+ * Log module for adding core query audit data for a query to the DB.
  */
 public class AuditCoreLogModule extends BaseLogModule {
 
@@ -41,15 +45,15 @@ public class AuditCoreLogModule extends BaseLogModule {
   private final UserGroupInformation userGroupInformation;
 
   /**
-   * TODO.
+   * Constructor.
    *
-   * @param connection TODO
-   * @param sessionState TODO
-   * @param readEntities TODO
-   * @param writeEntities TODO
-   * @param userGroupInformation TODO
+   * @param connection the connection to use for connecting to the DB
+   * @param sessionState session information from Hive for this query
+   * @param readEntities the entities that were read by the query
+   * @param writeEntities the entities that were written by the query
+   * @param userGroupInformation information about the user that ran the query
    *
-   * @throws ConfigurationException TODO
+   * @throws ConfigurationException if there's an error with the configuration for the hook
    */
   public AuditCoreLogModule(final Connection connection,
                             final SessionState sessionState,
@@ -68,9 +72,12 @@ public class AuditCoreLogModule extends BaseLogModule {
    *
    * @return the id for the inserted core audit log entry
    *
-   * @throws Exception TODO
+   * @throws EntityException if there's an error processing the entities associated with this query
+   * @throws SQLException if there's an error querying the DB
+   * @throws UnknownHostException if there's an error getting the IP of this host
    */
-  public long run() throws Exception {
+  public long run()
+      throws EntityException, SerializationException, SQLException, UnknownHostException {
     final String query = String.format("INSERT INTO %s ("
         + "query_id, "
         + "command_type, "
@@ -98,8 +105,7 @@ public class AuditCoreLogModule extends BaseLogModule {
 
     ResultSet rs = ps.getGeneratedKeys();
     rs.next();
-    long auditLogId = rs.getLong(1);
-    return auditLogId;
+    return rs.getLong(1);
   }
 
   /**
@@ -118,14 +124,15 @@ public class AuditCoreLogModule extends BaseLogModule {
    * representation of the object will be used instead. e.g.
    * "default.my_table" or "default.my_partitioned_table/ds=1"
    *
-   * @param entities TODO
-   * @param identifierOnly TODO
-   * @return TODO
-   * @throws Exception TODO
+   * @param entities the entities to convert into JSON
+   * @param identifierOnly whether to use identifiers instead of the full JSON representation
+   * @return a JSON string representing the entities
+   * @throws EntityException if there's an error processing an entity
+   * @throws SerializationException if there's an error serializing to JSON
    */
   private static String toJson(Collection<? extends Entity> entities,
                                boolean identifierOnly)
-      throws Exception {
+      throws EntityException, SerializationException {
 
     if (entities == null) {
       return new JSONObject().toString();
@@ -160,10 +167,18 @@ public class AuditCoreLogModule extends BaseLogModule {
               e.getPartition().getName());
           break;
         case LOCAL_DIR:
-          localDirectories.add(e.getLocation().toString());
+          try {
+            localDirectories.add(e.getLocation().toString());
+          } catch (Exception ex) {
+            throw new EntityException(ex);
+          }
           break;
         case DFS_DIR:
-          dfsDirectories.add(e.getLocation().toString());
+          try {
+            dfsDirectories.add(e.getLocation().toString());
+          } catch (Exception ex) {
+            throw new EntityException(ex);
+          }
           break;
         case UDF:
           LOG.info(
@@ -171,7 +186,7 @@ public class AuditCoreLogModule extends BaseLogModule {
                   + "displayName: " + e.getUDF().getDisplayName());
           break;
         default:
-          throw new UnhandledTypeExecption("Unhandled type: "
+          throw new EntityException("Unhandled type: "
               + e.getType() + " entity: " + e);
       }
     }
@@ -184,80 +199,83 @@ public class AuditCoreLogModule extends BaseLogModule {
     JSONArray jsonDummyPartitions = new JSONArray();
     JSONArray jsonLocalDirs = new JSONArray();
     JSONArray jsonDfsDirs = new JSONArray();
-
-    for (Database db : databases) {
-      if (identifierOnly) {
-        String jsonDatabase = String.format("%s", db.getName());
-        jsonDatabases.put(jsonDatabase);
-      } else {
-        jsonDatabases.put(new JSONObject(serializer.toString(db)));
-      }
-    }
-
-    for (Table t : tables) {
-      if (identifierOnly) {
-        String jsonTable = String.format("%s.%s", t.getDbName(),
-            t.getTableName());
-        jsonTables.put(jsonTable);
-      } else {
-        jsonTables.put(new JSONObject(serializer.toString(t)));
-      }
-    }
-
-    for (Partition p : partitions) {
-      if (identifierOnly) {
-        String partitionName = String.format("%s.%s/%s", p.getDbName(),
-            p.getTableName(),
-            partitionNames.get(p));
-        jsonPartitions.put(partitionName);
-      } else {
-        jsonPartitions.put(new JSONObject(serializer.toString(p)));
-      }
-    }
-
-    for (Partition p : dummyPartitions) {
-      if (identifierOnly) {
-        String dummyPartitionJson = String.format("%s.%s/%s", p.getDbName(),
-            p.getTableName(),
-            partitionNames.get(p));
-        jsonDummyPartitions.put(dummyPartitionJson);
-      } else {
-        jsonDummyPartitions.put(new JSONObject(serializer.toString(p)));
-      }
-    }
-
-    for (String dir : localDirectories) {
-      jsonLocalDirs.put(dir);
-    }
-
-    for (String dir : dfsDirectories) {
-      jsonDfsDirs.put(dir);
-    }
-
     JSONObject obj = new JSONObject();
 
-    if (jsonDatabases.length() > 0) {
-      obj.put("databases", jsonDatabases);
-    }
+    try {
+      for (Database db : databases) {
+        if (identifierOnly) {
+          String jsonDatabase = String.format("%s", db.getName());
+          jsonDatabases.put(jsonDatabase);
+        } else {
+          jsonDatabases.put(new JSONObject(serializer.toString(db)));
+        }
+      }
 
-    if (jsonTables.length() > 0) {
-      obj.put("tables", jsonTables);
-    }
+      for (Table t : tables) {
+        if (identifierOnly) {
+          String jsonTable = String.format("%s.%s", t.getDbName(),
+              t.getTableName());
+          jsonTables.put(jsonTable);
+        } else {
+          jsonTables.put(new JSONObject(serializer.toString(t)));
+        }
+      }
 
-    if (jsonPartitions.length() > 0) {
-      obj.put("partitions", jsonPartitions);
-    }
+      for (Partition p : partitions) {
+        if (identifierOnly) {
+          String partitionName = String.format("%s.%s/%s", p.getDbName(),
+              p.getTableName(),
+              partitionNames.get(p));
+          jsonPartitions.put(partitionName);
+        } else {
+          jsonPartitions.put(new JSONObject(serializer.toString(p)));
+        }
+      }
 
-    if (jsonDummyPartitions.length() > 0) {
-      obj.put("dummy_partitions", jsonDummyPartitions);
-    }
+      for (Partition p : dummyPartitions) {
+        if (identifierOnly) {
+          String dummyPartitionJson = String.format("%s.%s/%s", p.getDbName(),
+              p.getTableName(),
+              partitionNames.get(p));
+          jsonDummyPartitions.put(dummyPartitionJson);
+        } else {
+          jsonDummyPartitions.put(new JSONObject(serializer.toString(p)));
+        }
+      }
 
-    if (jsonLocalDirs.length() > 0) {
-      obj.put("local_directories", jsonLocalDirs);
-    }
+      for (String dir : localDirectories) {
+        jsonLocalDirs.put(dir);
+      }
 
-    if (jsonDfsDirs.length() > 0) {
-      obj.put("dfs_directories", jsonDfsDirs);
+      for (String dir : dfsDirectories) {
+        jsonDfsDirs.put(dir);
+      }
+
+      if (jsonDatabases.length() > 0) {
+        obj.put("databases", jsonDatabases);
+      }
+
+      if (jsonTables.length() > 0) {
+        obj.put("tables", jsonTables);
+      }
+
+      if (jsonPartitions.length() > 0) {
+        obj.put("partitions", jsonPartitions);
+      }
+
+      if (jsonDummyPartitions.length() > 0) {
+        obj.put("dummy_partitions", jsonDummyPartitions);
+      }
+
+      if (jsonLocalDirs.length() > 0) {
+        obj.put("local_directories", jsonLocalDirs);
+      }
+
+      if (jsonDfsDirs.length() > 0) {
+        obj.put("dfs_directories", jsonDfsDirs);
+      }
+    } catch (TException | JSONException e) {
+      throw new SerializationException(e);
     }
 
     return obj.toString();

@@ -54,26 +54,23 @@ public class AuditLogHookTest {
    *
    * @return the database connection factory
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws SQLException if there's an error insert into the DB
    */
   public static DbConnectionFactory getDbConnectionFactory()
-      throws IOException, SQLException {
+      throws SQLException {
     TestDbCredentials testDbCredentials = new TestDbCredentials();
-    DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(
+    return new StaticDbConnectionFactory(
         ReplicationTestUtils.getJdbcUrl(embeddedMySqlDb),
         testDbCredentials.getReadWriteUsername(),
         testDbCredentials.getReadWritePassword());
-    return dbConnectionFactory;
   }
 
   /**
    * Resets the testing database.
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws SQLException if there's an error inserting to the DB
    */
-  public static void resetState() throws IOException, SQLException {
+  public static void resetState() throws SQLException {
     DbConnectionFactory dbConnectionFactory = getDbConnectionFactory();
     ReplicationTestUtils.dropDatabase(dbConnectionFactory, DB_NAME);
     AuditLogHookUtils.setupAuditLogTables(

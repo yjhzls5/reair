@@ -10,14 +10,14 @@ import org.junit.Test;
 public class MapRedStatsLogModuleTest {
 
   @Test
-  public void testZeroCounterGroupsToJson() throws JsonProcessingException {
+  public void testZeroCounterGroupsToJson() throws SerializationException {
     Counters counters = new Counters();
     String json = MapRedStatsLogModule.toJson(counters);
     assertEquals(json, "[]");
   }
 
   @Test
-  public void testOneGroupOneCounterToJson() throws JsonProcessingException {
+  public void testOneGroupOneCounterToJson() throws SerializationException {
     Counters counters = new Counters();
     counters.incrCounter("SomeCounterGroupName", "SomeCounterName", 3);
     String json = MapRedStatsLogModule.toJson(counters);
@@ -28,7 +28,7 @@ public class MapRedStatsLogModuleTest {
   }
 
   @Test
-  public void testOneGroupManyCountersToJson() throws JsonProcessingException {
+  public void testOneGroupManyCountersToJson() throws SerializationException {
     Counters counters = new Counters();
     counters.incrCounter("SomeCounterGroupName", "SomeCounterName", 3);
     counters.incrCounter("SomeCounterGroupName", "AnotherCounterName", 4);
@@ -44,7 +44,7 @@ public class MapRedStatsLogModuleTest {
 
   @Test
   public void testManyGroupsManyCountersToJson()
-      throws JsonProcessingException {
+      throws SerializationException {
     Counters counters = new Counters();
     counters.incrCounter("SomeCounterGroupName1", "SomeCounterName1", 3);
     counters.incrCounter("SomeCounterGroupName1", "SomeCounterName2", 4);
