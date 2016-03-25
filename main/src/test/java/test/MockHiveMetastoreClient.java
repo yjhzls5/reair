@@ -28,7 +28,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
   private Map<HiveObjectSpec, Partition> specToPartition;
 
   /**
-   * TODO.
+   * Creates a Hive metastore client that simulates the behavior of the Hive metastore.
    */
   public MockHiveMetastoreClient() {
     dbNameToDatabase = new HashMap<>();
@@ -40,7 +40,10 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
    * Returns the partition name (e.g. ds=1/hr=2) given a Table and Partition object. For simplicity,
    * this does not handle special characters properly.
    *
-   * @throws HiveMetastoreException TODO
+   * @param table the table that the partition belongs to
+   * @param partition the partition to get the name for
+   * @return the name of the partition
+   * @throws HiveMetastoreException if the schema between the table and partition do not match
    */
   private String getPartitionName(Table table, Partition partition) throws HiveMetastoreException {
     if (table.getPartitionKeys().size() != partition.getValues().size()) {
@@ -49,7 +52,6 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
               + " columns " + "while partition has " + partition.getValues().size() + " values");
     }
 
-    StringBuilder sb = new StringBuilder();
     List<String> keyValues = new ArrayList<>();
     int keyValueIndex = 0;
     for (FieldSchema field : table.getPartitionKeys()) {
@@ -189,11 +191,8 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
     return getTable(dbName, tableName) != null;
   }
 
-
   /**
    * Drops the table, but for safety, doesn't delete the data.
-   *
-   * @throws HiveMetastoreException TODO
    */
   @Override
   public void dropTable(String dbName, String tableName, boolean deleteData)
@@ -203,7 +202,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
       throw new HiveMetastoreException("Missing table: " + tableSpec);
     }
     // Remove the table
-    Table table = specToTable.remove(new HiveObjectSpec(dbName, tableName));
+    specToTable.remove(new HiveObjectSpec(dbName, tableName));
 
     // Remove associated partitions
     Iterator<Map.Entry<HiveObjectSpec, Partition>> mapIterator =
@@ -220,8 +219,6 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
 
   /**
    * Drops the partition, but for safety, doesn't delete the data.
-   *
-   * @throws HiveMetastoreException TODO
    */
   @Override
   public void dropPartition(
@@ -252,7 +249,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
   @Override
   public Map<String, String> partitionNameToMap(String partitionName)
       throws HiveMetastoreException {
-    LinkedHashMap partitionKeyToValue = new LinkedHashMap<String, String>();
+    LinkedHashMap<String, String> partitionKeyToValue = new LinkedHashMap<>();
     String[] keyValues = partitionName.split("/");
     for (String keyValue : keyValues) {
       String[] keyValueSplit = keyValue.split("=");
@@ -295,19 +292,7 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
     return sb.toString();
   }
 
-  /**
-   * TODO.
-   *
-   * @param partitionSpecs TODO
-   * @param sourceDb TODO
-   * @param sourceTable TODO
-   * @param destDb TODO
-   * @param destinationTableName TODO
-   *
-   * @return TODO
-   *
-   * @throws HiveMetastoreException TODO
-   */
+  @Override
   public Partition exchangePartition(
       Map<String, String> partitionSpecs,
       String sourceDb,
@@ -380,7 +365,6 @@ public class MockHiveMetastoreClient implements HiveMetastoreClient {
       if (spec.getDbName().equals(dbName)) {
         tables.add(spec.getTableName());
       }
-
     }
 
     return tables;

@@ -24,29 +24,6 @@ import java.io.IOException;
 
 public class CopyUnpartitionedTableTaskTest extends MockClusterTest {
   private static final Log LOG = LogFactory.getLog(CopyUnpartitionedTableTaskTest.class);
-  /*
-   * @Test public void testExample() throws Exception { LOG.debug("This is a test");
-   * YarnConfiguration conf = new YarnConfiguration();
-   * conf.setInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB, 64);
-   * conf.setClass(YarnConfiguration.RM_SCHEDULER, FifoScheduler.class, ResourceScheduler.class);
-   * MiniYARNCluster miniCluster = new MiniYARNCluster( "test", 1, 1, 1); miniCluster.init(conf);
-   * miniCluster.start();
-   * 
-   * conf.set(ConfigurationKeys.FILESYSTEM_CONSISTENCY_WAIT_TIME, "0");
-   * conf.set(ConfigurationKeys.DISTCP_POOL, "default");
-   * 
-   * Path srcPath = new Path("file:///tmp/deleteme"); Path destPath = new
-   * Path("file:///tmp/deleteme_copy"); Path distcpTmpDir = new
-   * Path("file:///tmp/deleteme_distcp_tmp"); Path distcpLogDir = new
-   * Path("file:///tmp/deleteme_distcp_logdir");
-   * 
-   * LOG.debug("Running sync"); FsUtils.oneWaySync(conf, srcPath, destPath, false, true,
-   * distcpTmpDir, distcpLogDir, null, 0);
-   * 
-   * miniCluster.stop();
-   * 
-   * assertTrue(true); }
-   */
 
   @Test
   public void testCopyUnpartitionedTable()

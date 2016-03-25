@@ -33,14 +33,14 @@ public class PersistedJobInfoStoreTest {
   private static final Log LOG = LogFactory.getLog(PersistedJobInfoStoreTest.class);
 
   private static EmbeddedMySqlDb embeddedMySqlDb;
-  private static String MYSQL_TEST_DB_NAME = "replication_test";
-  private static String MYSQL_TEST_TABLE_NAME = "replication_jobs";
+  private static final String MYSQL_TEST_DB_NAME = "replication_test";
+  private static final String MYSQL_TEST_TABLE_NAME = "replication_jobs";
 
   /**
-   * TODO.
+   * Setups up this class for testing.
    *
-   * @throws ClassNotFoundException TODO
-   * @throws SQLException TODO
+   * @throws ClassNotFoundException if there's an error initializing the JDBC driver
+   * @throws SQLException if there's an error querying the database
    */
   @BeforeClass
   public static void setupClass() throws ClassNotFoundException, SQLException {
@@ -92,7 +92,7 @@ public class PersistedJobInfoStoreTest {
     Map<Long, PersistedJobInfo> idToJob = new HashMap<>();
     List<PersistedJobInfo> persistedJobInfos = jobStore.getRunnableFromDb();
     for (PersistedJobInfo persistedJobInfo : persistedJobInfos) {
-      idToJob.put(Long.valueOf(persistedJobInfo.getId()), persistedJobInfo);
+      idToJob.put(persistedJobInfo.getId(), persistedJobInfo);
     }
 
     // Make sure that the job that was created is the same as the job that
@@ -107,7 +107,7 @@ public class PersistedJobInfoStoreTest {
     idToJob.clear();
     persistedJobInfos = jobStore.getRunnableFromDb();
     for (PersistedJobInfo persistedJobInfo : persistedJobInfos) {
-      idToJob.put(Long.valueOf(persistedJobInfo.getId()), persistedJobInfo);
+      idToJob.put(persistedJobInfo.getId(), persistedJobInfo);
     }
     assertEquals(testJob, idToJob.get(testJob.getId()));
   }

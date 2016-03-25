@@ -32,10 +32,10 @@ public class RenamePartitionTaskTest extends MockClusterTest {
   private static ParallelJobExecutor jobExecutor = new ParallelJobExecutor(1);
 
   /**
-   * TODO.
+   * Sets up this class for testing.
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws IOException if there's an error accessing the local filesystem
+   * @throws SQLException if there's an error querying the embedded DB
    */
   @BeforeClass
   public static void setupClass() throws IOException, SQLException {
@@ -55,7 +55,7 @@ public class RenamePartitionTaskTest extends MockClusterTest {
     final HiveObjectSpec oldPartitionSpec = new HiveObjectSpec(dbName, tableName, oldPartitionName);
     final HiveObjectSpec newPartitionSpec = new HiveObjectSpec(dbName, tableName, newPartitionName);
 
-    final Table srcTable = ReplicationTestUtils.createPartitionedTable(conf, srcMetastore,
+    ReplicationTestUtils.createPartitionedTable(conf, srcMetastore,
         originalTableSpec, TableType.MANAGED_TABLE, srcWarehouseRoot);
 
     final Partition oldPartition =
@@ -67,7 +67,7 @@ public class RenamePartitionTaskTest extends MockClusterTest {
         conflictHandler, srcCluster, destCluster, oldPartitionSpec,
         ReplicationUtils.getLocation(oldPartition), Optional.empty(), directoryCopier, true);
 
-    final RunInfo status = copyJob.runTask();
+    copyJob.runTask();
 
     // Rename the source partition
     final Partition newPartition = new Partition(oldPartition);

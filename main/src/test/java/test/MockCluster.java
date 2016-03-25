@@ -13,12 +13,12 @@ public class MockCluster implements Cluster {
   private Path tmpDir;
 
   /**
-   * TODO.
+   * Constructs a mock cluster with static values.
    *
-   * @param name TODO
-   * @param client TODO
-   * @param fsRoot TODO
-   * @param tmpDir TODO
+   * @param name name of the cluster
+   * @param client the Hive metastore client to use
+   * @param fsRoot the root of the warehouse directory associated with the supplied metastore
+   * @param tmpDir the root of the directory to use for temporary files
    */
   public MockCluster(String name, HiveMetastoreClient client, Path fsRoot, Path tmpDir) {
     this.name = name;

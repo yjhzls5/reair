@@ -105,7 +105,7 @@ public class MockHiveMetastoreClientTest {
   @Test
   public void testPartitionNameToMap() throws HiveMetastoreException {
     String partitionName = "ds=1/hr=2/min=3/sec=4";
-    LinkedHashMap expectedKeyValueMap = new LinkedHashMap<String, String>();
+    LinkedHashMap<String, String> expectedKeyValueMap = new LinkedHashMap<>();
     expectedKeyValueMap.put("ds", "1");
     expectedKeyValueMap.put("hr", "2");
     expectedKeyValueMap.put("min", "3");

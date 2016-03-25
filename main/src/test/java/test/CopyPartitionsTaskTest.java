@@ -89,9 +89,9 @@ public class CopyPartitionsTaskTest extends MockClusterTest {
    * This ensures that the common directory isn't copied in cases where copying the common directory
    * would copy too much data.
    *
-   * @throws IOException TODO
-   * @throws HiveMetastoreException TODO
-   * @throws DistCpException TODO
+   * @throws IOException if there's an error writing to the local file system
+   * @throws HiveMetastoreException if there's an error querying the metastore
+   * @throws DistCpException if there's an error copying data
    */
   @Test
   public void testCopyPartitionsWithoutCopyingCommon()

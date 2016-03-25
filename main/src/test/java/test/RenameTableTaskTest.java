@@ -28,10 +28,10 @@ public class RenameTableTaskTest extends MockClusterTest {
   private static ParallelJobExecutor jobExecutor = new ParallelJobExecutor(1);
 
   /**
-   * TODO.
+   * Sets up this class before running tests.
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws IOException if there's an error accessing the local filesystem
+   * @throws SQLException if there's an error querying the embedded DB
    */
   @BeforeClass
   public static void setupClass() throws IOException, SQLException {

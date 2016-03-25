@@ -51,10 +51,11 @@ public abstract class MockClusterTest {
   protected Path destWarehouseRoot;
 
   /**
-   * TODO.
+   * Sets up this class for use in unit testing. It spins up the YARN mini-cluster and also sets up
+   * various default classes.
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws IOException if there's an error accessing the local filesystem
+   * @throws SQLException if there's an error querying the embedded DB
    */
   @BeforeClass
   public static void setupClass() throws IOException, SQLException {
@@ -73,9 +74,9 @@ public abstract class MockClusterTest {
   }
 
   /**
-   * TODO.
+   * Setup to do for each unit test.
    *
-   * @throws IOException TODO
+   * @throws IOException if there's an error accessing the local file system
    */
   @Before
   public void setUp() throws IOException {

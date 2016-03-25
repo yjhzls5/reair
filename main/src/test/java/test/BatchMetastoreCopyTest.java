@@ -27,10 +27,10 @@ import java.sql.SQLException;
 public class BatchMetastoreCopyTest extends MockClusterTest {
 
   /**
-   * TODO.
+   * Sets up this class to have the right defaults for the batch replication test.
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws IOException if there's an error writing to files
+   * @throws SQLException if there's an error querying the embedded DB
    */
   @BeforeClass
   public static void setupClass() throws IOException, SQLException {

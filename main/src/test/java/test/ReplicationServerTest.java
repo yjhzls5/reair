@@ -75,10 +75,10 @@ public class ReplicationServerTest extends MockClusterTest {
   private static ReplicationFilter replicationFilter;
 
   /**
-   * TODO.
+   * Sets up this class for testing.
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws IOException if there's an error accessing the local filesystem
+   * @throws SQLException if there's an error querying the DB
    */
   @BeforeClass
   public static void setupClass() throws IOException, SQLException {
@@ -89,13 +89,7 @@ public class ReplicationServerTest extends MockClusterTest {
     resetState();
   }
 
-  /**
-   * TODO.
-   *
-   * @throws IOException TODO
-   * @throws SQLException TODO
-   */
-  public static void resetState() throws IOException, SQLException {
+  private static void resetState() throws IOException, SQLException {
     TestDbCredentials testDbCredentials = new TestDbCredentials();
     DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(
         ReplicationTestUtils.getJdbcUrl(embeddedMySqlDb),
@@ -158,12 +152,7 @@ public class ReplicationServerTest extends MockClusterTest {
     replicationFilter.setConf(conf);
   }
 
-  /**
-   * TODO.
-   *
-   * @throws HiveMetastoreException TODO
-   */
-  public static void clearMetastores() throws HiveMetastoreException {
+  private static void clearMetastores() throws HiveMetastoreException {
     // Drop all tables from the destination metastore
     for (String tableName : srcMetastore.getTables(HIVE_DB, "*")) {
       srcMetastore.dropTable(HIVE_DB, tableName, true);
@@ -174,17 +163,7 @@ public class ReplicationServerTest extends MockClusterTest {
     }
   }
 
-  /**
-   * TODO.
-   *
-   * @param dbConnectionFactory TODO
-   * @param dbName TODO
-   * @param keyValueTableName TODO
-   * @param persistedJobInfoTableName TODO
-   *
-   * @throws SQLException TODO
-   */
-  public static void setupReplicationServerStateTables(
+  private static void setupReplicationServerStateTables(
       DbConnectionFactory dbConnectionFactory,
       String dbName,
       String keyValueTableName,
@@ -525,7 +504,6 @@ public class ReplicationServerTest extends MockClusterTest {
 
   private void simulateDropTable(String dbName, String tableName) throws Exception {
     // Drop the specified table from the source and also generate the appropriate audit log entry
-    HiveObjectSpec tableSpec = new HiveObjectSpec(dbName, tableName);
     Table srcTable = srcMetastore.getTable(dbName, tableName);
     srcMetastore.dropTable(dbName, tableName, false);
 
@@ -668,7 +646,7 @@ public class ReplicationServerTest extends MockClusterTest {
         new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
         1,
         1,
-        Optional.of(Long.valueOf(0)));
+        Optional.of(0L));
     replicationServer.setPollWaitTimeMs(TEST_POLL_TIME);
     return replicationServer;
   }
@@ -677,7 +655,8 @@ public class ReplicationServerTest extends MockClusterTest {
    * Tests to make sure that entries that were not completed in the previous
    * invocation of the server are picked up and run on a subsequent
    * invocation.
-   * @throws Exception TODO
+   *
+   * @throws Exception if there is an error setting up or running this test
    */
   @Test
   public void testResumeJobs() throws Exception {
@@ -781,7 +760,7 @@ public class ReplicationServerTest extends MockClusterTest {
    * Test to make sure that the drop table command does not get replicated
    * if the table is modified on the destination.
    *
-   * @throws Exception TODO
+   * @throws Exception if there is an error setting up or running this test
    */
   @Test
   public void testDropTableNoOp() throws Exception {
@@ -823,7 +802,7 @@ public class ReplicationServerTest extends MockClusterTest {
   /**
    * Test whether the rename table operation is properly propagated.
    *
-   * @throws Exception TODO
+   * @throws Exception if there is an error setting up or running this test
    */
   @Test
   public void testRenameTable() throws Exception {
@@ -859,7 +838,8 @@ public class ReplicationServerTest extends MockClusterTest {
    * Test whether the rename table operation is properly propagated in case
    * when the table is updated on the destination. In such a case, the
    * table should be copied over.
-   * @throws Exception TODO
+   *
+   * @throws Exception if there is an error setting up or running this test
    */
   @Test
   public void testRenameTableCopy() throws Exception {

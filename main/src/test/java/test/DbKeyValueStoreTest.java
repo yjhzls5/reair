@@ -28,10 +28,10 @@ public class DbKeyValueStoreTest {
   private static String MYSQL_TEST_TABLE_NAME = "key_value";
 
   /**
-   * TODO.
+   * Configures this class for testing by setting up the embedded DB and creating a test database.
    *
-   * @throws ClassNotFoundException TODO
-   * @throws SQLException TODO
+   * @throws ClassNotFoundException if there's an error instantiating the JDBC driver
+   * @throws SQLException if there's an error querying the embedded DB
    */
   @BeforeClass
   public static void setupClass() throws ClassNotFoundException, SQLException {
