@@ -20,10 +20,8 @@ public class MetastoreReplUtils {
    *
    * @param conf configuration for the cluster
    * @return ClusterFactory implementation
-   *
-   * @throws IOException Java reflection exceptions are wrapped in IOException
    */
-  public static ClusterFactory createClusterFactory(Configuration conf) throws IOException {
+  public static ClusterFactory createClusterFactory(Configuration conf) {
     String clusterFactoryClassName =
         conf.get(DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS);
     if (clusterFactoryClassName != null) {
@@ -31,7 +29,7 @@ public class MetastoreReplUtils {
       try {
         factory = (ClusterFactory) Class.forName(clusterFactoryClassName).newInstance();
       } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-        throw new IOException(e);
+        throw new RuntimeException(e);
       }
       return factory;
     } else {

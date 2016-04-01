@@ -87,9 +87,7 @@ public class Stage2DirectoryCopyMapper extends Mapper<LongWritable, Text, LongWr
       return;
     }
 
-    fs.mkdirs(dstPath);
-
-    if (!fs.exists(dstPath)) {
+    if (!fs.mkdirs(dstPath)) {
       throw new IOException("Validate recreate destination directory failed: "
           + dstPath.toString());
     }

@@ -19,7 +19,7 @@ public class HdfsPath {
    * A full path include protocol, host, and path.
    * For example: hdfs://clusterfs/user/hadoop
    *
-   * @param fullPath file full path
+   * @param fullPath full file path
    */
   public HdfsPath(String fullPath) {
     Matcher matcher = locationPattern.matcher(fullPath.trim());

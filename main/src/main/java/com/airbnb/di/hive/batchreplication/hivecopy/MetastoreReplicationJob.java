@@ -125,10 +125,10 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
   /**
    * Run hive metastore based batch replication.
-   *  1. Parse input args.
+   *  1. Parse input arguments.
    *  2. Run three MR jobs in sequences.
    *
-   * @param args program input args
+   * @param args command arguments
    * @return 1 failed
    *         0 succeeded.
    *
@@ -485,9 +485,9 @@ public class MetastoreReplicationJob extends Configured implements Tool {
   }
 
   /**
-   * main function, Invoke ToolRunner.run.
+   * Main function - invoke ToolRunner.run().
    *
-   * @param args program args
+   * @param args program arguments
    *
    * @throws Exception  InterruptedException,
    *                    IOException,
