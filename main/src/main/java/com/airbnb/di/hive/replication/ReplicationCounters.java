@@ -40,10 +40,10 @@ public class ReplicationCounters {
   }
 
   /**
-   * TODO.
+   * Get the value of the given counter.
    *
-   * @param type TODO
-   * @return TODO
+   * @param type the type of counter
+   * @return the value of the counter
    */
   public synchronized long getCounter(Type type) {
     long currentCount = 0;
@@ -53,6 +53,9 @@ public class ReplicationCounters {
     return currentCount;
   }
 
+  /**
+   * Reset all counters to 0.
+   */
   public synchronized void clear() {
     counters.clear();
   }

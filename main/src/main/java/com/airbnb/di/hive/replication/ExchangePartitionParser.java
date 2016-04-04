@@ -27,10 +27,10 @@ public class ExchangePartitionParser {
   private List<String> partitionValues;
 
   /**
-   * TODO.
+   * Parse the query and store relevant attributes.
    *
-   * @param query TODO
-   * @return TODO
+   * @param query the query to parse
+   * @return whether query was successfully parsed
    */
   public boolean parse(String query) {
     Matcher matcher = Pattern.compile(EXCHANGE_REGEX, Pattern.CASE_INSENSITIVE).matcher(query);
@@ -51,10 +51,10 @@ public class ExchangePartitionParser {
   }
 
   /**
-   * TODO.
+   * Parse the string representation of a Hive object specification into HiveObjectSpec.
    *
    * @param spec table specification in the form "db.table"
-   * @return TODO
+   * @return HiveObjectSpec represented by the input string
    */
   private HiveObjectSpec getSpec(String spec) {
     String[] specSplit = spec.split("\\.");
@@ -69,12 +69,17 @@ public class ExchangePartitionParser {
     }
   }
 
+  /**
+   * Get the partition that is being exchanged by this query.
+   *
+   * @return the name of the partition that is exchanged by the previously parsed query
+   */
   public String getPartitionName() {
     return partitionName;
   }
 
   /**
-   * TODO.
+   * Get the partition names from a partition spec. E.g. "PARTITION(ds='1')" => "ds=1"
    *
    * @param partitionSpec a partition specification in the form "ds=1, hr=2"
    *
@@ -108,6 +113,11 @@ public class ExchangePartitionParser {
     return sb.toString();
   }
 
+  /**
+   * Get the partition that is being exchanged by this query.
+   *
+   * @return the partition values of the partition that is exchanged by the previously parsed query
+   */
   public List<String> getPartitionValues() {
     return partitionValues;
   }
@@ -132,10 +142,20 @@ public class ExchangePartitionParser {
     return partitionValues;
   }
 
+  /**
+   * Get the specification for the object that the query exchanged from.
+   *
+   * @return specification for the object that the query exchanged from.
+   */
   public HiveObjectSpec getExchangeFromSpec() {
     return exchangeFromTableSpec;
   }
 
+  /**
+   * Get the specification for the object that the query exchanged to.
+   *
+   * @return specification for the object that the query exchanged to.
+   */
   public HiveObjectSpec getExchangeToSpec() {
     return exchangeToTableSpec;
   }

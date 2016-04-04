@@ -97,9 +97,9 @@ public class DirectoryCopier {
    *
    * @param srcDir source directory
    * @param destDir destination directory
-   * @return TODO
+   * @return whether directories are equal
    *
-   * @throws IOException TODO
+   * @throws IOException if there's an error reading the filesystem
    */
   public boolean equalDirs(Path srcDir, Path destDir) throws IOException {
     return FsUtils.equalDirs(conf, srcDir, destDir, Optional.empty(), checkFileModificationTimes);

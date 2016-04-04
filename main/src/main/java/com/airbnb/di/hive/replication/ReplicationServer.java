@@ -37,6 +37,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TimeZone;
 
+/**
+ * Replication server that reads entries from the audit log and replicates objects / operations
+ * from the source warehouse to the destination warehouse.
+ */
 public class ReplicationServer implements TReplicationService.Iface {
 
   private static final Log LOG = LogFactory.getLog(ReplicationServer.class);
@@ -133,19 +137,19 @@ public class ReplicationServer implements TReplicationService.Iface {
   }
 
   /**
-   * TODO.
+   * Constructor.
    *
-   * @param conf TODO
-   * @param srcCluster TODO
-   * @param destCluster TODO
-   * @param auditLogReader TODO
-   * @param keyValueStore TODO
-   * @param jobInfoStore TODO
-   * @param replicationFilter TODO
-   * @param directoryCopier TODO
-   * @param numWorkers TODO
-   * @param maxJobsInMemory TODO
-   * @param startAfterAuditLogId TODO
+   * @param conf configuration
+   * @param srcCluster source cluster
+   * @param destCluster destination cluster
+   * @param auditLogReader audit log reader
+   * @param keyValueStore key/value store for persisting the read position of the audit log
+   * @param jobInfoStore store for persisting replication job information
+   * @param replicationFilter the filter for replication entries
+   * @param directoryCopier directory copier
+   * @param numWorkers number of worker threads to launch for processing replication jobs
+   * @param maxJobsInMemory maximum number of jobs to store in memory
+   * @param startAfterAuditLogId start reading and replicating entries after this audit log ID
    */
   public ReplicationServer(
       Configuration conf,
@@ -202,10 +206,10 @@ public class ReplicationServer implements TReplicationService.Iface {
   }
 
   /**
-   * TODO.
+   * Creates a replication job from the parameters that were persisted to the DB.
    *
-   * @param persistedJobInfo TODO
-   * @return TODO
+   * @param persistedJobInfo information about the job persisted on the DB
+   * @return a ReplicationJob made from the persisted information
    */
   private ReplicationJob restoreReplicationJob(PersistedJobInfo persistedJobInfo) {
     ReplicationTask replicationTask = null;
@@ -298,9 +302,9 @@ public class ReplicationServer implements TReplicationService.Iface {
   }
 
   /**
-   * TODO.
+   * Queue the specified job to be run.
    *
-   * @param job TODO
+   * @param job the job to add to the queue.
    */
   public void queueJobForExecution(ReplicationJob job) {
     jobExecutor.add(job);
@@ -308,12 +312,12 @@ public class ReplicationServer implements TReplicationService.Iface {
   }
 
   /**
-   * TODO.
+   * Start reading the audit log and replicate entries.
    *
-   * @param jobsToComplete TODO
+   * @param jobsToComplete the number of jobs to complete before returning. Useful for testing.
    *
-   * @throws IOException TODO
-   * @throws SQLException TODO
+   * @throws IOException if there's an error reading or writing to the filesystem
+   * @throws SQLException if there's an error querying the DB
    */
   public void run(long jobsToComplete) throws IOException, SQLException {
 
