@@ -157,6 +157,7 @@ public class BatchMetastoreCopyTest extends MockClusterTest {
     String[] args = {"--source", srcWarehouseRoot.toString(),
         "--destination", destWarehouseRoot.toString(),
         "--output-path", new Path(destCluster.getFsRoot(), "test_output").toString(),
+        "--temp-path", destCluster.getTmpDir().toString(),
         "--operation", "a,d,u"};
 
     ToolRunner.run(jobConf, new ReplicationJob(), args);

@@ -514,7 +514,7 @@ public class ReplicationUtils {
         FileStatus srcStatus = srcFs.getFileStatus(srcPath);
 
         final FSDataInputStream inputStream = srcFs.open(srcPath);
-        Path dstPath = new Path(dstDir + "/" + srcFileStatus.getFileName());
+        Path dstPath = new Path(dstDir, srcFileStatus.getFileName());
         // if dst already exists.
         if (dstFs.exists(dstPath)) {
           FileStatus dstStatus = dstFs.getFileStatus(dstPath);
@@ -533,8 +533,9 @@ public class ReplicationUtils {
         }
 
         Path tmpDstPath = new Path(
-            tmpDirPath, "__tmp__copy__file_" + identifier + "_" +
-                srcFileStatus.getFileName() + "." + System.currentTimeMillis());
+            tmpDirPath,
+            "__tmp__copy__file_" + identifier + "_" + srcFileStatus.getFileName()
+                + "." + System.currentTimeMillis());
         if (dstFs.exists(tmpDstPath)) {
           dstFs.delete(tmpDstPath, false);
         }

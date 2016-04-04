@@ -511,7 +511,8 @@ public class ReplicationJob extends Configured implements Tool {
     return success ? 0 : 1;
   }
 
-  private int runSyncJob(String source, String destination, String tmpDir, String input, String output)
+  private int runSyncJob(String source, String destination, String tmpDir, String input,
+                         String output)
       throws IOException, InterruptedException, ClassNotFoundException {
     Job job = new Job(getConf(), "HDFS Sync job");
     job.setJarByClass(getClass());
