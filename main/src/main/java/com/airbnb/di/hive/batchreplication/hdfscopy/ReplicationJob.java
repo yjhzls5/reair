@@ -62,6 +62,7 @@ public class ReplicationJob extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(ReplicationJob.class);
   private static final String SRC_PATH_CONF = "replication.src.path";
   private static final String DST_PATH_CONF = "replication.dst.path";
+  private static final String TMP_PATH_CONF = "replication.tmp.path";
   private static final String COMPARE_OPTION_CONF = "replication.compare.option";
   public static final String DIRECTORY_BLACKLIST_REGEX = "replication.directory.blacklist";
 
@@ -278,6 +279,7 @@ public class ReplicationJob extends Configured implements Tool {
 
   public static class HdfsSyncReducer extends Reducer<LongWritable, Text, Text, Text> {
     private String dstRoot;
+    private Path tmpDirPath;
     private long copiedSize = 0;
 
     enum CopyStatus {
@@ -289,6 +291,7 @@ public class ReplicationJob extends Configured implements Tool {
     protected void setup(Context context) throws IOException, InterruptedException {
       super.setup(context);
       this.dstRoot = context.getConfiguration().get(DST_PATH_CONF);
+      this.tmpDirPath = new Path(context.getConfiguration().get(TMP_PATH_CONF));
     }
 
     @Override
@@ -310,7 +313,8 @@ public class ReplicationJob extends Configured implements Tool {
           String copyError =
               ReplicationUtils.doCopyFileAction(context.getConfiguration(), fileStatus,
                   srcFs, dstFile.getParent().toString(),
-                  dstFs, context, fields[1].equals("update"), "");
+                  dstFs, tmpDirPath, context, fields[1].equals("update"),
+                  context.getTaskAttemptID().toString());
 
           if (copyError == null) {
             context.write(new Text(fields[0]),
@@ -360,10 +364,16 @@ public class ReplicationJob extends Configured implements Tool {
             .create());
 
     options.addOption(OptionBuilder.withLongOpt("destination")
-            .withDescription("Copy desitnation directory")
+            .withDescription("Copy destination directory")
             .hasArg()
             .withArgName("D")
             .create());
+
+    options.addOption(OptionBuilder.withLongOpt("temp-path")
+        .withDescription("Copy temporary directory path")
+        .hasArg()
+        .withArgName("T")
+        .create());
 
     options.addOption(OptionBuilder.withLongOpt("output-path")
             .withDescription("Job logging output path")
@@ -438,6 +448,11 @@ public class ReplicationJob extends Configured implements Tool {
           commandLine.getOptionValue("destination"), commandLine.getOptionValue("output-path"),
           commandLine.getOptionValue("operation"));
     } else {
+      if (!commandLine.hasOption("temp-path")) {
+        printUsage("Usage: hadoop jar ...", constructOptions(), System.out);
+        return 1;
+      }
+
       Path outputRoot = new Path(commandLine.getOptionValue("output-path")).getParent();
       String tmpPath =
           outputRoot.toString() + "/__tmp_hive_result_." + System.currentTimeMillis();
@@ -454,7 +469,9 @@ public class ReplicationJob extends Configured implements Tool {
         }
         LOG.info("output exists: " + fs.getFileStatus(tmpDirectory).toString());
         retVal = runSyncJob(commandLine.getOptionValue("source"),
-                commandLine.getOptionValue("destination"), tmpPath + "/part*",
+                commandLine.getOptionValue("destination"),
+                commandLine.getOptionValue("temp-path"),
+                tmpPath + "/part*",
                 commandLine.getOptionValue("output-path"));
       }
 
@@ -494,7 +511,7 @@ public class ReplicationJob extends Configured implements Tool {
     return success ? 0 : 1;
   }
 
-  private int runSyncJob(String source, String destination, String input, String output)
+  private int runSyncJob(String source, String destination, String tmpDir, String input, String output)
       throws IOException, InterruptedException, ClassNotFoundException {
     Job job = new Job(getConf(), "HDFS Sync job");
     job.setJarByClass(getClass());
@@ -508,6 +525,7 @@ public class ReplicationJob extends Configured implements Tool {
 
     job.getConfiguration().set(SRC_PATH_CONF, source);
     job.getConfiguration().set(DST_PATH_CONF, destination);
+    job.getConfiguration().set(TMP_PATH_CONF, tmpDir);
 
     FileInputFormat.setInputPaths(job, new Path(input));
     FileInputFormat.setMaxInputSplitSize(job,

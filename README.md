@@ -69,13 +69,13 @@ gradlew shadowjar -p main -x test
 
 * CLI options:
 ```
-  -s, --source: source directory
-  -d, --destination: destination directory. source and destination must have same relative path.
-  -o, --output: logging directory
-  -p, --option: checking options: comma separated option including a(add),d(delete),u(update)
-  -l, --list: list file size only
-  -b, --blacklist: directory name blacklist regex
-  -dry, --dryrun: dry run mode
+  -source: source directory
+  -destination: destination directory. source and destination must have same relative path.
+  -temp-path: copy temporary directory
+  -output-path: logging directory
+  -operation: checking options: comma separated option including a(add),d(delete),u(update)
+  -blacklist: directory name blacklist regex
+  -dry-run: dry run mode
 ```
 
 * To starts HDFS replication
@@ -84,7 +84,7 @@ gradlew shadowjar -p main -x test
 export HADOOP_HEAPSIZE=8096
 timestamp="$(date +"%s")"
 
-hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.di.hive.batchreplication.hdfscopy.ReplicationJob -Dmapreduce.job.reduces=500 -Dmapreduce.map.memory.mb=8000 -Dmapreduce.map.java.opts="-Djava.net.preferIPv4Stack=true -Xmx7000m" -s hdfs://airfs-src/ -d hdfs://airfs-dest/ -o hdfs://airfs-dest/user/test/fullrepljob -b "tmp.*" -p a,u,d
+hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.di.hive.batchreplication.hdfscopy.ReplicationJob -Dmapreduce.job.reduces=500 -Dmapreduce.map.memory.mb=8000 -Dmapreduce.map.java.opts="-Djava.net.preferIPv4Stack=true -Xmx7000m" -source hdfs://airfs-src/ -destination hdfs://airfs-dest/ -temp-path hdfs://airfs-dest/tmp -output-path hdfs://airfs-dest/user/test/fullrepljob -blacklist "tmp.*" -operation a,u,d
 
 hive -e "LOAD  DATA  INPATH  '/user/test/fullrepljob' OVERWRITE INTO TABLE hdfscopy_result partition ( jobts = $timestamp);"
 ```

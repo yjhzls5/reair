@@ -482,8 +482,9 @@ public class ReplicationUtils {
    * @param conf Hadoop configuration object
    * @param srcFileStatus Status of the source file
    * @param srcFs Source FileSystem
-   * @param dstFolderPath Destination directory
+   * @param dstDir Destination directory
    * @param dstFs Destination FileSystem
+   * @param tmpDirPath Temporary copy staging location.
    * @param progressable A progressable object to progress during long file copies
    * @param forceUpdate Whether to force a copy
    * @param identifier Identifier to use in the temporary file
@@ -493,8 +494,9 @@ public class ReplicationUtils {
       Configuration conf,
       SimpleFileStatus srcFileStatus,
       FileSystem srcFs,
-      String dstFolderPath,
+      String dstDir,
       FileSystem dstFs,
+      Path tmpDirPath,
       Progressable progressable,
       boolean forceUpdate,
       String identifier) {
@@ -512,7 +514,7 @@ public class ReplicationUtils {
         FileStatus srcStatus = srcFs.getFileStatus(srcPath);
 
         final FSDataInputStream inputStream = srcFs.open(srcPath);
-        Path dstPath = new Path(dstFolderPath + "/" + srcFileStatus.getFileName());
+        Path dstPath = new Path(dstDir + "/" + srcFileStatus.getFileName());
         // if dst already exists.
         if (dstFs.exists(dstPath)) {
           FileStatus dstStatus = dstFs.getFileStatus(dstPath);
@@ -524,14 +526,15 @@ public class ReplicationUtils {
           }
         }
 
-        Path dstParentPath = new Path(dstFolderPath);
+        Path dstParentPath = new Path(dstDir);
         if (!dstFs.exists(dstParentPath) && !dstFs.mkdirs(dstParentPath)) {
-          LOG.info("Could not create directory: " + dstFolderPath);
-          return "Could not create directory: " + dstFolderPath;
+          LOG.info("Could not create directory: " + dstDir);
+          return "Could not create directory: " + dstDir;
         }
 
         Path tmpDstPath = new Path(
-            dstFolderPath + "/__tmp__copy__file_" + identifier + "." + System.currentTimeMillis());
+            tmpDirPath, "__tmp__copy__file_" + identifier + "_" +
+                srcFileStatus.getFileName() + "." + System.currentTimeMillis());
         if (dstFs.exists(tmpDstPath)) {
           dstFs.delete(tmpDstPath, false);
         }

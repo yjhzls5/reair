@@ -3,6 +3,9 @@ package com.airbnb.di.hive.batchreplication.hivecopy;
 import com.airbnb.di.hive.batchreplication.SimpleFileStatus;
 import com.airbnb.di.hive.replication.ReplicationUtils;
 
+import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.di.hive.replication.configuration.ClusterFactory;
+import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -23,6 +26,8 @@ import java.io.IOException;
 public class Stage2DirectoryCopyReducer extends Reducer<LongWritable, Text, Text, Text> {
   private static final Log LOG = LogFactory.getLog(Stage2DirectoryCopyReducer.class);
   private Configuration conf;
+  private Cluster dstCluster;
+
 
   enum CopyStatus {
     COPIED,
@@ -33,7 +38,13 @@ public class Stage2DirectoryCopyReducer extends Reducer<LongWritable, Text, Text
   }
 
   protected void setup(Context context) throws IOException, InterruptedException {
-    this.conf = context.getConfiguration();
+    try {
+      this.conf = context.getConfiguration();
+      ClusterFactory clusterFactory = MetastoreReplUtils.createClusterFactory(conf);
+      this.dstCluster = clusterFactory.getDestCluster();
+    } catch (ConfigurationException e) {
+      throw new IOException(e);
+    }
   }
 
   protected void reduce(LongWritable key, Iterable<Text> values, Context context)
@@ -52,6 +63,7 @@ public class Stage2DirectoryCopyReducer extends Reducer<LongWritable, Text, Text
           srcFs,
           dstDirectory,
           dstFs,
+          dstCluster.getTmpDir(),
           context,
           false,
           context.getTaskAttemptID().toString());
