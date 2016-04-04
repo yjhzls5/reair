@@ -16,6 +16,7 @@ import com.airbnb.di.hive.replication.primitives.CopyPartitionsTask;
 import com.airbnb.di.hive.replication.primitives.CopyUnpartitionedTableTask;
 import com.airbnb.di.hive.replication.primitives.DropPartitionTask;
 import com.airbnb.di.hive.replication.primitives.DropTableTask;
+import com.airbnb.di.hive.replication.primitives.RenamePartitionTask;
 import com.airbnb.di.hive.replication.primitives.RenameTableTask;
 import com.airbnb.di.hive.replication.primitives.ReplicationTask;
 import com.airbnb.di.hive.replication.thrift.TReplicationJob;
@@ -261,7 +262,33 @@ public class ReplicationServer implements TReplicationService.Iface {
             persistedJobInfo.getSrcPath(), persistedJobInfo.getRenameToPath(),
             persistedJobInfo.getSrcObjectTldt(), copyPartitionJobExecutor, directoryCopier);
         break;
-      case RENAME_PARTITION: // TODO: Handle rename partition
+      case RENAME_PARTITION:
+        if (!persistedJobInfo.getRenameToDb().isPresent()
+            || !persistedJobInfo.getRenameToTable().isPresent()
+            || !persistedJobInfo.getRenameToPartition().isPresent()) {
+          throw new RuntimeException(String.format("Rename to partition is invalid: %s.%s/%s",
+              persistedJobInfo.getRenameToDb(),
+              persistedJobInfo.getRenameToTable(),
+              persistedJobInfo.getRenameToPartition()));
+        }
+
+        HiveObjectSpec renameToSpec = new HiveObjectSpec(
+            persistedJobInfo.getRenameToDb().get(),
+            persistedJobInfo.getRenameToTable().get(),
+            persistedJobInfo.getRenameToPartition().get());
+
+        replicationTask = new RenamePartitionTask(conf,
+            destinationObjectFactory,
+            objectConflictHandler,
+            srcCluster,
+            destCluster,
+            partitionSpec,
+            renameToSpec,
+            Optional.empty(),
+            persistedJobInfo.getRenameToPath(),
+            persistedJobInfo.getSrcObjectTldt(),
+            directoryCopier);
+        break;
       default:
         throw new UnsupportedOperationException(
             "Unhandled operation:" + persistedJobInfo.getOperation());

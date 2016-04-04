@@ -9,7 +9,8 @@ import java.io.IOException;
 
 /**
  * Interface for a replication task. A replication task is one of many primitives that can be used
- * to replicate data and actions from the source warehouse to the destination warehouse.
+ * to replicate data and actions from the source warehouse to the destination warehouse. Generally,
+ * a ReplicationTask is executed by a ReplicationJob.
  */
 public interface ReplicationTask {
   /**
