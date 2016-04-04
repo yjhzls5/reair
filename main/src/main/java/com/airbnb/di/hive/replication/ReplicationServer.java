@@ -1,8 +1,10 @@
 package com.airbnb.di.hive.replication;
 
 import com.airbnb.di.db.DbKeyValueStore;
+import com.airbnb.di.hive.StateUpdateException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.auditlog.AuditLogEntry;
+import com.airbnb.di.hive.replication.auditlog.AuditLogEntryException;
 import com.airbnb.di.hive.replication.auditlog.AuditLogReader;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
@@ -94,20 +96,20 @@ public class ReplicationServer implements TReplicationService.Iface {
   // once it finishes
   private class JobStateChangeHandler implements OnStateChangeHandler {
     @Override
-    public void onStart(ReplicationJob replicationJob) {
+    public void onStart(ReplicationJob replicationJob) throws StateUpdateException {
       LOG.debug("Job id: " + replicationJob.getId() + " started");
       jobInfoStore.changeStatusAndPersist(ReplicationStatus.RUNNING,
           replicationJob.getPersistedJobInfo());
     }
 
     @Override
-    public void onComplete(RunInfo runInfo, ReplicationJob replicationJob) {
+    public void onComplete(RunInfo runInfo, ReplicationJob replicationJob)
+        throws StateUpdateException {
       LOG.debug("Job id: " + replicationJob.getId() + " finished " + "with state "
           + runInfo.getRunStatus() + " and " + runInfo.getBytesCopied() + " bytes copied");
 
       replicationJob.getPersistedJobInfo().getExtras().put(PersistedJobInfo.BYTES_COPIED_KEY,
           Long.toString(runInfo.getBytesCopied()));
-
 
       LOG.debug("Persisting job id: " + replicationJob.getPersistedJobInfo().getId());
 
@@ -319,7 +321,8 @@ public class ReplicationServer implements TReplicationService.Iface {
    * @throws IOException if there's an error reading or writing to the filesystem
    * @throws SQLException if there's an error querying the DB
    */
-  public void run(long jobsToComplete) throws IOException, SQLException {
+  public void run(long jobsToComplete)
+      throws AuditLogEntryException, IOException, StateUpdateException, SQLException {
 
     // Clear the counters so that we can accurate stats for this run
     clearCounters();

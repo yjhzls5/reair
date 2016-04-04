@@ -4,8 +4,10 @@ import com.airbnb.di.db.DbConnectionFactory;
 import com.airbnb.di.db.DbConnectionWatchdog;
 import com.airbnb.di.db.DbKeyValueStore;
 import com.airbnb.di.db.StaticDbConnectionFactory;
+import com.airbnb.di.hive.StateUpdateException;
 import com.airbnb.di.hive.replication.DirectoryCopier;
 import com.airbnb.di.hive.replication.ReplicationServer;
+import com.airbnb.di.hive.replication.auditlog.AuditLogEntryException;
 import com.airbnb.di.hive.replication.auditlog.AuditLogReader;
 import com.airbnb.di.hive.replication.configuration.Cluster;
 import com.airbnb.di.hive.replication.configuration.ClusterFactory;
@@ -54,7 +56,9 @@ public class ReplicationLauncher {
   public static void launch(Configuration conf,
       Optional<Long> startAfterAuditLogId,
       boolean resetState)
-    throws SQLException, ConfigurationException, IOException {
+    throws AuditLogEntryException, ConfigurationException, IOException, StateUpdateException,
+      SQLException {
+
 
     // Create the audit log reader
     String auditLogJdbcUrl = conf.get(
@@ -76,6 +80,7 @@ public class ReplicationLauncher {
         DeployConfigurationKeys.AUDIT_LOG_MAP_RED_STATS_DB_TABLE);
 
     final AuditLogReader auditLogReader = new AuditLogReader(
+        conf,
         auditLogConnectionFactory,
         auditLogTableName,
         auditLogObjectsTableName,
@@ -108,6 +113,7 @@ public class ReplicationLauncher {
     // Create the store for replication job info
     PersistedJobInfoStore persistedJobInfoStore =
         new PersistedJobInfoStore(
+            conf,
             stateConnectionFactory,
             stateTableName);
 
@@ -215,7 +221,8 @@ public class ReplicationLauncher {
    */
   @SuppressWarnings("static-access")
   public static void main(String[] argv)
-      throws  SQLException, ConfigurationException, IOException, ParseException {
+      throws AuditLogEntryException, ConfigurationException, IOException, ParseException,
+      StateUpdateException, SQLException {
     Options options = new Options();
 
     options.addOption(OptionBuilder.withLongOpt("config-files")

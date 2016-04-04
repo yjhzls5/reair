@@ -1,6 +1,7 @@
 package com.airbnb.di.hive.replication;
 
 import com.airbnb.di.common.DistCpException;
+import com.airbnb.di.hive.StateUpdateException;
 import com.airbnb.di.hive.common.HiveMetastoreException;
 import com.airbnb.di.hive.replication.db.PersistedJobInfo;
 import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
@@ -78,6 +79,10 @@ public class ReplicationJob extends Job {
         }
       } catch (HiveMetastoreException | IOException | DistCpException e) {
         LOG.error("Got an exception!", e);
+      } catch (StateUpdateException e) {
+        // Indicates an error with the system - fail the job.
+        LOG.error("Got an exception!", e);
+        return -1;
       }
 
       if (attempt == maxAttempts - 1) {

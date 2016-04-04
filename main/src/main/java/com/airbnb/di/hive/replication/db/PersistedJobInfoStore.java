@@ -5,14 +5,17 @@ import com.google.common.collect.Lists;
 
 import com.airbnb.di.common.Container;
 import com.airbnb.di.db.DbConnectionFactory;
+import com.airbnb.di.hive.StateUpdateException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.ReplicationOperation;
 import com.airbnb.di.hive.replication.ReplicationStatus;
 import com.airbnb.di.hive.replication.ReplicationUtils;
+import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.utils.RetryableTask;
 import com.airbnb.di.utils.RetryingTaskRunner;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.StringUtils;
 
@@ -49,9 +52,22 @@ public class PersistedJobInfoStore {
   private String dbTableName;
   private RetryingTaskRunner retryingTaskRunner = new RetryingTaskRunner();
 
-  public PersistedJobInfoStore(DbConnectionFactory dbConnectionFactory, String dbTableName) {
+  /**
+   * Constructor.
+   *
+   * @param conf configuration
+   * @param dbConnectionFactory factory for creating connections to the DB
+   * @param dbTableName name of the table on the DB that stores job information
+   */
+  public PersistedJobInfoStore(Configuration conf,
+                               DbConnectionFactory dbConnectionFactory,
+                               String dbTableName) {
     this.dbConnectionFactory = dbConnectionFactory;
     this.dbTableName = dbTableName;
+    this.retryingTaskRunner = new RetryingTaskRunner(
+        conf.getInt(DeployConfigurationKeys.DB_QUERY_RETRIES,
+            DbConstants.DEFAULT_NUM_RETRIES),
+        DbConstants.DEFAULT_RETRY_EXPONENTIAL_BASE);
   }
 
   /**
@@ -186,17 +202,24 @@ public class PersistedJobInfoStore {
       final Optional<HiveObjectSpec> renameToObject,
       final Optional<Path> renameToPath,
       final Map<String,
-      String> extras) {
+      String> extras) throws StateUpdateException {
     final PersistedJobInfo jobInfo = new PersistedJobInfo();
 
     final Container<PersistedJobInfo> container = new Container<PersistedJobInfo>();
-    retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
-      @Override
-      public void run() throws Exception {
-        container.set(create(operation, status, srcPath, srcClusterName, srcTableSpec,
-            srcPartitionNames, srcTldt, renameToObject, renameToPath, extras));
-      }
-    });
+    try {
+      retryingTaskRunner.runWithRetries(new RetryableTask() {
+        @Override
+        public void run() throws Exception {
+          container.set(create(operation, status, srcPath, srcClusterName, srcTableSpec,
+              srcPartitionNames, srcTldt, renameToObject, renameToPath, extras));
+        }
+      });
+    } catch (IOException | SQLException e) {
+      // These should be the only exceptions thrown.
+      throw new StateUpdateException(e);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
 
     return container.get();
   }
@@ -288,15 +311,30 @@ public class PersistedJobInfoStore {
   }
 
   private synchronized void persistHelper(PersistedJobInfo job) throws SQLException, IOException {
-    String query = "INSERT INTO " + dbTableName + " SET " + "id = ?, " + "create_time = ?, "
-        + "operation = ?, " + "status = ?, " + "src_path = ?, " + "src_cluster = ?, "
-        + "src_db = ?, " + "src_table = ?, " + "src_partitions = ?, " + "src_tldt = ?, "
-        + "rename_to_db = ?, " + "rename_to_table = ?, " + "rename_to_partition = ?, "
-        + "rename_to_path = ?, " + "extras = ? " + "ON DUPLICATE KEY UPDATE " + "create_time = ?, "
-        + "operation = ?, " + "status = ?, " + "src_path = ?, " + "src_cluster = ?, "
-        + "src_db = ?, " + "src_table = ?, " + "src_partitions = ?, " + "src_tldt = ?, "
-        + "rename_to_db = ?, " + "rename_to_table = ?, " + "rename_to_partition = ?, "
-        + "rename_to_path = ?, " + "extras = ?";
+    String query = "INSERT INTO " + dbTableName
+        + " SET " + "id = ?, " + "create_time = ?, "
+        + "operation = ?, " + "status = ?, "
+        + "src_path = ?, " + "src_cluster = ?, "
+        + "src_db = ?, " + "src_table = ?, "
+        + "src_partitions = ?, " + "src_tldt = ?, "
+        + "rename_to_db = ?, " + "rename_to_table = ?, "
+        + "rename_to_partition = ?, "
+        + "rename_to_path = ?, "
+        + "extras = ? "
+        + "ON DUPLICATE KEY UPDATE " + "create_time = ?, "
+        + "operation = ?, "
+        + "status = ?, "
+        + "src_path = ?, "
+        + "src_cluster = ?, "
+        + "src_db = ?, "
+        + "src_table = ?, "
+        + "src_partitions = ?, "
+        + "src_tldt = ?, "
+        + "rename_to_db = ?, "
+        + "rename_to_table = ?, "
+        + "rename_to_partition = ?, "
+        + "rename_to_path = ?, "
+        + "extras = ?";
 
     Connection connection = dbConnectionFactory.getConnection();
     PreparedStatement ps = connection.prepareStatement(query);
@@ -341,7 +379,8 @@ public class PersistedJobInfoStore {
     }
   }
 
-  public synchronized void changeStatusAndPersist(ReplicationStatus status, PersistedJobInfo job) {
+  public synchronized void changeStatusAndPersist(ReplicationStatus status, PersistedJobInfo job)
+      throws StateUpdateException {
     job.setStatus(status);
     persist(job);
   }
@@ -351,13 +390,19 @@ public class PersistedJobInfoStore {
    *
    * @param job the job to persist
    */
-  public synchronized void persist(final PersistedJobInfo job) {
-    retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
-      @Override
-      public void run() throws Exception {
-        persistHelper(job);
-      }
-    });
+  public synchronized void persist(final PersistedJobInfo job) throws StateUpdateException {
+    try {
+      retryingTaskRunner.runWithRetries(new RetryableTask() {
+        @Override
+        public void run() throws Exception {
+          persistHelper(job);
+        }
+      });
+    } catch (IOException | SQLException e) {
+      throw new StateUpdateException(e);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private synchronized PersistedJobInfo getJob(long id) throws SQLException {

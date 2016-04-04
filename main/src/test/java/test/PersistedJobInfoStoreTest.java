@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.airbnb.di.db.DbConnectionFactory;
 import com.airbnb.di.db.StaticDbConnectionFactory;
+import com.airbnb.di.hive.StateUpdateException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.replication.ReplicationOperation;
 import com.airbnb.di.hive.replication.ReplicationStatus;
@@ -13,6 +14,7 @@ import com.airbnb.di.utils.EmbeddedMySqlDb;
 import com.airbnb.di.utils.ReplicationTestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -61,7 +63,7 @@ public class PersistedJobInfoStoreTest {
   }
 
   @Test
-  public void testCreateAndUpdate() throws IOException, SQLException {
+  public void testCreateAndUpdate() throws StateUpdateException, SQLException {
     // Create the state table
     DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(
         ReplicationTestUtils.getJdbcUrl(embeddedMySqlDb, MYSQL_TEST_DB_NAME),
@@ -73,7 +75,7 @@ public class PersistedJobInfoStoreTest {
     Statement statement = connection.createStatement();
     statement.execute(PersistedJobInfoStore.getCreateTableSql("replication_jobs"));
     PersistedJobInfoStore jobStore =
-        new PersistedJobInfoStore(dbConnectionFactory, MYSQL_TEST_TABLE_NAME);
+        new PersistedJobInfoStore(new Configuration(), dbConnectionFactory, MYSQL_TEST_TABLE_NAME);
 
 
     // Test out creation

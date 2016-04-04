@@ -6,11 +6,14 @@ import com.airbnb.di.hive.common.NamedPartition;
 import com.airbnb.di.hive.hooks.HiveOperation;
 import com.airbnb.di.hive.replication.MetadataException;
 import com.airbnb.di.hive.replication.ReplicationUtils;
+import com.airbnb.di.hive.replication.db.DbConstants;
+import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
 import com.airbnb.di.utils.RetryableTask;
 import com.airbnb.di.utils.RetryingTaskRunner;
 import org.apache.commons.lang.math.LongRange;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 
@@ -51,6 +54,7 @@ public class AuditLogReader {
    * @param getIdsAfter start reading entries from the audit log after this ID value
    */
   public AuditLogReader(
+      Configuration conf,
       DbConnectionFactory dbConnectionFactory,
       String auditLogTableName,
       String outputObjectsTableName,
@@ -62,25 +66,36 @@ public class AuditLogReader {
     this.mapRedStatsTableName = mapRedStatsTableName;
     this.lastReadId = getIdsAfter;
     auditLogEntries = new LinkedList<>();
-    this.retryingTaskRunner = new RetryingTaskRunner();
+    this.retryingTaskRunner = new RetryingTaskRunner(
+        conf.getInt(DeployConfigurationKeys.DB_QUERY_RETRIES,
+            DbConstants.DEFAULT_NUM_RETRIES),
+        DbConstants.DEFAULT_RETRY_EXPONENTIAL_BASE);
   }
 
   /**
-   * Return the next audit log entry from the DB. If there is an error connecting to the DB, retry
-   * until successful.
+   * Return the next audit log entry from the DB. If there is an error connecting to the DB, retry.
    *
    * @return the next audit log entry
    *
    * @throws SQLException if there is an error querying the DB
    */
-  public synchronized Optional<AuditLogEntry> resilientNext() throws SQLException {
+  public synchronized Optional<AuditLogEntry> resilientNext()
+      throws AuditLogEntryException, SQLException {
     final Container<Optional<AuditLogEntry>> ret = new Container<>();
-    retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
-      @Override
-      public void run() throws Exception {
-        ret.set(next());
-      }
-    });
+
+    try {
+      retryingTaskRunner.runWithRetries(new RetryableTask() {
+        @Override
+        public void run() throws Exception {
+          ret.set(next());
+        }
+      });
+    } catch (SQLException | AuditLogEntryException e) {
+      // These should be the only exceptions thrown
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
 
     return ret.get();
   }

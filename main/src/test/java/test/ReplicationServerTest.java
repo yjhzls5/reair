@@ -133,6 +133,7 @@ public class ReplicationServerTest extends MockClusterTest {
             testDbCredentials.getReadWritePassword());
 
     auditLogReader = new AuditLogReader(
+        conf,
         auditLogDbConnectionFactory,
         AUDIT_LOG_TABLE_NAME,
         AUDIT_LOG_OBJECTS_TABLE_NAME,
@@ -145,6 +146,7 @@ public class ReplicationServerTest extends MockClusterTest {
 
     persistedJobInfoStore =
         new PersistedJobInfoStore(
+            conf,
             replicationStateDbConnectionFactory,
             REPLICATION_JOB_STATE_TABLE_NAME);
 

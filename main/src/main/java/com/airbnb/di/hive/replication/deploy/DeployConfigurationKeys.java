@@ -29,6 +29,10 @@ public class DeployConfigurationKeys {
   // Name of the table containing key/value pairs
   public static final String STATE_KV_DB_TABLE = "airbnb.reair.state.kv.db.table";
 
+  // When running queries to the DB, the number of times to retry if there's an error
+  public static final String DB_QUERY_RETRIES =
+      "airbnb.reair.db.query.retries";
+
   // Name to use for the source cluster
   public static final String SRC_CLUSTER_NAME = "airbnb.reair.clusters.src.name";
   // URL to the source cluster's metastore Thrift server.

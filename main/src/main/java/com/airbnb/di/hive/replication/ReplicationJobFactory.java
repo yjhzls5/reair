@@ -1,5 +1,6 @@
 package com.airbnb.di.hive.replication;
 
+import com.airbnb.di.hive.StateUpdateException;
 import com.airbnb.di.hive.common.HiveObjectSpec;
 import com.airbnb.di.hive.common.HiveUtils;
 import com.airbnb.di.hive.common.NamedPartition;
@@ -105,7 +106,7 @@ public class ReplicationJobFactory {
   public ReplicationJob createJobForCopyTable(
       long auditLogId,
       long auditLogEntryCreateTime,
-      Table table) throws SQLException {
+      Table table) throws StateUpdateException {
     ReplicationOperation replicationOperation =
         HiveUtils.isPartitioned(table) ? ReplicationOperation.COPY_PARTITIONED_TABLE
             : ReplicationOperation.COPY_UNPARTITIONED_TABLE;
@@ -152,7 +153,7 @@ public class ReplicationJobFactory {
   public ReplicationJob createJobForCopyPartition(
       long auditLogId,
       long auditLogEntryCreateTime,
-      HiveObjectSpec spec) {
+      HiveObjectSpec spec) throws StateUpdateException {
 
     Map<String, String> extras = new HashMap<>();
     extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY, Long.toString(auditLogId));
@@ -187,7 +188,7 @@ public class ReplicationJobFactory {
   public ReplicationJob createJobForCopyPartition(
       long auditLogId,
       long auditLogEntryCreateTime,
-      NamedPartition namedPartition) throws SQLException {
+      NamedPartition namedPartition) throws StateUpdateException {
     String partitionName = namedPartition.getName();
     List<String> partitionNames = new ArrayList<>();
     partitionNames.add(partitionName);
@@ -226,7 +227,7 @@ public class ReplicationJobFactory {
   public ReplicationJob createJobForCopyDynamicPartitions(
       long auditLogId,
       long auditLogEntryCreateTime,
-      List<NamedPartition> namedPartitions) throws SQLException {
+      List<NamedPartition> namedPartitions) throws StateUpdateException {
 
     ReplicationOperation replicationOperation = ReplicationOperation.COPY_PARTITIONS;
 
@@ -287,7 +288,7 @@ public class ReplicationJobFactory {
   public ReplicationJob createJobForDropTable(
       long auditLogId,
       long auditLogEntryCreateTime,
-      Table table) throws SQLException {
+      Table table) throws StateUpdateException {
     ReplicationOperation replicationOperation = ReplicationOperation.DROP_TABLE;
 
     Map<String, String> extras = new HashMap<>();
@@ -326,7 +327,7 @@ public class ReplicationJobFactory {
   public ReplicationJob createJobForDropPartition(
       long auditLogId,
       long auditLogEntryCreateTime,
-      NamedPartition namedPartition) throws SQLException {
+      NamedPartition namedPartition) throws StateUpdateException {
     Map<String, String> extras = new HashMap<>();
     extras.put(PersistedJobInfo.AUDIT_LOG_ID_EXTRAS_KEY, Long.toString(auditLogId));
     extras.put(PersistedJobInfo.AUDIT_LOG_ENTRY_CREATE_TIME_KEY,
@@ -368,7 +369,7 @@ public class ReplicationJobFactory {
       long auditLogId,
       long auditLogEntryCreateTime,
       Table renameFromTable,
-      Table renameToTable) throws SQLException {
+      Table renameToTable) throws StateUpdateException {
     ReplicationOperation replicationOperation = ReplicationOperation.RENAME_TABLE;
 
     Map<String, String> extras = new HashMap<>();
@@ -419,7 +420,7 @@ public class ReplicationJobFactory {
       long auditLogId,
       long auditLogEntryCreateTime,
       NamedPartition renameFromPartition,
-      NamedPartition renameToPartition) throws IOException, SQLException {
+      NamedPartition renameToPartition) throws StateUpdateException {
     ReplicationOperation replicationOperation = ReplicationOperation.RENAME_PARTITION;
 
     Map<String, String> extras = new HashMap<>();
@@ -468,7 +469,7 @@ public class ReplicationJobFactory {
    */
   public List<ReplicationJob> createReplicationJobs(
       AuditLogEntry auditLogEntry,
-      ReplicationFilter replicationFilter) throws IOException, SQLException {
+      ReplicationFilter replicationFilter) throws StateUpdateException {
     List<ReplicationJob> replicationJobs = new ArrayList<>();
 
     if (!replicationFilter.accept(auditLogEntry)) {
