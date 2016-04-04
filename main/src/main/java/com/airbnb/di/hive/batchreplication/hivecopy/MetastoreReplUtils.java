@@ -15,7 +15,7 @@ public class MetastoreReplUtils {
   }
 
   /**
-   * static function to create ClusterFactory object based on configuration. For test environment it
+   * Static function to create ClusterFactory object based on configuration. For test environment it
    * will create a mock ClusterFactory.
    *
    * @param conf configuration for the cluster

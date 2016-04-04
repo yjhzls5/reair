@@ -477,7 +477,7 @@ public class ReplicationJob extends Configured implements Tool {
 
     job.setReducerClass(DirectoryCompareReducer.class);
 
-    // last directory is destination, all other directories are source directory
+    // last directory is destination, all other directories are source directories
     job.getConfiguration().set(SRC_PATH_CONF, source);
     job.getConfiguration().set(DST_PATH_CONF, destination);
     job.getConfiguration().set("mapred.input.dir", Joiner.on(",").join(source, destination));

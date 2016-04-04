@@ -23,7 +23,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 
 /**
- * Stage 2 Mapper to handle directory hdfs directory copy
+ * Stage 2 Mapper to handle directory hdfs copy
  *
  * <p>Input of this job is stage1 output. It contains action of table and partition. We only care
  * about COPY action in this stage. In the mapper, it will enumerate the directories and figure what
