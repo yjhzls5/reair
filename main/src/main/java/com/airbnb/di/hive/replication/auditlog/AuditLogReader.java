@@ -149,8 +149,15 @@ public class AuditLogReader {
         + "FROM (SELECT id FROM %s WHERE id > %s "
         + "AND (command_type IS NULL OR command_type NOT IN('SHOWTABLES', 'SHOWPARTITIONS', "
         + "'SWITCHDATABASE')) "
+        + "ORDER BY id "
         + "LIMIT %s)"
-        + " subquery";
+        + " subquery "
+        // Get read locks on the specified rows to prevent skipping of rows that haven't committed
+        // yet, but have an id that matches the where clause.
+        // For example, one transaction starts and
+        // inserts id = 1, but another transaction starts, inserts, and commits i = 2 before the
+        // first transaction commits. Locking can also be done with serializable isolation level.
+        + "LOCK IN SHARE MODE";
     String query = String.format(queryFormatString, auditLogTableName, lastReadId, ROW_FETCH_SIZE);
     Connection connection = dbConnectionFactory.getConnection();
 
@@ -184,7 +191,12 @@ public class AuditLogReader {
         + "WHERE a.id >= ? AND a.id <= ? "
         + "AND (command_type IS NULL OR command_type "
         + "NOT IN('SHOWTABLES', 'SHOWPARTITIONS', 'SWITCHDATABASE')) "
-        + "ORDER BY id";
+        + "ORDER BY id "
+        // Get read locks on the specified rows to prevent skipping of rows that haven't committed
+        // yet, but have an ID between idsToRead. For example, one transaction starts and
+        // inserts id = 1, but another transaction starts, inserts, and commits i=2 before the
+        // first transaction commits. Locking can also be done with serializable isolation level.
+        + "LOCK IN SHARE MODE";
     String query = String.format(queryFormatString,
         auditLogTableName, outputObjectsTableName,
         idsToRead.getMinimumLong(), idsToRead.getMaximumLong());
@@ -323,7 +335,7 @@ public class AuditLogReader {
         throw new RuntimeException("Unhandled output type: " + objectType);
       }
     }
-
+    
     // This is the case where we read to the end of the table.
     if (id != -1) {
       AuditLogEntry entry = new AuditLogEntry(
