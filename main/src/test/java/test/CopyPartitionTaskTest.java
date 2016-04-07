@@ -2,13 +2,14 @@ package test;
 
 import static org.junit.Assert.assertEquals;
 
-import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
-import com.airbnb.di.hive.replication.ReplicationUtils;
-import com.airbnb.di.hive.replication.RunInfo;
-import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
-import com.airbnb.di.utils.ReplicationTestUtils;
+import com.airbnb.reair.common.DistCpException;
+import com.airbnb.reair.common.HiveMetastoreException;
+import com.airbnb.reair.common.HiveObjectSpec;
+import com.airbnb.reair.incremental.ReplicationUtils;
+import com.airbnb.reair.incremental.RunInfo;
+import com.airbnb.reair.incremental.primitives.CopyPartitionTask;
+import com.airbnb.reair.utils.ReplicationTestUtils;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;

@@ -2,9 +2,10 @@ package test;
 
 import com.google.common.collect.Lists;
 
-import com.airbnb.di.hive.common.HiveMetastoreClient;
-import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
+import com.airbnb.reair.common.HiveMetastoreClient;
+import com.airbnb.reair.common.HiveMetastoreException;
+import com.airbnb.reair.common.HiveObjectSpec;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;

@@ -1,13 +1,13 @@
 package test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
-import com.airbnb.di.db.DbConnectionFactory;
-import com.airbnb.di.db.DbKeyValueStore;
-import com.airbnb.di.db.StaticDbConnectionFactory;
-import com.airbnb.di.utils.EmbeddedMySqlDb;
-import com.airbnb.di.utils.ReplicationTestUtils;
+import com.airbnb.reair.db.DbConnectionFactory;
+import com.airbnb.reair.db.DbKeyValueStore;
+import com.airbnb.reair.db.EmbeddedMySqlDb;
+import com.airbnb.reair.db.StaticDbConnectionFactory;
+import com.airbnb.reair.utils.ReplicationTestUtils;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.AfterClass;

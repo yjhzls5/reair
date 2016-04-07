@@ -64,7 +64,7 @@
 
   <property>
     <name>airbnb.reair.object.filter</name>
-    <value>com.airbnb.di.hive.replication.filter.RegexReplicationFilter</value>
+    <value>com.airbnb.reair.incremental.filter.RegexReplicationFilter</value>
     <comment>
       Name of the class used to filter out entries from replication
     </comment>

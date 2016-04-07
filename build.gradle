@@ -41,7 +41,7 @@ subprojects {
   tasks.withType(Checkstyle) {
     checkstyleClasspath = project.configurations.checkstyleOverride
     configFile rootProject.file('build-config/google_checkstyle.xml')
-    checkstyleMain.exclude '**/thrift/**'
+    checkstyleMain.exclude '**/com/airbnb/reair/incremental/thrift/**'
   }
   // TODO Not ideal because linting information is displayed even when the build failed for a
   // different reason

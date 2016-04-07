@@ -1,10 +1,10 @@
 package test;
 
-import com.airbnb.di.hive.replication.DirectoryCopier;
-import com.airbnb.di.hive.replication.configuration.Cluster;
-import com.airbnb.di.hive.replication.configuration.ClusterFactory;
+import com.airbnb.reair.incremental.DirectoryCopier;
+import com.airbnb.reair.incremental.configuration.Cluster;
+import com.airbnb.reair.incremental.configuration.ClusterFactory;
+import com.airbnb.reair.incremental.configuration.ConfigurationException;
 
-import com.airbnb.di.hive.replication.configuration.ConfigurationException;
 import org.apache.hadoop.conf.Configuration;
 
 /**

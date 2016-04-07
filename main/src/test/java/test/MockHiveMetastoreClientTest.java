@@ -6,8 +6,8 @@ import static org.junit.Assert.assertNull;
 
 import com.google.common.collect.Lists;
 
-import com.airbnb.di.hive.common.HiveMetastoreClient;
-import com.airbnb.di.hive.common.HiveMetastoreException;
+import com.airbnb.reair.common.HiveMetastoreException;
+
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -16,7 +16,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

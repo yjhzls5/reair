@@ -7,8 +7,6 @@
 package com.airbnb.di.hive.replication.thrift;
 
 
-import java.util.Map;
-import java.util.HashMap;
 import org.apache.thrift.TEnum;
 
 public enum TReplicationOperation implements org.apache.thrift.TEnum {

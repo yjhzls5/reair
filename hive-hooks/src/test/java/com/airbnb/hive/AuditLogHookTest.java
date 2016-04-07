@@ -4,14 +4,15 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.Lists;
 
-import com.airbnb.di.db.DbConnectionFactory;
-import com.airbnb.di.db.StaticDbConnectionFactory;
-import com.airbnb.di.hive.hooks.AuditLogHook;
-import com.airbnb.di.hive.hooks.AuditLogHookUtils;
-import com.airbnb.di.hive.hooks.HiveOperation;
-import com.airbnb.di.utils.EmbeddedMySqlDb;
-import com.airbnb.di.utils.ReplicationTestUtils;
-import com.airbnb.di.utils.TestDbCredentials;
+import com.airbnb.reair.db.DbConnectionFactory;
+import com.airbnb.reair.db.EmbeddedMySqlDb;
+import com.airbnb.reair.db.StaticDbConnectionFactory;
+import com.airbnb.reair.db.TestDbCredentials;
+import com.airbnb.reair.hive.hooks.AuditLogHook;
+import com.airbnb.reair.hive.hooks.AuditLogHookUtils;
+import com.airbnb.reair.hive.hooks.HiveOperation;
+import com.airbnb.reair.utils.ReplicationTestUtils;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
@@ -22,7 +23,6 @@ import org.apache.hadoop.mapred.Counters;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;

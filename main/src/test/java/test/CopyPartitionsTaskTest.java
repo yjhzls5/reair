@@ -4,14 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
-import com.airbnb.di.hive.replication.ReplicationUtils;
-import com.airbnb.di.hive.replication.RunInfo;
-import com.airbnb.di.hive.replication.primitives.CopyPartitionsTask;
-import com.airbnb.di.multiprocessing.ParallelJobExecutor;
-import com.airbnb.di.utils.ReplicationTestUtils;
+import com.airbnb.reair.common.DistCpException;
+import com.airbnb.reair.common.HiveMetastoreException;
+import com.airbnb.reair.common.HiveObjectSpec;
+import com.airbnb.reair.incremental.ReplicationUtils;
+import com.airbnb.reair.incremental.RunInfo;
+import com.airbnb.reair.incremental.primitives.CopyPartitionsTask;
+import com.airbnb.reair.multiprocessing.ParallelJobExecutor;
+import com.airbnb.reair.utils.ReplicationTestUtils;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;

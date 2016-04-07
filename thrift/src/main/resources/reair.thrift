@@ -1,4 +1,4 @@
-namespace java com.airbnb.di.hive.replication.thrift
+namespace java com.airbnb.reair.incremental.thrift
 
 enum TReplicationOperation {
   COPY_UNPARTITIONED_TABLE,

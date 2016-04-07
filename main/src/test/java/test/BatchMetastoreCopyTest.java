@@ -2,12 +2,13 @@ package test;
 
 import static org.junit.Assert.assertTrue;
 
-import com.airbnb.di.hive.batchreplication.hdfscopy.ReplicationJob;
-import com.airbnb.di.hive.batchreplication.hivecopy.MetastoreReplicationJob;
-import com.airbnb.di.hive.common.HiveObjectSpec;
-import com.airbnb.di.hive.replication.ReplicationUtils;
-import com.airbnb.di.hive.replication.deploy.DeployConfigurationKeys;
-import com.airbnb.di.utils.ReplicationTestUtils;
+import com.airbnb.reair.batch.hdfs.ReplicationJob;
+import com.airbnb.reair.batch.hive.MetastoreReplicationJob;
+import com.airbnb.reair.common.HiveObjectSpec;
+import com.airbnb.reair.incremental.ReplicationUtils;
+import com.airbnb.reair.incremental.deploy.ConfigurationKeys;
+import com.airbnb.reair.utils.ReplicationTestUtils;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -75,9 +76,9 @@ public class BatchMetastoreCopyTest extends MockClusterTest {
     JobConf jobConf = new JobConf(conf);
 
     String[] args = {};
-    jobConf.set(DeployConfigurationKeys.BATCH_JOB_OUTPUT_DIR,
+    jobConf.set(ConfigurationKeys.BATCH_JOB_OUTPUT_DIR,
         new Path(destCluster.getFsRoot(), "test_output").toString());
-    jobConf.set(DeployConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS,
+    jobConf.set(ConfigurationKeys.BATCH_JOB_CLUSTER_FACTORY_CLASS,
         MockClusterFactory.class.getName());
 
     ToolRunner.run(jobConf, new MetastoreReplicationJob(), args);

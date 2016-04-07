@@ -1,13 +1,12 @@
 package test;
 
-import com.airbnb.di.hive.replication.DirectoryCopier;
-import com.airbnb.di.hive.replication.configuration.Cluster;
-import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
+import com.airbnb.reair.incremental.DirectoryCopier;
+import com.airbnb.reair.incremental.configuration.Cluster;
+import com.airbnb.reair.incremental.configuration.DestinationObjectFactory;
+import com.airbnb.reair.incremental.configuration.ObjectConflictHandler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hadoop.yarn.server.MiniYARNCluster;

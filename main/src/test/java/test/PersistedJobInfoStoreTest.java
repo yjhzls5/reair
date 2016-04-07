@@ -2,16 +2,17 @@ package test;
 
 import static org.junit.Assert.assertEquals;
 
-import com.airbnb.di.db.DbConnectionFactory;
-import com.airbnb.di.db.StaticDbConnectionFactory;
-import com.airbnb.di.hive.StateUpdateException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
-import com.airbnb.di.hive.replication.ReplicationOperation;
-import com.airbnb.di.hive.replication.ReplicationStatus;
-import com.airbnb.di.hive.replication.db.PersistedJobInfo;
-import com.airbnb.di.hive.replication.db.PersistedJobInfoStore;
-import com.airbnb.di.utils.EmbeddedMySqlDb;
-import com.airbnb.di.utils.ReplicationTestUtils;
+import com.airbnb.reair.common.HiveObjectSpec;
+import com.airbnb.reair.db.DbConnectionFactory;
+import com.airbnb.reair.db.EmbeddedMySqlDb;
+import com.airbnb.reair.db.StaticDbConnectionFactory;
+import com.airbnb.reair.incremental.ReplicationOperation;
+import com.airbnb.reair.incremental.ReplicationStatus;
+import com.airbnb.reair.incremental.StateUpdateException;
+import com.airbnb.reair.incremental.db.PersistedJobInfo;
+import com.airbnb.reair.incremental.db.PersistedJobInfoStore;
+import com.airbnb.reair.utils.ReplicationTestUtils;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -20,7 +21,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;

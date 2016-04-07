@@ -3,8 +3,9 @@ package test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.airbnb.di.hive.common.HiveObjectSpec;
-import com.airbnb.di.hive.replication.ExchangePartitionParser;
+import com.airbnb.reair.common.HiveObjectSpec;
+import com.airbnb.reair.incremental.ExchangePartitionParser;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;

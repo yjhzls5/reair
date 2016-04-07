@@ -43,7 +43,7 @@ export HADOOP_HEAPSIZE=8096
 JOB_START_TIME="$(date +"%s")"
 
 hadoop jar airbnb-reair-main-1.0.0-all.jar \
-com.airbnb.di.hive.batchreplication.hdfscopy.ReplicationJob \
+com.airbnb.reair.batch.hdfs.ReplicationJob \
 -Dmapreduce.job.reduces=500 \
 -Dmapreduce.map.memory.mb=8000 \
 -Dmapreduce.map.java.opts="-Djava.net.preferIPv4Stack=true -Xmx7000m" \

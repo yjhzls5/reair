@@ -54,7 +54,7 @@ my_db2	my_table2
 ```
 export HADOOP_OPTS="-Dlog4j.configuration=file://<path to log4j.properties>"
 export HADOOP_HEAPSIZE=8096
-hadoop jar airbnb-reair-main-1.0.0-all.jar --config-file my_config_file.xml --table-list my_tables_to_copy.txt
+hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.batch.hive.MetastoreReplicationJob --config-file my_config_file.xml --table-list my_tables_to_copy.txt
 ```
 
 * Additional CLI Options: `--step`, `--override-input`. These arguments are useful if want to run one of the three MR job individually for faster failure recovery. `--step` indicates which step to run. `--override-input` provides the path for the input when running the second and third stage MR jobs. The input path will usually be the output for the first stage MR job.
@@ -106,7 +106,7 @@ Once the build finishes, the JAR to run the incremental replication process can 
 
 ```
 export HADOOP_OPTS="-Dlog4j.configuration=file://<path to log4j.properties>"
-hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.di.hive.replication.deploy.ReplicationLauncher --config-files my_config_file.xml
+hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.incremental.deploy.ReplicationLauncher --config-files my_config_file.xml
 ```
 
 If you use the recommended [`log4j.properties`](main/src/main/resources/log4j.properties) file that is shipped with the tool, messages with the `INFO` level will be printed to `stderr`, but more detailed logging messages with >= `DEBUG` logging level will be recorded to a log file in the current working directory.
@@ -123,7 +123,7 @@ To force the process to start replicating entries after a particular audit log I
 
 ```
 export HADOOP_OPTS="-Dlog4j.configuration=file://<path to log4j.properties>"
-hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.di.hive.replication.deploy.ReplicationLauncher --config-files my_config_file.xml --start-after-id 123456
+hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.replication.deploy.ReplicationLauncher --config-files my_config_file.xml --start-after-id 123456
 ```
 
 Replication entries that were started but not completed on the last invocation will be marked as aborted when you use `--start-after-id` to restart the process.

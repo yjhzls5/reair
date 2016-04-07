@@ -4,21 +4,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.airbnb.di.common.DistCpException;
-import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.common.HiveObjectSpec;
-import com.airbnb.di.hive.replication.ReplicationUtils;
-import com.airbnb.di.hive.replication.RunInfo;
-import com.airbnb.di.hive.replication.configuration.DestinationObjectFactory;
-import com.airbnb.di.hive.replication.configuration.ObjectConflictHandler;
-import com.airbnb.di.hive.replication.primitives.CopyPartitionTask;
-import com.airbnb.di.hive.replication.primitives.RenamePartitionTask;
-import com.airbnb.di.multiprocessing.ParallelJobExecutor;
-import com.airbnb.di.utils.ReplicationTestUtils;
+import com.airbnb.reair.common.DistCpException;
+import com.airbnb.reair.common.HiveMetastoreException;
+import com.airbnb.reair.common.HiveObjectSpec;
+import com.airbnb.reair.incremental.ReplicationUtils;
+import com.airbnb.reair.incremental.RunInfo;
+import com.airbnb.reair.incremental.primitives.CopyPartitionTask;
+import com.airbnb.reair.incremental.primitives.RenamePartitionTask;
+import com.airbnb.reair.multiprocessing.ParallelJobExecutor;
+import com.airbnb.reair.utils.ReplicationTestUtils;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Partition;
-import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

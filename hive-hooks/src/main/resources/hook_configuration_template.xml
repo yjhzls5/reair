@@ -5,7 +5,7 @@
 
     <property>
         <name>hive.exec.post.hooks</name>
-        <value>com.airbnb.di.hive.hooks.AuditLogHook</value>
+        <value>com.airbnb.reair.hive.hooks.AuditLogHook</value>
         <comment>
             Post-execute hooks for Hive.
         </comment>

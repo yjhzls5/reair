@@ -1,8 +1,9 @@
 package test;
 
-import com.airbnb.di.hive.common.HiveMetastoreClient;
-import com.airbnb.di.hive.common.HiveMetastoreException;
-import com.airbnb.di.hive.replication.configuration.Cluster;
+import com.airbnb.reair.common.HiveMetastoreClient;
+import com.airbnb.reair.common.HiveMetastoreException;
+import com.airbnb.reair.incremental.configuration.Cluster;
+
 import org.apache.hadoop.fs.Path;
 
 public class MockCluster implements Cluster {
