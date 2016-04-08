@@ -526,6 +526,5 @@ public class FsUtils {
     } else {
       return Optional.of(Boolean.valueOf(srcChecksum.equals(destChecksum)));
     }
-
   }
 }

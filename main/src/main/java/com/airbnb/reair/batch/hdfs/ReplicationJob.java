@@ -12,8 +12,9 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
 
+import com.airbnb.reair.batch.BatchUtils;
 import com.airbnb.reair.batch.SimpleFileStatus;
-import com.airbnb.reair.incremental.ReplicationUtils;
+import com.airbnb.reair.common.FsUtils;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -33,6 +34,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -51,6 +53,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -61,10 +64,21 @@ import javax.annotation.Nullable;
  */
 public class ReplicationJob extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(ReplicationJob.class);
+
   private static final String SRC_PATH_CONF = "replication.src.path";
   private static final String DST_PATH_CONF = "replication.dst.path";
   private static final String TMP_PATH_CONF = "replication.tmp.path";
   private static final String COMPARE_OPTION_CONF = "replication.compare.option";
+
+  // Names of the command line argument (e.g. --source)
+  public static final String SOURCE_DIRECTORY_ARG = "source";
+  public static final String DESTINATION_DIRECTORY_ARG = "destination";
+  public static final String TEMP_DIRECTORY_ARG = "temp";
+  public static final String LOG_DIRECTORY_ARG = "log";
+  public static final String OPERATIONS_ARG = "operations";
+  public static final String BLACKLIST_ARG = "blacklist";
+  public static final String DRY_RUN_ARG = "dry-run";
+
   public static final String DIRECTORY_BLACKLIST_REGEX = "replication.directory.blacklist";
 
   private enum Operation {
@@ -312,7 +326,7 @@ public class ReplicationJob extends Configured implements Tool {
                   .getFileSystem(context.getConfiguration());
           FileSystem dstFs = dstFile.getFileSystem(context.getConfiguration());
           String copyError =
-              ReplicationUtils.doCopyFileAction(context.getConfiguration(), fileStatus,
+              BatchUtils.doCopyFileAction(context.getConfiguration(), fileStatus,
                   srcFs, dstFile.getParent().toString(),
                   dstFs, tmpDirPath, context, fields[1].equals("update"),
                   context.getTaskAttemptID().toString());
@@ -337,15 +351,14 @@ public class ReplicationJob extends Configured implements Tool {
   /**
    * Print usage information to provided OutputStream.
    *
-   * @param applicationName Name of application to list in usage.
    * @param options Command-line options to be part of usage.
    * @param out OutputStream to which to write the usage information.
    */
-  public static void printUsage(final String applicationName, final Options options,
-      final OutputStream out) {
+  public static void printUsage(final Options options, final OutputStream out) {
     final PrintWriter writer = new PrintWriter(out);
     final HelpFormatter usageFormatter = new HelpFormatter();
-    usageFormatter.printUsage(writer, 80, applicationName, options);
+    usageFormatter.printUsage(writer, 80,
+        "Usage: hadoop jar <jar name> " + ReplicationJob.class.getName(), options);
     writer.flush();
   }
 
@@ -354,48 +367,49 @@ public class ReplicationJob extends Configured implements Tool {
    *
    * @return Options expected from command-line of GNU form.
    */
+  @SuppressWarnings("static-access")
   public static Options constructOptions() {
     Options options = new Options();
 
-    options.addOption(OptionBuilder.withLongOpt("source")
+    options.addOption(OptionBuilder.withLongOpt(SOURCE_DIRECTORY_ARG)
             .withDescription(
                     "Comma separated list of source directories")
             .hasArg()
             .withArgName("S")
             .create());
 
-    options.addOption(OptionBuilder.withLongOpt("destination")
+    options.addOption(OptionBuilder.withLongOpt(DESTINATION_DIRECTORY_ARG)
             .withDescription("Copy destination directory")
             .hasArg()
             .withArgName("D")
             .create());
 
-    options.addOption(OptionBuilder.withLongOpt("temp-path")
+    options.addOption(OptionBuilder.withLongOpt(TEMP_DIRECTORY_ARG)
         .withDescription("Copy temporary directory path")
         .hasArg()
         .withArgName("T")
         .create());
 
-    options.addOption(OptionBuilder.withLongOpt("output-path")
+    options.addOption(OptionBuilder.withLongOpt(LOG_DIRECTORY_ARG)
             .withDescription("Job logging output path")
             .hasArg()
             .withArgName("O")
             .create());
 
-    options.addOption(OptionBuilder.withLongOpt("operation")
+    options.addOption(OptionBuilder.withLongOpt(OPERATIONS_ARG)
             .withDescription("checking options: comma separated option"
                     + " including a(add), d(delete), u(update)")
             .hasArg()
             .withArgName("P")
             .create());
 
-    options.addOption(OptionBuilder.withLongOpt("blacklist")
+    options.addOption(OptionBuilder.withLongOpt(BLACKLIST_ARG)
             .withDescription("Directory blacklist regex")
             .hasArg()
             .withArgName("B")
             .create());
 
-    options.addOption(OptionBuilder.withLongOpt("dry-run")
+    options.addOption(OptionBuilder.withLongOpt(DRY_RUN_ARG)
             .withDescription("Dry run only")
             .create());
 
@@ -421,73 +435,103 @@ public class ReplicationJob extends Configured implements Tool {
     try {
       commandLine = cmdLineParser.parse(options, args);
     } catch (ParseException e) {
-      LOG.error("Encountered exception while parsing using GnuParser:", e);
-      printUsage("Usage: hadoop jar ...", options, System.out);
+      LOG.error("Encountered exception while parsing using GnuParser: ", e);
+      printUsage(options, System.out);
       System.out.println();
       ToolRunner.printGenericCommandUsage(System.out);
       return 1;
     }
 
 
-    if (!commandLine.hasOption("source") || !commandLine.hasOption("destination")) {
-      printUsage("Usage: hadoop jar ...", constructOptions(), System.out);
+    if (!commandLine.hasOption(SOURCE_DIRECTORY_ARG)
+        || !commandLine.hasOption(DESTINATION_DIRECTORY_ARG)) {
+      printUsage(options, System.out);
       return 1;
     }
 
-    if (!commandLine.hasOption("output-path")) {
-      printUsage("Usage: hadoop jar ...", constructOptions(), System.out);
+    if (!commandLine.hasOption(LOG_DIRECTORY_ARG)) {
+      printUsage(options, System.out);
       return 1;
     }
 
-    if (commandLine.hasOption("blacklist")) {
-      getConf().set(DIRECTORY_BLACKLIST_REGEX, commandLine.getOptionValue("b"));
-      LOG.info("Blacklist:" + commandLine.getOptionValue("b"));
+    boolean dryRun = commandLine.hasOption(DRY_RUN_ARG);
+    Path srcDir = new Path(commandLine.getOptionValue(SOURCE_DIRECTORY_ARG));
+    Path destDir = new Path(commandLine.getOptionValue(DESTINATION_DIRECTORY_ARG));
+    String operationsStr = commandLine.getOptionValue(OPERATIONS_ARG);
+    String tmpDirStr = commandLine.getOptionValue(TEMP_DIRECTORY_ARG);
+    String blacklistRegex = commandLine.getOptionValue(BLACKLIST_ARG);
+
+    if (blacklistRegex != null) {
+      getConf().set(DIRECTORY_BLACKLIST_REGEX, blacklistRegex);
+      LOG.info("Blacklist: " + blacklistRegex);
     }
 
-    if (commandLine.hasOption("dry-run")) {
-      return runReplicationCompareJob(commandLine.getOptionValue("source"),
-          commandLine.getOptionValue("destination"), commandLine.getOptionValue("output-path"),
-          commandLine.getOptionValue("operation"));
+    if (!dryRun && tmpDirStr == null) {
+      LOG.error("Temporary directory must be specified");
+      return -1;
+    }
+
+    // Disable speculative execution since neither mapper nor reducer handles this properly.
+    if (this.getConf().getBoolean(MRJobConfig.MAP_SPECULATIVE, true)) {
+      LOG.warn("Turning off speculative mappers in configuration");
+      getConf().set(MRJobConfig.MAP_SPECULATIVE, "false");
+    }
+    if (this.getConf().getBoolean(MRJobConfig.REDUCE_SPECULATIVE, true)) {
+      LOG.warn("Turning off speculative reducers in configuration");
+      getConf().set(MRJobConfig.REDUCE_SPECULATIVE, "false");
+    }
+
+    Path logPath = new Path(commandLine.getOptionValue(LOG_DIRECTORY_ARG));
+    // If the log directory exists and it is not empty, throw an error
+    FileSystem fs = logPath.getFileSystem(getConf());
+    if (!fs.exists(logPath)) {
+      LOG.info("Creating " + logPath);
+    } else if (FsUtils.getSize(getConf(), logPath, Optional.empty()) != 0) {
+      LOG.error("Log directory already exists and is not empty: " + logPath);
+      return -1;
+    }
+
+    Path stage1LogDir = new Path(logPath, "stage1");
+    Path stage2LogDir = new Path(logPath, "stage2");
+
+    if (dryRun) {
+      LOG.info("Starting stage 1 with log directory " + stage1LogDir);
+      return runDirectoryComparisonJob(srcDir,
+          destDir,
+          stage1LogDir,
+          operationsStr);
     } else {
-      if (!commandLine.hasOption("temp-path")) {
-        printUsage("Usage: hadoop jar ...", constructOptions(), System.out);
-        return 1;
+      Path tmpDir = new Path(tmpDirStr);
+
+      // Verify that destination directory exists
+      if (!FsUtils.dirExists(getConf(), destDir)) {
+        LOG.warn("Destination directory does not exist. Creating " + destDir);
+        FileSystem destFs = destDir.getFileSystem(getConf());
+        fs.mkdirs(destDir);
       }
 
-      Path outputRoot = new Path(commandLine.getOptionValue("output-path")).getParent();
-      String tmpPath =
-          outputRoot.toString() + "/__tmp_hive_result_." + System.currentTimeMillis();
-      int retVal = 1;
+      LOG.info("Starting stage 1 with log directory " + stage1LogDir);
+      if (runDirectoryComparisonJob(srcDir,
+          destDir,
+          stage1LogDir,
+          operationsStr) == 0) {
 
-      if (runReplicationCompareJob(commandLine.getOptionValue("source"),
-          commandLine.getOptionValue("destination"), tmpPath,
-              commandLine.getOptionValue("operation")) == 0) {
-        Path tmpDirectory = new Path(tmpPath);
-        FileSystem fs = tmpDirectory.getFileSystem(getConf());
-        if (!fs.exists(tmpDirectory)) {
-          LOG.error(tmpDirectory.toString() + " directory does not exist");
-          return 1;
-        }
-        LOG.info("output exists: " + fs.getFileStatus(tmpDirectory).toString());
-        retVal = runSyncJob(commandLine.getOptionValue("source"),
-                commandLine.getOptionValue("destination"),
-                commandLine.getOptionValue("temp-path"),
-                tmpPath + "/part*",
-                commandLine.getOptionValue("output-path"));
+        LOG.info("Starting stage 2 with log directory " + stage2LogDir);
+        return runSyncJob(srcDir,
+                destDir,
+                tmpDir,
+                stage1LogDir,
+                stage2LogDir);
+      } else {
+        return -1;
       }
-
-      Path tmpDirectory = new Path(tmpPath);
-      FileSystem fs = tmpDirectory.getFileSystem(getConf());
-      if (fs.exists(tmpDirectory)) {
-        fs.delete(tmpDirectory, true);
-      }
-      return retVal;
     }
   }
 
-  private int runReplicationCompareJob(String source, String destination, String output,
-      String compareOption) throws IOException, InterruptedException, ClassNotFoundException {
-    Job job = new Job(getConf(), "Replication Compare job");
+  private int runDirectoryComparisonJob(Path source, Path destination, Path output,
+                                        String compareOption)
+      throws IOException, InterruptedException, ClassNotFoundException {
+    Job job = new Job(getConf(), "Directory Comparison Job");
     job.setJarByClass(getClass());
 
     job.setInputFormatClass(DirScanInputFormat.class);
@@ -496,15 +540,15 @@ public class ReplicationJob extends Configured implements Tool {
     job.setReducerClass(DirectoryCompareReducer.class);
 
     // last directory is destination, all other directories are source directories
-    job.getConfiguration().set(SRC_PATH_CONF, source);
-    job.getConfiguration().set(DST_PATH_CONF, destination);
-    job.getConfiguration().set("mapred.input.dir", Joiner.on(",").join(source, destination));
+    job.getConfiguration().set(SRC_PATH_CONF, source.toString());
+    job.getConfiguration().set(DST_PATH_CONF, destination.toString());
+    job.getConfiguration().set(FileInputFormat.INPUT_DIR, Joiner.on(",").join(source, destination));
     job.getConfiguration().set(COMPARE_OPTION_CONF, compareOption);
 
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(FileStatus.class);
 
-    FileOutputFormat.setOutputPath(job, new Path(output));
+    FileOutputFormat.setOutputPath(job, output);
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
 
     boolean success = job.waitForCompletion(true);
@@ -512,8 +556,8 @@ public class ReplicationJob extends Configured implements Tool {
     return success ? 0 : 1;
   }
 
-  private int runSyncJob(String source, String destination, String tmpDir, String input,
-                         String output)
+  private int runSyncJob(Path source, Path destination, Path tmpDir, Path input,
+                         Path output)
       throws IOException, InterruptedException, ClassNotFoundException {
     Job job = new Job(getConf(), "HDFS Sync job");
     job.setJarByClass(getClass());
@@ -525,14 +569,15 @@ public class ReplicationJob extends Configured implements Tool {
     job.setOutputKeyClass(LongWritable.class);
     job.setOutputValueClass(Text.class);
 
-    job.getConfiguration().set(SRC_PATH_CONF, source);
-    job.getConfiguration().set(DST_PATH_CONF, destination);
-    job.getConfiguration().set(TMP_PATH_CONF, tmpDir);
+    job.getConfiguration().set(SRC_PATH_CONF, source.toString());
+    job.getConfiguration().set(DST_PATH_CONF, destination.toString());
+    job.getConfiguration().set(TMP_PATH_CONF, tmpDir.toString());
 
-    FileInputFormat.setInputPaths(job, new Path(input));
+    FileInputFormat.setInputPaths(job, input);
+    FileInputFormat.setInputDirRecursive(job, true);
     FileInputFormat.setMaxInputSplitSize(job,
             this.getConf().getLong( FileInputFormat.SPLIT_MAXSIZE, 60000L));
-    FileOutputFormat.setOutputPath(job, new Path(output));
+    FileOutputFormat.setOutputPath(job, new Path(output.toString()));
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
 
     boolean success = job.waitForCompletion(true);

@@ -10,7 +10,7 @@ Depending on the options specified, it can:
 * Copy files that exist on the source and on the destination but differ in file size (update option)
 * Delete files that exist on the destination, but not the source (delete option)
 
-Directories can be excluded from the copy by configuring the blacklist regex option. Directory names (not full paths) matching the regex are not traversed.
+Directories can be excluded from the copy by configuring the blacklist regex option. Paths (e.g. `/a/b/c`) matching the regex are not traversed.
 
 The dry run mode only does a comparison between source and destination directories and outputs the operations that it would have done to the logging directory in text format. Please see the schema of the logging table below for details on the output.
 
@@ -49,10 +49,11 @@ com.airbnb.reair.batch.hdfs.ReplicationJob \
 -Dmapreduce.map.java.opts="-Djava.net.preferIPv4Stack=true -Xmx7000m" \
 -source hdfs://airfs-src/user/hive/warehouse \
 -destination hdfs://airfs-dest/user/hive/warehouse \
--output-path hdfs://airfs-dest/user/replication/log/$JOB_START_TIME \
--temp-path hdfs://airfs-dest/tmp/replication/$JOB_START_TIME$
--blacklist "tmp.*" \
--operation a,u,d
+-log hdfs://airfs-dest/user/replication/log/$JOB_START_TIME \
+-temp hdfs://airfs-dest/tmp/replication/$JOB_START_TIME$
+-blacklist ".*/tmp/.*" \
+-operations a,u,d
 
-hive -e "LOAD  DATA  INPATH  'hdfs://airfs-dest/user/replication/log/$JOB_START_TIME' OVERWRITE INTO TABLE hdfs_copy_results PARTITION (job_start_time = $JOB_START_TIME);"
+# Load the log into a Hive table for easy viewing
+hive -e "LOAD  DATA  INPATH  'hdfs://airfs-dest/user/replication/log/$JOB_START_TIME/stage2' OVERWRITE INTO TABLE hdfs_copy_results PARTITION (job_start_time = $JOB_START_TIME);"
 ```

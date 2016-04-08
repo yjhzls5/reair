@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PageData {
+  // Number of jobs to fetch per Thrift call
+  private static final int JOB_FETCH_SIZE = 100;
+
   private String host;
   private int port;
   private List<TReplicationJob> activeJobs = null;
@@ -25,9 +28,9 @@ public class PageData {
   }
 
   /**
-   * TODO.
+   * Gets replication job data from the Thrift server.
    *
-   * @throws TException TODO
+   * @throws TException if there's an error connecting to the Thrift server
    */
   public void fetchData() throws TException {
     TTransport transport;
@@ -42,7 +45,7 @@ public class PageData {
       retiredJobs = new ArrayList<>();
       long marker = -1;
       while (true) {
-        List<TReplicationJob> jobBatch = client.getRetiredJobs(marker, 100);
+        List<TReplicationJob> jobBatch = client.getRetiredJobs(marker, JOB_FETCH_SIZE);
         if (jobBatch.size() == 0) {
           break;
         }
@@ -56,7 +59,7 @@ public class PageData {
       activeJobs = new ArrayList<>();
       marker = -1;
       while (true) {
-        List<TReplicationJob> jobBatch = client.getActiveJobs(marker, 100);
+        List<TReplicationJob> jobBatch = client.getActiveJobs(marker, JOB_FETCH_SIZE);
         if (jobBatch.size() == 0) {
           break;
         }

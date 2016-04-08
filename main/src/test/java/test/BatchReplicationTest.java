@@ -1,5 +1,6 @@
 package test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.airbnb.reair.batch.hdfs.ReplicationJob;
@@ -23,9 +24,9 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 /**
- * Unit Test for MetastoreReplicationJob.
+ * Unit test for batch replication.
  */
-public class BatchMetastoreCopyTest extends MockClusterTest {
+public class BatchReplicationTest extends MockClusterTest {
 
   /**
    * Sets up this class to have the right defaults for the batch replication test.
@@ -114,7 +115,7 @@ public class BatchMetastoreCopyTest extends MockClusterTest {
     ReplicationTestUtils.dropTable(srcMetastore, spec);
     ReplicationTestUtils.dropPartition(srcMetastore, partitionSpec2);
 
-    ToolRunner.run(jobConf, new MetastoreReplicationJob(), args);
+    assertEquals(0, ToolRunner.run(jobConf, new MetastoreReplicationJob(), args));
 
     assertTrue(!ReplicationUtils.exists(destMetastore, partitionSpec2));
   }
@@ -155,13 +156,14 @@ public class BatchMetastoreCopyTest extends MockClusterTest {
 
     JobConf jobConf = new JobConf(conf);
 
-    String[] args = {"--source", srcWarehouseRoot.toString(),
-        "--destination", destWarehouseRoot.toString(),
-        "--output-path", new Path(destCluster.getFsRoot(), "test_output").toString(),
-        "--temp-path", destCluster.getTmpDir().toString(),
-        "--operation", "a,d,u"};
+    String[] args = {"--" + ReplicationJob.SOURCE_DIRECTORY_ARG, srcWarehouseRoot.toString(),
+        "--" + ReplicationJob.DESTINATION_DIRECTORY_ARG, destWarehouseRoot.toString(),
+        "--" + ReplicationJob.LOG_DIRECTORY_ARG,
+        new Path(destCluster.getFsRoot(), "log").toString(),
+        "--" + ReplicationJob.TEMP_DIRECTORY_ARG, destCluster.getTmpDir().toString(),
+        "--" + ReplicationJob.OPERATIONS_ARG, "a,d,u"};
 
-    ToolRunner.run(jobConf, new ReplicationJob(), args);
+    assertEquals(0, ToolRunner.run(jobConf, new ReplicationJob(), args));
 
     assertTrue(directoryCopier.equalDirs(srcWarehouseRoot, destWarehouseRoot));
   }

@@ -211,7 +211,7 @@ public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
               : fs.listStatus(f.getPath(), hiddenFileFilter)) {
             if (child.isDirectory()) {
               if (directoryBlackList == null
-                  || !child.getPath().getName().matches(directoryBlackList)) {
+                  || !child.getPath().toUri().getPath().matches(directoryBlackList)) {
                 nextLevel.add(child);
               }
             }

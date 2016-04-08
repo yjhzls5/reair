@@ -1,5 +1,6 @@
 package com.airbnb.reair.batch.hive;
 
+import com.airbnb.reair.batch.BatchUtils;
 import com.airbnb.reair.batch.SimpleFileStatus;
 import com.airbnb.reair.incremental.ReplicationUtils;
 import com.airbnb.reair.incremental.configuration.Cluster;
@@ -57,7 +58,7 @@ public class Stage2DirectoryCopyReducer extends Reducer<LongWritable, Text, Text
       SimpleFileStatus fileStatus = new SimpleFileStatus(srcFileName, size, 0L);
       FileSystem srcFs = (new Path(srcFileName)).getFileSystem(this.conf);
       FileSystem dstFs = (new Path(dstDirectory)).getFileSystem(this.conf);
-      String result = ReplicationUtils.doCopyFileAction(
+      String result = BatchUtils.doCopyFileAction(
           conf,
           fileStatus,
           srcFs,

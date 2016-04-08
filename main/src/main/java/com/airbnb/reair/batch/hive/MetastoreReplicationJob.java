@@ -53,8 +53,8 @@ import java.util.UUID;
 public class MetastoreReplicationJob extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(MetastoreReplicationJob.class);
 
-  public static final String USAGE_COMMAND_STR = "Usage: hadoop jar <path to jar> "
-      + "<class reference> -libjar <path hive-metastore.jar,libthrift.jar,libfb303.jar> options";
+  public static final String USAGE_COMMAND_STR = "Usage: hadoop jar <jar name> "
+      + MetastoreReplicationJob.class.getName();
 
   // Context for rendering templates using velocity
   private VelocityContext velocityContext = new VelocityContext();
@@ -124,9 +124,9 @@ public class MetastoreReplicationJob extends Configured implements Tool {
   }
 
   /**
-   * Run hive metastore based batch replication.
+   * Run batch replication of the Hive metastore.
    *  1. Parse input arguments.
-   *  2. Run three MR jobs in sequences.
+   *  2. Run three MR jobs in sequence.
    *
    * @param args command arguments
    * @return 1 failed
@@ -149,7 +149,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         .create());
 
     options.addOption(OptionBuilder.withLongOpt("step")
-        .withDescription("Run specific step")
+        .withDescription("Run a specific step")
         .hasArg()
         .withArgName("ST")
         .create());
@@ -197,7 +197,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
       mergeConfiguration(conf, this.getConf());
     } else {
-      LOG.info("Unit test mode, getting configure from caller");
+      LOG.warn("Configuration files not specified. Running unit test?");
     }
 
     if (this.getConf().getBoolean(MRJobConfig.MAP_SPECULATIVE, true)) {
@@ -269,11 +269,11 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         return -1;
       }
 
-      if (runHdfsCopyJob(new Path(step1Out, "part*"), step2Out) != 0) {
+      if (runHdfsCopyJob(step1Out, step2Out) != 0) {
         return -1;
       }
 
-      if (runCommitChangeJob(new Path(step1Out, "part*"), step3Out) != 0) {
+      if (runCommitChangeJob(step1Out, step3Out) != 0) {
         return -1;
       }
 
@@ -423,6 +423,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     job.setReducerClass(Stage2DirectoryCopyReducer.class);
 
     FileInputFormat.setInputPaths(job, input);
+    FileInputFormat.setInputDirRecursive(job, true);
     FileInputFormat.setMaxInputSplitSize(job,
         this.getConf().getLong(FileInputFormat.SPLIT_MAXSIZE, 60000L));
 
@@ -464,6 +465,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     job.setOutputValueClass(Text.class);
 
     FileInputFormat.setInputPaths(job, input);
+    FileInputFormat.setInputDirRecursive(job, true);
     FileInputFormat.setMaxInputSplitSize(job,
         this.getConf().getLong(FileInputFormat.SPLIT_MAXSIZE, 60000L));
 

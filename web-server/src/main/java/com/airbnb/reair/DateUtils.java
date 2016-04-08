@@ -6,10 +6,10 @@ import java.util.TimeZone;
 
 public class DateUtils {
   /**
-   * TODO.
+   * Converts the unix time into an ISO8601 time.
    *
-   * @param time TODO
-   * @return TODO
+   * @param time unix time to convert
+   * @return a String representing the specified unix time
    */
   public String convertToIso8601(long time) {
     TimeZone tz = TimeZone.getTimeZone("UTC");

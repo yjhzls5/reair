@@ -9,7 +9,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- * InputSplit for a direcotry.
+ * Splits for a directory.
  */
 public class DirInputSplit extends InputSplit implements Writable {
   private String filePath;
