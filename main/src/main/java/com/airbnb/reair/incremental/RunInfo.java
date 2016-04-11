@@ -7,7 +7,7 @@ public class RunInfo {
 
   public enum RunStatus {
     // See similar definitions for
-    // {@link com.airbnb.di.hive.replication.ReplicationStatus}
+    // {@link com.airbnb.reair.incremental.ReplicationStatus}
     SUCCESSFUL,
     NOT_COMPLETABLE,
     FAILED,
