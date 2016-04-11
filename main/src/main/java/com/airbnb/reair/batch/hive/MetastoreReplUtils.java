@@ -7,7 +7,7 @@ import com.airbnb.reair.incremental.deploy.ConfigurationKeys;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * Util class for metastore replication.
+ * Utilities class for metastore replication.
  */
 public class MetastoreReplUtils {
   private MetastoreReplUtils() {

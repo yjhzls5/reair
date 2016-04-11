@@ -10,7 +10,7 @@ import java.sql.SQLException;
 /**
  * Periodically checks to see if it's possible to make a connection to the DB. If not, it exits this
  * process. This is to handle a case where for some reason, the MySQL JDBC driver gets in a bad
- * state and is no longer able to make connections. The only solution seems to be a restart.
+ * state and is no longer able to make connections. Further debugging is pending.
  */
 public class DbConnectionWatchdog extends Thread {
 
@@ -24,9 +24,9 @@ public class DbConnectionWatchdog extends Thread {
   private DbConnectionFactory dbConnectionFactory;
 
   /**
-   * TODO.
+   * Constructor.
    *
-   * @param dbConnectionFactory TODO
+   * @param dbConnectionFactory the connection factory to use for making test connections
    */
   public DbConnectionWatchdog(DbConnectionFactory dbConnectionFactory) {
     this.dbConnectionFactory = dbConnectionFactory;

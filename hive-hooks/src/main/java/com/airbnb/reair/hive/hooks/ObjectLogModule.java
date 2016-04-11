@@ -24,7 +24,7 @@ import java.util.Set;
 public class ObjectLogModule extends BaseLogModule {
 
   public static final String TABLE_NAME_KEY =
-      "airbnb.logging.audit_log.objects.table_name";
+      "airbnb.reair.audit_log.objects.table_name";
 
   // The objects table stores serialized forms of the relevant Hive objects
   // for that query.

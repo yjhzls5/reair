@@ -39,7 +39,7 @@ public class AuditLogHookTest {
   protected static final String DB_NAME = "audit_log_db";
   protected static final String AUDIT_LOG_TABLE_NAME = "audit_log";
   protected static final String OUTPUT_OBJECTS_TABLE_NAME = "audit_objects";
-  protected static final String MAP_RED_STATS_TABLE_NAME = "map_red_stats";
+  protected static final String MAP_RED_STATS_TABLE_NAME = "mapred_stats";
 
   protected static final String DEFAULT_QUERY_STRING = "Example query string";
 

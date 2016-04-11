@@ -54,7 +54,7 @@ public class ReplicationServerTest extends MockClusterTest {
   private static final String AUDIT_LOG_TABLE_NAME = "audit_log";
   private static final String AUDIT_LOG_OBJECTS_TABLE_NAME = "audit_objects";
   private static final String AUDIT_LOG_MAP_RED_STATS_TABLE_NAME =
-      "map_red_stats";
+      "mapred_stats";
 
   private static final String REPLICATION_STATE_DB_NAME =
       "replication_state_db";

@@ -19,8 +19,8 @@
 
   <property>
     <name>airbnb.reair.clusters.src.hdfs.root</name>
-    <value>hdfs://airfs-prod</value>
-    <comment>Source cluster HDFS root</comment>
+    <value>hdfs://airfs-prod/</value>
+    <comment>Source cluster HDFS root. Note trailing slash.</comment>
   </property>
 
   <property>
@@ -49,7 +49,7 @@
   <property>
     <name>airbnb.reair.clusters.dest.hdfs.root</name>
     <value>hdfs://airfs-test/</value>
-    <comment>Destination cluster HDFS root.</comment>
+    <comment>Destination cluster HDFS root. Note trailing slash.</comment>
   </property>
 
   <property>
@@ -63,29 +63,11 @@
   </property>
 
   <property>
-    <name>airbnb.reair.object.filter</name>
-    <value>com.airbnb.reair.incremental.filter.RegexReplicationFilter</value>
-    <comment>
-      Name of the class used to filter out entries from replication
-    </comment>
-  </property>
-
-  <property>
     <name>airbnb.reair.clusters.batch.output.dir</name>
     <value>hdfs://airfs-test/user/test/test_output</value>
     <comment>
       This configuration must be provided. It gives location to store each stage
       MR job output.
-    </comment>
-  </property>
-
-  <property>
-    <name>airbnb.reair.clusters.batch.input</name>
-    <value>hdfs://airfs-test/user/test/input.txt</value>
-    <comment>
-      Optional input list file. The file is text format with each line specified
-      as dbname.tablename. If input list is not provided, the job will go through
-      all databases and tables in the hive metastore.
     </comment>
   </property>
 

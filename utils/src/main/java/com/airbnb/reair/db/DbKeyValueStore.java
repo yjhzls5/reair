@@ -13,6 +13,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 
+/**
+ * A simple string key/value store using a DB.
+ */
 public class DbKeyValueStore {
 
   private static final Log LOG = LogFactory.getLog(DbKeyValueStore.class);
@@ -22,28 +25,26 @@ public class DbKeyValueStore {
   private RetryingTaskRunner retryingTaskRunner = new RetryingTaskRunner();
 
   /**
-   * TODO.
+   * Constructor.
    *
-   * @param dbConnectionFactory TODO
-   * @param dbTableName TODO
-   *
-   * @throws SQLException TODO
+   * @param dbConnectionFactory connection factory to use for connecting to the DB
+   * @param dbTableName name of the table containing the keys and values
    */
-  public DbKeyValueStore(DbConnectionFactory dbConnectionFactory, String dbTableName)
-      throws SQLException {
+  public DbKeyValueStore(DbConnectionFactory dbConnectionFactory, String dbTableName) {
 
     this.dbTableName = dbTableName;
     this.dbConnectionFactory = dbConnectionFactory;
   }
 
   /**
-   * TODO.
+   * Get the create table command for the key/value table.
    *
-   * @param tableName TODO
-   * @return TODO
+   * @param tableName name of the table
+   * @return SQL that can be executed to create the table
    */
   public static String getCreateTableSql(String tableName) {
-    return String.format("CREATE TABLE `%s` (\n" + "  `update_time` timestamp NOT NULL DEFAULT "
+    return String.format("CREATE TABLE `%s` (\n"
+        + "  `update_time` timestamp NOT NULL DEFAULT "
         + "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n"
         + "  `key_string` varchar(256) NOT NULL,\n"
         + "  `value_string` varchar(4000) DEFAULT NULL,\n" + "  PRIMARY KEY (`key_string`)\n"
@@ -51,39 +52,20 @@ public class DbKeyValueStore {
   }
 
   /**
-   * TODO.
+   * Get the value of the key.
    *
-   * @param value TODO
-   * @return TODO
+   * @param key name of the key
+   * @return the value associated with they key
    *
-   * @throws SQLException TODO
+   * @throws SQLException if there's an error querying the DB
    */
-  public Optional<String> resilientGet(final String value) throws SQLException {
-    final Container<Optional<String>> ret = new Container<>();
-    retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
-      @Override
-      public void run() throws Exception {
-        ret.set(get(value));
-      }
-    });
-    return ret.get();
-  }
-
-  /**
-   * TODO.
-   *
-   * @param value TODO
-   * @return TODO
-   *
-   * @throws SQLException TODO
-   */
-  public Optional<String> get(String value) throws SQLException {
+  public Optional<String> get(String key) throws SQLException {
     Connection connection = dbConnectionFactory.getConnection();
     String query =
         String.format("SELECT value_string FROM %s " + "WHERE key_string = ? LIMIT 1", dbTableName);
     PreparedStatement ps = connection.prepareStatement(query);
     try {
-      ps.setString(1, value);
+      ps.setString(1, key);
       ResultSet rs = ps.executeQuery();
       if (rs.next()) {
         return Optional.ofNullable(rs.getString(1));
@@ -97,10 +79,10 @@ public class DbKeyValueStore {
   }
 
   /**
-   * TODO.
+   * Sets the value for a key, retrying if necessary.
    *
-   * @param key TODO
-   * @param value TODO
+   * @param key the key to set
+   * @param value the value to associate with the key
    */
   public void resilientSet(final String key, final String value) {
     retryingTaskRunner.runUntilSuccessful(new RetryableTask() {
@@ -112,12 +94,12 @@ public class DbKeyValueStore {
   }
 
   /**
-   * TODO.
+   * Sets the value for a key.
    *
-   * @param key TODO
-   * @param value TODO
+   * @param key the key to set
+   * @param value the value to associate with the key
    *
-   * @throws SQLException TODO
+   * @throws SQLException if there's an error querying the DB
    */
   public void set(String key, String value) throws SQLException {
     LOG.debug("Setting " + key + " to " + value);
@@ -136,18 +118,4 @@ public class DbKeyValueStore {
       ps = null;
     }
   }
-
-  /*
-   * public static int main(String [] args) throws Exception { String jdbcUrl =
-   * "jdbc:mysql://pinkybrain-hive.cqmqbyzxdwlk." +
-   * "us-east-1.rds.amazonaws.com:3306/hive_replication"; String dbUser =
-   * DbCredentials.getUsername(); String dbPass = DbCredentials.getPassword();
-   *
-   * DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(jdbcUrl, dbUser,
-   * dbPass); DbKeyValueStore kvStore = new DbKeyValueStore(dbConnectionFactory, "key_value");
-   *
-   * kvStore.set("foo", "bar"); System.out.println("fruit is " + kvStore.get("fruit"));
-   * System.out.println("vegetable is " + kvStore.get("vegetable")); System.out.println("foo is " +
-   * kvStore.get("foo")); System.out.println("bar is " + kvStore.get("bar")); return 0; }
-   */
 }

@@ -32,10 +32,7 @@ import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /**
- * InputFormat that scan directories breadth first. It will stop at a level when it gets enough
- * splits. The InputSplit it returns will keep track if the directory needs further scan. If it does
- * the recursive scan will be done in RecorderReader. The InputFormat will return file path as key,
- * and file size information as value.
+ * Input format that scans the metastore and generates splits containing tables.
  */
 public class MetastoreScanInputFormat extends FileInputFormat<Text, Text> {
   private static final Log LOG = LogFactory.getLog(MetastoreScanInputFormat.class);

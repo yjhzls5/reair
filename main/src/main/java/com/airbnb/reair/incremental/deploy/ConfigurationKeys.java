@@ -5,29 +5,30 @@ package com.airbnb.reair.incremental.deploy;
  */
 public class ConfigurationKeys {
   // JDBC URL to the DB containing the audit log table
-  public static final String AUDIT_LOG_JDBC_URL = "airbnb.reair.audit_log.db.jdbc";
+  public static final String AUDIT_LOG_JDBC_URL = "airbnb.reair.audit_log.db.jdbc_url";
   // User for the audit log DB
-  public static final String AUDIT_LOG_DB_USER = "airbnb.reair.audit_log.db.user";
+  public static final String AUDIT_LOG_DB_USER = "airbnb.reair.audit_log.db.username";
   // Password for the audit log DB
   public static final String AUDIT_LOG_DB_PASSWORD = "airbnb.reair.audit_log.db.password";
   // Name of the audit log table
-  public static final String AUDIT_LOG_DB_TABLE = "airbnb.reair.audit_log.db.table";
+  public static final String AUDIT_LOG_DB_TABLE = "airbnb.reair.audit_log.db.table_name";
   // Name of the table containing serialized thrift objects from the audit log
-  public static final String AUDIT_LOG_OBJECTS_DB_TABLE = "airbnb.reair.audit_log.objects.db.table";
+  public static final String AUDIT_LOG_OBJECTS_DB_TABLE =
+      "airbnb.reair.audit_log.objects.db.table_name";
   // Name of the table containing mapred job stats
-  public static final String AUDIT_LOG_MAP_RED_STATS_DB_TABLE =
-      "airbnb.reair.audit_log.map_red_stats.db.table";
+  public static final String AUDIT_LOG_MAPRED_STATS_DB_TABLE =
+      "airbnb.reair.audit_log.mapred_stats.db.table_name";
 
   // JDB URL to the DB containing the replication state tables
-  public static final String STATE_JDBC_URL = "airbnb.reair.state.db.jdbc";
+  public static final String STATE_JDBC_URL = "airbnb.reair.state.db.jdbc_url";
   // User for the state DB
-  public static final String STATE_DB_USER = "airbnb.reair.state.db.user";
+  public static final String STATE_DB_USER = "airbnb.reair.state.db.username";
   // Password for the state DB
   public static final String STATE_DB_PASSWORD = "airbnb.reair.state.db.password";
   // Name of the table containing replication job state
-  public static final String STATE_DB_TABLE = "airbnb.reair.state.db.table";
+  public static final String STATE_DB_TABLE = "airbnb.reair.state.db.table_name";
   // Name of the table containing key/value pairs
-  public static final String STATE_KV_DB_TABLE = "airbnb.reair.state.kv.db.table";
+  public static final String STATE_KV_DB_TABLE = "airbnb.reair.state.kv.db.table_name";
 
   // When running queries to the DB, the number of times to retry if there's an error
   public static final String DB_QUERY_RETRIES =

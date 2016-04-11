@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Record Reader return directory path.
+ * Record Reader that returns paths to directories.
  */
 public class DirRecordReader extends RecordReader<Text, Boolean> {
   private List<InputSplit> inputSplits;

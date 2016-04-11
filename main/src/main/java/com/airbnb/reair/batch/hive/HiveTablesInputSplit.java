@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * InputSplit for a direcotry.
+ * Split containing a Hive table name.
  */
 public class HiveTablesInputSplit extends InputSplit implements Writable {
   private List<String> tables;

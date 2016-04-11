@@ -38,14 +38,13 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
- * Worker to figure out action for a table entity.
+ * Worker to figure out the action for a table entity.
  *
- * <p>For partitioned table, the worker will generate CHECK_PATITION action for each partition. In
- * PartitionCompareReducer action for each partition will be figured out. The reason to separate
- * table and partition check is to do load balance. In a production data warehouse, we will have
- * hundreds thousands and millions of partitions unevenly distributed. Each check to metastore takes
- * hundred millseconds. So it is important to load balance the work evenly. Using shuffle between
- * map and reducer, we can redistribute partition check evenly.
+ * <p>For partitioned table, the worker will generate a CHECK_PARTITION action for each partition.
+ * In PartitionCompareReducer, a more specific action will be determined. The reason for having
+ * separate table and partition checks is for load balancing. In a production data warehouse,
+ * tables can have millions of partitions. Since each check to metastore takes a hundred
+ * milliseconds, it is important to distribute metastore calls to many reducers through a shuffle.
  */
 public class TableCompareWorker {
   private static class BlackListPair {

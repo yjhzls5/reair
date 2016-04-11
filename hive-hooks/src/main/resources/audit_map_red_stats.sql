@@ -1,7 +1,7 @@
 # Stores mapreduce stats for hive queries
 # Even though the "counters" column is JSON, store it as text since Hive may
 # need to import this table and it does not support the JSON type
-CREATE TABLE `map_red_stats` (
+CREATE TABLE `mapred_stats` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `audit_log_id` bigint(20) NOT NULL,

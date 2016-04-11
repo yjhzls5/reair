@@ -34,10 +34,10 @@ import java.io.IOException;
 import java.util.Optional;
 
 /**
- * Stage 3 mapper for commit copy action
+ * Stage 3 mapper to commit metadata changes.
  *
- * <p>Input of the Stage 3 job is Stage 1 job output. It contains action of table and partition. In
- * this stage, we need to commit metadata operation, and finalize all drop actions.
+ * <p>Input of the Stage 3 job is Stage 1 job output, which is a list of actions to take for each
+ * table / partition.
  */
 public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, Text> {
   private static final Log LOG = LogFactory.getLog(Stage3CommitChangeMapper.class);

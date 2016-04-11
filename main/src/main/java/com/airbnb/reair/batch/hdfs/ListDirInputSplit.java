@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * List directory input split.
+ * Splits containing paths to directories.
  */
 public class ListDirInputSplit extends InputSplit implements Writable {
   private List<InputSplit> splits;

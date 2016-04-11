@@ -32,10 +32,10 @@ import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /**
- * InputFormat that scan directories breadth first. It will stop at a level when it gets enough
- * splits. The InputSplit it returns will keep track if the directory needs further scanning.
- * If it does, the recursive scan will be done in RecorderReader. The InputFormat will return
- * file path as key and file size information as value.
+ * InputFormat that scans directories breadth-first. It will stop at a level when it gets enough
+ * splits. The InputSplit it returns will keep track if a directory needs further traversal. If it
+ * does, a further recursive scan will be done in RecorderReader. The InputFormat will return the
+ * file path as the key and the file size information as the value.
  */
 public class DirScanInputFormat extends FileInputFormat<Text, Boolean> {
   private static final Log LOG = LogFactory.getLog(DirScanInputFormat.class);

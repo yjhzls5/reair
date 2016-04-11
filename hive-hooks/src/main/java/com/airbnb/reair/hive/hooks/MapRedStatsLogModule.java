@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public class MapRedStatsLogModule extends BaseLogModule {
   public static final String TABLE_NAME_KEY =
-      "airbnb.logging.audit_log.map_red_stats.table_name";
+      "airbnb.reair.audit_log.mapred_stats.table_name";
 
   private final long auditLogId;
 

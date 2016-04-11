@@ -23,12 +23,13 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 
 /**
- * Stage 2 Mapper to handle directory hdfs copy
+ * Stage 2 Mapper to handle copying of HDFS directories.
  *
- * <p>Input of this job is stage1 output. It contains action of table and partition. We only care
- * about COPY action in this stage. In the mapper, it will enumerate the directories and figure what
- * files needs to be copied. Since each directory can have unbalanced number of files, we use
- * shuffle again to load balance file copy actions. In the reducer we actually copy the file.
+ * <p>Input of this job is the output of stage 1. It contains the actions to take for the tables and
+ * partitions. In this stage, we only care about the COPY actions. In the mapper, it will enumerate
+ * the directories and figure out files needs to be copied. Since each directory can have an uneven
+ * number of files, we shuffle again to distribute the work for copying files, which is done on the
+ * reducers.
  */
 public class Stage2DirectoryCopyMapper extends Mapper<LongWritable, Text, LongWritable, Text> {
   private static final Log LOG = LogFactory.getLog(Stage2DirectoryCopyMapper.class);
@@ -126,7 +127,7 @@ public class Stage2DirectoryCopyMapper extends Mapper<LongWritable, Text, LongWr
     } catch (IOException e) {
       // Ignore File list generate error because source directory could be removed while we
       // enumerate it.
-      LOG.info("Src dir is removed: " + src);
+      LOG.warn("Error listing " + src, e);
     }
   }
 }

@@ -12,8 +12,8 @@
     </property>
 
     <property>
-        <name>airbnb.hive.audit_log.jdbc_url</name>
-        <value>jdbc:mysql://myHost:myPort/myDbName?username=myUsername&amp;password=myPassword</value>
+        <name>airbnb.reair.audit_log.jdbc_url</name>
+        <value>jdbc:mysql://myHost:myPort/myDbName</value>
         <comment>
             JDBC connection URL to the MySQL instance containing the audit log.
             The URL should include the DB name as well.
@@ -21,15 +21,37 @@
     </property>
 
     <property>
-        <name>airbnb.hive.audit_log.table_name</name>
+        <name>airbnb.reair.audit_log.db.username</name>
+        <value>username</value>
+        <comment>
+          Username to use when connecting to the DB.
+        </comment>
+    </property>
+
+    <property>
+        <name>airbnb.reair.audit_log.db.password</name>
+        <value>password</value>
+        <comment>
+          Password to use when connecting to the DB.
+        </comment>
+    </property>
+
+    <property>
+        <name>airbnb.reair.audit_log.core.table_name</name>
         <value>audit_log</value>
         <comment>Name of the audit log table.</comment>
     </property>
 
     <property>
-        <name>airbnb.hive.audit_log.objects.table_name</name>
+        <name>airbnb.reair.audit_log.objects.table_name</name>
         <value>audit_objects</value>
         <comment>Name of the audit objects table.</comment>
+    </property>
+
+    <property>
+        <name>airbnb.reair.audit_log.mapred_stats.table_name</name>
+        <value>mapred_stats</value>
+        <comment>Name of the map-reduce stats table.</comment>
     </property>
 
 </configuration>

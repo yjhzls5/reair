@@ -21,8 +21,8 @@ import java.io.IOException;
 /**
  * Stage 2 reducer to handle directory copy.
  *
- * <p>Input is the files needs to be copied. Load balance is done through shuffle. Output of the job
- * is file copied or skipped.
+ * <p>The inputs for this reducer are the files needs to be copied. The output of the reducer are
+ * rows that indicate whether the specified file was copied or not.
  */
 public class Stage2DirectoryCopyReducer extends Reducer<LongWritable, Text, Text, Text> {
   private static final Log LOG = LogFactory.getLog(Stage2DirectoryCopyReducer.class);

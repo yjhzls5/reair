@@ -12,7 +12,7 @@ public interface DbCredentials {
    *
    * @throws IOException if there's an error reading the credentials
    */
-  public void refreshCredsIfNecessary() throws IOException;
+  void refreshCredsIfNecessary() throws IOException;
 
   /**
    * Get the username that has read and write privileges.
@@ -21,7 +21,7 @@ public interface DbCredentials {
    *
    * @throws IOException if there an error reading the credentials
    */
-  public String getReadWriteUsername() throws IOException;
+  String getReadWriteUsername() throws IOException;
 
   /**
    * Get the password associated with the user that has read / write access to the DB.
@@ -30,5 +30,5 @@ public interface DbCredentials {
    *
    * @throws IOException if there's an error reading the credentials
    */
-  public String getReadWritePassword() throws IOException;
+  String getReadWritePassword() throws IOException;
 }

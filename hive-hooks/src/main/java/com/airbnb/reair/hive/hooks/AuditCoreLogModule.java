@@ -38,7 +38,7 @@ public class AuditCoreLogModule extends BaseLogModule {
   public static Logger LOG = Logger.getLogger(AuditCoreLogModule.class);
 
   public static final String TABLE_NAME_KEY =
-      "airbnb.logging.audit_log.core.table_name";
+      "airbnb.reair.audit_log.core.table_name";
 
   private final Set<ReadEntity> readEntities;
   private final Set<WriteEntity> writeEntities;

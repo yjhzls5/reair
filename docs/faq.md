@@ -24,7 +24,7 @@ For tables and partitions where the location is on S3, the metadata for the tabl
 
 ### What kind of consistency guarantees does batch replication provide while it's running?
 
-While batch replication is running, there are no consistency guarantees on the destination warehouse. Because files are copied directly to destination directories, it's possible to observe a partially complete data directory. Once batch replication finishes, it guarantees that if a table exists in the metastore, it is consistent with the state of the source table at some point after batch replication was kicked off. In general, please wait for batch replication to finish running before running any queries on the destination warehouse.
+While batch replication is running, there are no consistency guarantees on the destination warehouse. Because files are copied directly to destination directories, it's possible to observe a partially complete data directory. Once batch replication finishes successfully, it guarantees that if a table exists in the metastore, it is consistent with the state of the source table at some point after batch replication was kicked off. In general, please wait for batch replication to finish running before running any queries on the destination warehouse.
 
 ## Incremental Replication
 

@@ -60,7 +60,7 @@ import javax.annotation.Nullable;
 
 /**
  * A Map/Reduce job that copies HDFS files from source directories to a destination directory.
- * In case of conflict in sources, the source with largest timestamp value is picked.
+ * In case of conflict in sources, the source with largest timestamp value is copied.
  */
 public class ReplicationJob extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(ReplicationJob.class);

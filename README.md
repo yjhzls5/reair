@@ -20,7 +20,7 @@ To accommodate these use cases, ReAir includes both batch and incremental replic
 
 ## Additional Documentation
 
-* Blog Post
+* [Blog Post](https://medium.com/@airbnbeng/5153f8a433da)
 * [FAQ](docs/faq.md)
 * [Known Issues](docs/known_issues.md)
 * [Large HDFS Directory Copy](docs/hdfs_copy.md)
@@ -39,7 +39,7 @@ To accommodate these use cases, ReAir includes both batch and incremental replic
 
 ```
 cd reair
-gradlew shadowjar -p main -x test
+./gradlew shadowjar -p main -x test
 ```
 
 * Create a local text file containing the tables that you want to copy. A row in the text file should consist of the DB name and the table name separated by a tab. e.g.
@@ -54,7 +54,7 @@ my_db2	my_table2
 ```
 export HADOOP_OPTS="-Dlog4j.configuration=file://<path to log4j.properties>"
 export HADOOP_HEAPSIZE=8096
-hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.batch.hive.MetastoreReplicationJob --config-file my_config_file.xml --table-list my_tables_to_copy.txt
+hadoop jar main/build/libs/airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.batch.hive.MetastoreReplicationJob --config-files my_config_file.xml --table-list my_tables_to_copy.txt
 ```
 
 * Additional CLI Options: `--step`, `--override-input`. These arguments are useful if want to run one of the three MR job individually for faster failure recovery. `--step` indicates which step to run. `--override-input` provides the path for the input when running the second and third stage MR jobs. The input path will usually be the output for the first stage MR job.
@@ -74,7 +74,7 @@ Build and deploy the JAR containing the audit log hook
 
 ```
 cd reair
-gradlew shadowjar -p hive-hooks -x test
+./gradlew shadowjar -p hive-hooks -x test
 ```
 
 * Once built, the JAR for the audit log hook can be found under `hive-hooks/build/libs/airbnb-reair-hive-hooks-1.0.0-all.jar`.
@@ -97,12 +97,12 @@ gradlew shadowjar -p hive-hooks -x test
 
 ```
 cd reair
-gradlew shadowjar -p main
+./gradlew shadowjar -p main -x test
 ```
 
 Once the build finishes, the JAR to run the incremental replication process can be found under `main/build/libs/airbnb-reair-main-1.0.0-all.jar`
 
-* To start replicating, set options to point to the appropriate logging configuration and kick off the replication launcher by using the `hadoop jar` command on the destination cluster. Be sure to specify the configuration file that was filled out in the prior step.
+* To start replicating, set options to point to the appropriate logging configuration and kick off the replication launcher by using the `hadoop jar` command on the destination cluster. An example `log4j.properties` file is provided [here](main/src/main/resources/log4j.properties). Be sure to specify the configuration file that was filled out in the prior step.
 
 ```
 export HADOOP_OPTS="-Dlog4j.configuration=file://<path to log4j.properties>"
@@ -123,7 +123,7 @@ To force the process to start replicating entries after a particular audit log I
 
 ```
 export HADOOP_OPTS="-Dlog4j.configuration=file://<path to log4j.properties>"
-hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.replication.deploy.ReplicationLauncher --config-files my_config_file.xml --start-after-id 123456
+hadoop jar main/build/libs/airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.replication.deploy.ReplicationLauncher --config-files my_config_file.xml --start-after-id 123456
 ```
 
 Replication entries that were started but not completed on the last invocation will be marked as aborted when you use `--start-after-id` to restart the process.
@@ -155,3 +155,6 @@ java -jar airbnb-reair-web-server-1.0.0-all.jar --thrift-host localhost --thrift
 
 # Discussion Group
 A discussion group is available [here](https://groups.google.com/forum/#!forum/airbnb-reair).
+
+# In the wild
+If you find `ReAir` useful, please list yourself on this [page!](docs/inthewild.md)

@@ -35,11 +35,11 @@ public class AuditLogHook implements PostExecute {
   private static final int BASE_SLEEP = 1;
 
   public static String DB_USERNAME =
-      "airbnb.hive.audit_log.db.username";
+      "airbnb.reair.audit_log.db.username";
   public static String DB_PASSWORD =
-      "airbnb.hive.audit_log.db.password";
+      "airbnb.reair.audit_log.db.password";
   // Keys for values in hive-site.xml
-  public static String JDBC_URL_KEY = "airbnb.logging.audit_log.jdbc_url";
+  public static String JDBC_URL_KEY = "airbnb.reair.audit_log.jdbc_url";
 
   protected DbCredentials dbCreds;
 

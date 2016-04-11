@@ -76,7 +76,7 @@ public class ReplicationLauncher {
     String auditLogObjectsTableName = conf.get(
         ConfigurationKeys.AUDIT_LOG_OBJECTS_DB_TABLE);
     String auditLogMapRedStatsTableName = conf.get(
-        ConfigurationKeys.AUDIT_LOG_MAP_RED_STATS_DB_TABLE);
+        ConfigurationKeys.AUDIT_LOG_MAPRED_STATS_DB_TABLE);
 
     final AuditLogReader auditLogReader = new AuditLogReader(
         conf,

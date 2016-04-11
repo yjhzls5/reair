@@ -4,7 +4,7 @@
 <configuration>
 
   <property>
-    <name>airbnb.reair.audit_log.db.jdbc</name>
+    <name>airbnb.reair.audit_log.db.jdbc_url</name>
     <value>jdbc:mysql://myhost:myport/mydb</value>
     <comment>
       JDBC connection URL to the MySQL instance containing the audit log.
@@ -13,7 +13,7 @@
   </property>
 
   <property>
-    <name>airbnb.reair.audit_log.db.user</name>
+    <name>airbnb.reair.audit_log.db.username</name>
     <value>username</value>
     <comment>Username for the audit log MySQL DB</comment>
   </property>
@@ -25,25 +25,25 @@
   </property>
 
   <property>
-    <name>airbnb.reair.audit_log.db.table</name>
+    <name>airbnb.reair.audit_log.db.table_name</name>
     <value>audit_log</value>
     <comment>Name of the audit log MySQL table</comment>
   </property>
 
   <property>
-    <name>airbnb.reair.audit_log.objects.db.table</name>
+    <name>airbnb.reair.audit_log.objects.db.table_name</name>
     <value>audit_objects</value>
     <comment>Name of the audit objects MySQL table</comment>
   </property>
 
   <property>
-    <name>airbnb.reair.audit_log.map_red_stats.db.table</name>
-    <value>map_red_stats</value>
+    <name>airbnb.reair.audit_log.mapred_stats.db.table_name</name>
+    <value>mapred_stats</value>
     <comment>Name of the mapreduce stats MySQL table</comment>
   </property>
 
   <property>
-    <name>airbnb.reair.state.db.jdbc</name>
+    <name>airbnb.reair.state.db.jdbc_url</name>
     <value>jdbc:mysql://myhost:myport/mydb</value>
     <comment>
       JDBC connection URL to the MySQL instance that contains the state tables.
@@ -52,7 +52,7 @@
   </property>
 
   <property>
-    <name>airbnb.reair.state.db.user</name>
+    <name>airbnb.reair.state.db.username</name>
     <value>username</value>
     <comment>Username for MySQL instance containing the state tables.</comment>
   </property>
@@ -64,13 +64,13 @@
   </property>
 
   <property>
-    <name>airbnb.reair.state.db.table</name>
+    <name>airbnb.reair.state.db.table_name</name>
     <value>replication_jobs</value>
     <comment>Name of the table containing replication job details.</comment>
   </property>
 
   <property>
-    <name>airbnb.reair.state.kv.db.table</name>
+    <name>airbnb.reair.state.kv.db.table_name</name>
     <value>key_value</value>
     <comment>Name of the table containing key/value pairs.</comment>
   </property>
@@ -92,8 +92,8 @@
 
   <property>
     <name>airbnb.reair.clusters.src.hdfs.root</name>
-    <value>hdfs://airfs-prod</value>
-    <comment>Source cluster HDFS root</comment>
+    <value>hdfs://airfs-prod/</value>
+    <comment>Source cluster HDFS root. Note the trailing slash.</comment>
   </property>
 
   <property>
@@ -122,7 +122,7 @@
   <property>
     <name>airbnb.reair.clusters.dest.hdfs.root</name>
     <value>hdfs://airfs-test/</value>
-    <comment>Destination cluster HDFS root.</comment>
+    <comment>Destination cluster HDFS root. Note the trailing slash.</comment>
   </property>
 
   <property>
@@ -140,6 +140,24 @@
     <value>com.airbnb.reair.incremental.filter.RegexReplicationFilter</value>
     <comment>
       Name of the class used to filter out entries from replication
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.whitelist.regex</name>
+    <value>.*</value>
+    <comment>
+      Object names matching this name will be replicated. Names follow db_name.table_name/partition_name
+      e.g. default.table/ds=1
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.blacklist.regex</name>
+    <value>^example_db\.blacklisted_table$|^example_db\.blacklisted_table2$</value>
+    <comment>
+      Object names matching this name will *not* be replicated.
+      Names follow db_name.table_name/partition_name e.g. default.table/ds=1
     </comment>
   </property>
 

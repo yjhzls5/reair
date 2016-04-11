@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Record Reader return directory path.
+ * Record reader that returns DB / table names.
  */
 public class TableRecordReader extends RecordReader<Text, Text> {
   private List<String> tables;

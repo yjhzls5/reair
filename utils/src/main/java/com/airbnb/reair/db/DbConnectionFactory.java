@@ -8,7 +8,7 @@ import java.sql.SQLException;
  */
 public interface DbConnectionFactory {
 
-  public Connection getConnection() throws SQLException;
+  Connection getConnection() throws SQLException;
 
 }
 

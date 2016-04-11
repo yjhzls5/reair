@@ -22,11 +22,11 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 
 /**
- * Reducer to compare partition entity.
+ * Reducer to process partition entities.
  *
- * <p>Partition entities are evenly distributed using shuffle. The reducer will figure out action
- * for each partition. The reducer will pass through the action for each table entity and append
- * partition action as output for the stage1 job.
+ * <p>Table and partition entities are evenly distributed to reducers via shuffle. For partition
+ * entities, the reducer will figure out the action to take. For table entities, the reducer will
+ * pass them through to the next stage.
  */
 public class PartitionCompareReducer extends Reducer<LongWritable, Text, Text, Text> {
   private static final Log LOG = LogFactory.getLog(PartitionCompareReducer.class);

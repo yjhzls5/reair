@@ -21,12 +21,12 @@ CREATE TABLE `replication_jobs` (
   KEY `src_cluster_index` (`src_cluster`(255)),
   KEY `src_db_index` (`src_db`(255)),
   KEY `src_table_index` (`src_table`(255))
-)
+);
 
 -- Holds misc. key value pairs
 CREATE TABLE `key_value` (
   `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `key_string` varchar(256) NOT NULL,
+  `key_string` varchar(128) NOT NULL,
   `value_string` varchar(4000) DEFAULT NULL,
   PRIMARY KEY (`key_string`)
-)
+);
