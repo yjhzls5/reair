@@ -20,7 +20,7 @@ To accommodate these use cases, ReAir includes both batch and incremental replic
 
 ## Additional Documentation
 
-* [Blog Post](https://medium.com/@airbnbeng/5153f8a433da)
+* [Blog Post](https://medium.com/airbnb-engineering/reair-easy-to-use-tools-for-migrating-and-replicating-petabyte-scale-data-warehouses-5153f8a433da#.lzr9kllqt)
 * [FAQ](docs/faq.md)
 * [Known Issues](docs/known_issues.md)
 * [Large HDFS Directory Copy](docs/hdfs_copy.md)
