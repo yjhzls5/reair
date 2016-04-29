@@ -75,10 +75,7 @@ public class Worker<T extends Job> extends Thread {
       }
     } catch (InterruptedException e) {
       LOG.debug("Got interrupted");
-    } catch (RuntimeException e) {
-      LOG.error("Worker got a runtime exception: ", e);
-      System.exit(-1);
-    }
+    } // Any other exception should cause the process to exit via uncaught exception handler
   }
 
   public Job getJob() {

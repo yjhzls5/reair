@@ -45,7 +45,7 @@ public class ObjectLogModule extends BaseLogModule {
    * Constructor.
    *
    * @param connection the connection to use for connecting to the DB
-   * @param sessionState session information from Hive for this queyr
+   * @param sessionState session information from Hive for this query
    * @param readEntities the entities that were read by the query
    * @param writeEntities the entities that were written by the query
    * @param auditLogId the audit log ID from the core log module that's associated with this query
