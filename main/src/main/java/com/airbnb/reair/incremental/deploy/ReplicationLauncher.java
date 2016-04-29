@@ -188,7 +188,7 @@ public class ReplicationLauncher {
               new TServer.Args(
                 serverTransport).processor(processor));
 
-          LOG.debug("Starting the thrift server...");
+          LOG.debug("Starting the thrift server on port " + thriftServerPort);
           server.serve();
         } catch (Exception e) {
           LOG.error("Thrift server died!", e);
