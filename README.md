@@ -42,11 +42,11 @@ cd reair
 ./gradlew shadowjar -p main -x test
 ```
 
-* Create a local text file containing the tables that you want to copy. A row in the text file should consist of the DB name and the table name separated by a tab. e.g.
+* Create a local text file containing the tables that you want to copy. A row in the text file should consist of the DB name and the table name separated by a period. e.g.
 
 ```
-my_db1	my_table1
-my_db2	my_table2
+my_db1.my_table1
+my_db2.my_table2
 ```
 
 * Launch the job using the `hadoop jar` command on the destination, specifying the config file and the list of tables to copy. A larger heap for the client may be needed for large batches.
