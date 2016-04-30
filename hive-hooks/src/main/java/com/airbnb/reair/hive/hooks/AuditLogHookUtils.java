@@ -113,7 +113,7 @@ public class AuditLogHookUtils {
   /**
    * Insert an audit log entry that represent a query with the supplied values.
    *
-   * @param auditLogHook the audit log hook to use
+   * @param cliAuditLogHook the CLI audit log hook to use
    * @param operation the type of Hive operation (e.g. ALTER TABLE, QUERY, etc)
    * @param command the command / query string that was run
    * @param inputTables the tables that were read by the query
@@ -126,7 +126,7 @@ public class AuditLogHookUtils {
    * @throws Exception if there's an error inserting into the audit log
    */
   public static void insertAuditLogEntry(
-      AuditLogHook auditLogHook,
+      CliAuditLogHook cliAuditLogHook,
       HiveOperation operation,
       String command,
       List<Table> inputTables,
@@ -164,7 +164,7 @@ public class AuditLogHookUtils {
     sessionState.setMapRedStats(mapRedStatsPerStage);
 
     // Run the hook
-    auditLogHook.run(sessionState, readEntities, writeEntities, null, null);
+    cliAuditLogHook.run(sessionState, readEntities, writeEntities, null, null);
   }
 
   /**
@@ -184,7 +184,7 @@ public class AuditLogHookUtils {
       String outputObjectsTableName,
       String mapRedStatsTableName) {
     HiveConf hiveConf = new HiveConf();
-    hiveConf.set(AuditLogHook.JDBC_URL_KEY,
+    hiveConf.set(CliAuditLogHook.JDBC_URL_KEY,
         ReplicationTestUtils.getJdbcUrl(mySqlDb, dbName));
     hiveConf.set(AuditCoreLogModule.TABLE_NAME_KEY, auditCoreLogTableName);
     hiveConf.set(ObjectLogModule.TABLE_NAME_KEY, outputObjectsTableName);

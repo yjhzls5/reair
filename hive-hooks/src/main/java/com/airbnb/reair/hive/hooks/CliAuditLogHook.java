@@ -1,5 +1,6 @@
 package com.airbnb.reair.hive.hooks;
 
+import com.airbnb.reair.common.Command;
 import com.airbnb.reair.db.DbCredentials;
 import com.airbnb.reair.utils.RetryableTask;
 import com.airbnb.reair.utils.RetryingTaskRunner;
@@ -25,9 +26,9 @@ import java.util.Set;
  * generates entries in the output objects table, and the map reduce stats
  * tables.
  */
-public class AuditLogHook implements PostExecute {
+public class CliAuditLogHook implements PostExecute {
 
-  public static Logger LOG = Logger.getLogger(AuditLogHook.class);
+  public static Logger LOG = Logger.getLogger(CliAuditLogHook.class);
 
   // Number of attempts to make
   private static final int NUM_ATTEMPTS = 10;
@@ -43,11 +44,11 @@ public class AuditLogHook implements PostExecute {
 
   protected DbCredentials dbCreds;
 
-  public AuditLogHook() {
+  public CliAuditLogHook() {
   }
 
   // Constructor used for testing
-  public AuditLogHook(DbCredentials dbCreds) {
+  public CliAuditLogHook(DbCredentials dbCreds) {
     this.dbCreds = dbCreds;
   }
 
@@ -66,6 +67,7 @@ public class AuditLogHook implements PostExecute {
                   final UserGroupInformation userGroupInformation)
       throws Exception {
     HiveConf conf = sessionState.getConf();
+    SessionStateLite sessionStateLite = new SessionStateLite(sessionState);
 
     final DbCredentials dbCreds = getDbCreds(conf);
 
@@ -95,7 +97,7 @@ public class AuditLogHook implements PostExecute {
 
         runLogModules(
             connection,
-            sessionState,
+            sessionStateLite,
             readEntities,
             writeEntities,
             userGroupInformation);
@@ -111,7 +113,7 @@ public class AuditLogHook implements PostExecute {
    * Runs the individual audit log modules that make up this hook.
    *
    * @param connection connection to the DB for inserting data
-   * @param sessionState Hive session information associated with the query
+   * @param sessionStateLite the session state that contains relevant config
    * @param readEntities the entities that were read by the query
    * @param writeEntities the entities that were written by the query
    * @param userGroupInformation information about the user that ran the query
@@ -120,26 +122,26 @@ public class AuditLogHook implements PostExecute {
    * @throws Exception if there's an error running the modules
    */
   protected long runLogModules(final Connection connection,
-                               final SessionState sessionState,
+                               final SessionStateLite sessionStateLite,
                                final Set<ReadEntity> readEntities,
                                final Set<WriteEntity> writeEntities,
                                final UserGroupInformation userGroupInformation)
       throws Exception {
     long auditLogId = new AuditCoreLogModule(
                               connection,
-                              sessionState,
+                              sessionStateLite,
                               readEntities,
                               writeEntities,
                               userGroupInformation).run();
     new ObjectLogModule(
             connection,
-            sessionState,
+            sessionStateLite,
             readEntities,
             writeEntities,
             auditLogId).run();
     new MapRedStatsLogModule(
             connection,
-            sessionState,
+            sessionStateLite,
             auditLogId).run();
 
     return auditLogId;

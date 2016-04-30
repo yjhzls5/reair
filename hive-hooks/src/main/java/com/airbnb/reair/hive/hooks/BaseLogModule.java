@@ -1,7 +1,6 @@
 package com.airbnb.reair.hive.hooks;
 
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.ql.session.SessionState;
 
 import java.sql.Connection;
 
@@ -11,7 +10,7 @@ import java.sql.Connection;
  */
 public abstract class BaseLogModule {
 
-  protected final SessionState sessionState;
+  protected final SessionStateLite sessionStateLite;
   // The database connection that audit information to be written via
   protected final Connection connection;
   // The table that audit information should be rewritten to
@@ -22,19 +21,19 @@ public abstract class BaseLogModule {
    *
    * @param connection database connection to write the logs to
    * @param tableNameKey the config key for the table name to write the logs to
-   * @param sessionState the sessionState that contains relevant configuration info
+   * @param sessionStateLite the session state that contains relevant config
    *
    * @throws ConfigurationException when the table name is not defined in the configuration
    */
   public BaseLogModule(final Connection connection,
                        final String tableNameKey,
-                       final SessionState sessionState)
+                       final SessionStateLite sessionStateLite)
            throws ConfigurationException {
     this.connection = connection;
-    this.sessionState = sessionState;
+    this.sessionStateLite = sessionStateLite;
 
     // Ensure the table name is set in the config, and fetch it
-    final HiveConf conf = sessionState.getConf();
+    final HiveConf conf = sessionStateLite.getConf();
     tableName = conf.get(tableNameKey);
     if (tableName == null) {
       throw new ConfigurationException(

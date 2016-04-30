@@ -6,7 +6,6 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.hooks.Entity;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
-import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
@@ -48,7 +47,7 @@ public class AuditCoreLogModule extends BaseLogModule {
    * Constructor.
    *
    * @param connection the connection to use for connecting to the DB
-   * @param sessionState session information from Hive for this query
+   * @param sessionStateLite session information from Hive for this query
    * @param readEntities the entities that were read by the query
    * @param writeEntities the entities that were written by the query
    * @param userGroupInformation information about the user that ran the query
@@ -56,12 +55,12 @@ public class AuditCoreLogModule extends BaseLogModule {
    * @throws ConfigurationException if there's an error with the configuration for the hook
    */
   public AuditCoreLogModule(final Connection connection,
-                            final SessionState sessionState,
+                            final SessionStateLite sessionStateLite,
                             final Set<ReadEntity> readEntities,
                             final Set<WriteEntity> writeEntities,
                             final UserGroupInformation userGroupInformation)
            throws ConfigurationException {
-    super(connection, TABLE_NAME_KEY, sessionState);
+    super(connection, TABLE_NAME_KEY, sessionStateLite);
     this.readEntities = readEntities;
     this.writeEntities = writeEntities;
     this.userGroupInformation = userGroupInformation;
@@ -93,9 +92,9 @@ public class AuditCoreLogModule extends BaseLogModule {
     int psIndex = 1;
     PreparedStatement ps = connection.prepareStatement(query,
                                Statement.RETURN_GENERATED_KEYS);
-    ps.setString(psIndex++, sessionState.getQueryId());
-    ps.setString(psIndex++, sessionState.getCommandType());
-    ps.setString(psIndex++, sessionState.getCmd());
+    ps.setString(psIndex++, sessionStateLite.getQueryId());
+    ps.setString(psIndex++, sessionStateLite.getCommandType());
+    ps.setString(psIndex++, sessionStateLite.getCmd());
     ps.setString(psIndex++, toJson(readEntities, true));
     ps.setString(psIndex++, toJson(writeEntities, true));
     ps.setString(psIndex++, userGroupInformation == null ? null :

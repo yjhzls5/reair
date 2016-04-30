@@ -11,8 +11,8 @@ import com.airbnb.reair.db.DbKeyValueStore;
 import com.airbnb.reair.db.EmbeddedMySqlDb;
 import com.airbnb.reair.db.StaticDbConnectionFactory;
 import com.airbnb.reair.db.TestDbCredentials;
-import com.airbnb.reair.hive.hooks.AuditLogHook;
 import com.airbnb.reair.hive.hooks.AuditLogHookUtils;
+import com.airbnb.reair.hive.hooks.CliAuditLogHook;
 import com.airbnb.reair.hive.hooks.HiveOperation;
 import com.airbnb.reair.incremental.DirectoryCopier;
 import com.airbnb.reair.incremental.ReplicationServer;
@@ -68,7 +68,7 @@ public class ReplicationServerTest extends MockClusterTest {
   // replication server
   private static final long TEST_POLL_TIME = 500;
 
-  private static AuditLogHook auditLogHook;
+  private static CliAuditLogHook cliAuditLogHook;
   private static AuditLogReader auditLogReader;
   private static DbKeyValueStore dbKeyValueStore;
   private static PersistedJobInfoStore persistedJobInfoStore;
@@ -117,7 +117,7 @@ public class ReplicationServerTest extends MockClusterTest {
             testDbCredentials.getReadWriteUsername(),
             testDbCredentials.getReadWritePassword());
 
-    auditLogHook = new AuditLogHook(testDbCredentials);
+    cliAuditLogHook = new CliAuditLogHook(testDbCredentials);
 
     // Setup the DB and tables needed to store replication state
     setupReplicationServerStateTables(dbConnectionFactory,
@@ -325,7 +325,7 @@ public class ReplicationServerTest extends MockClusterTest {
         AUDIT_LOG_OBJECTS_TABLE_NAME,
         AUDIT_LOG_MAP_RED_STATS_TABLE_NAME);
     AuditLogHookUtils.insertAuditLogEntry(
-        auditLogHook,
+        cliAuditLogHook,
         HiveOperation.QUERY,
         "Example query string",
         inputTables,
@@ -366,7 +366,7 @@ public class ReplicationServerTest extends MockClusterTest {
         AUDIT_LOG_OBJECTS_TABLE_NAME,
         AUDIT_LOG_MAP_RED_STATS_TABLE_NAME);
     AuditLogHookUtils.insertAuditLogEntry(
-        auditLogHook,
+        cliAuditLogHook,
         HiveOperation.ALTERTABLE_RENAME,
         "Example query string",
         inputTables,
@@ -401,7 +401,7 @@ public class ReplicationServerTest extends MockClusterTest {
         AUDIT_LOG_OBJECTS_TABLE_NAME,
         AUDIT_LOG_MAP_RED_STATS_TABLE_NAME);
     AuditLogHookUtils.insertAuditLogEntry(
-        auditLogHook,
+        cliAuditLogHook,
         HiveOperation.QUERY,
         "Example query string",
         inputTables,
@@ -445,7 +445,7 @@ public class ReplicationServerTest extends MockClusterTest {
         AUDIT_LOG_OBJECTS_TABLE_NAME,
         AUDIT_LOG_MAP_RED_STATS_TABLE_NAME);
     AuditLogHookUtils.insertAuditLogEntry(
-        auditLogHook,
+        cliAuditLogHook,
         HiveOperation.QUERY,
         "Example query string",
         inputTables,
@@ -492,7 +492,7 @@ public class ReplicationServerTest extends MockClusterTest {
         AUDIT_LOG_OBJECTS_TABLE_NAME,
         AUDIT_LOG_MAP_RED_STATS_TABLE_NAME);
     AuditLogHookUtils.insertAuditLogEntry(
-        auditLogHook,
+        cliAuditLogHook,
         HiveOperation.QUERY,
         "Example query string",
         inputTables,
@@ -519,7 +519,7 @@ public class ReplicationServerTest extends MockClusterTest {
         AUDIT_LOG_OBJECTS_TABLE_NAME,
         AUDIT_LOG_MAP_RED_STATS_TABLE_NAME);
     AuditLogHookUtils.insertAuditLogEntry(
-        auditLogHook,
+        cliAuditLogHook,
         HiveOperation.DROPTABLE,
         "Example query string",
         new ArrayList<>(),
@@ -558,7 +558,7 @@ public class ReplicationServerTest extends MockClusterTest {
         AUDIT_LOG_OBJECTS_TABLE_NAME,
         AUDIT_LOG_MAP_RED_STATS_TABLE_NAME);
     AuditLogHookUtils.insertAuditLogEntry(
-        auditLogHook,
+        cliAuditLogHook,
         HiveOperation.ALTERTABLE_DROPPARTS,
         "Example query string",
         inputTables,
@@ -625,7 +625,7 @@ public class ReplicationServerTest extends MockClusterTest {
         AUDIT_LOG_OBJECTS_TABLE_NAME,
         AUDIT_LOG_MAP_RED_STATS_TABLE_NAME);
     AuditLogHookUtils.insertAuditLogEntry(
-        auditLogHook,
+        cliAuditLogHook,
         null,
         query,
         new ArrayList<>(),
