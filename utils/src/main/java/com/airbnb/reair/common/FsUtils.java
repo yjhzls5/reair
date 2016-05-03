@@ -177,7 +177,8 @@ public class FsUtils {
    * @return a map from the path to a file relative to the root (e.g. a/b.txt) to the associated
    *         modification time
    */
-  private static Map<String, Long> getRelPathToModificationTime(Path root, Set<FileStatus> statuses)
+  private static Map<String, Long> getRelativePathToModificationTime(Path root,
+                                                                     Set<FileStatus> statuses)
       throws ArgumentException {
     Map<String, Long> pathToStatus = new HashMap<>();
     for (FileStatus status : statuses) {
@@ -195,6 +196,7 @@ public class FsUtils {
    *         the file was '/a/b/c.txt', the relative path would be 'b/c.txt'
    */
   public static String getRelativePath(Path root, Path child) {
+    // TODO: Use URI.relativize()
     String prefix = root.toString() + "/";
     if (!child.toString().startsWith(prefix)) {
       throw new RuntimeException("Invalid root: " + root + " and child " + child);
@@ -344,8 +346,8 @@ public class FsUtils {
       Map<String, Long> destFileModificationTimes = null;
 
       try {
-        srcFileModificationTimes = getRelPathToModificationTime(src, srcFileStatuses);
-        destFileModificationTimes = getRelPathToModificationTime(dest, destFileStatuses);
+        srcFileModificationTimes = getRelativePathToModificationTime(src, srcFileStatuses);
+        destFileModificationTimes = getRelativePathToModificationTime(dest, destFileStatuses);
       } catch (ArgumentException e) {
         throw new IOException("Invalid file statuses!", e);
       }
@@ -383,7 +385,7 @@ public class FsUtils {
     Map<String, Long> srcFileModificationTimes = null;
 
     try {
-      srcFileModificationTimes = getRelPathToModificationTime(src, srcFileStatuses);
+      srcFileModificationTimes = getRelativePathToModificationTime(src, srcFileStatuses);
     } catch (ArgumentException e) {
       throw new IOException("Invalid file statuses!", e);
     }

@@ -168,7 +168,7 @@ public class DistCpWrapper {
       }
     }
 
-    if (!FsUtils.equalDirs(conf, srcDir, distcpDestDir)) {
+    if (!FsUtils.equalDirs(conf, srcDir, distcpDestDir, Optional.empty(), syncModificationTimes)) {
       LOG.error("Source and destination sizes don't match!");
       if (atomic) {
         LOG.debug("Since it's an atomic copy, deleting " + distcpDestDir);

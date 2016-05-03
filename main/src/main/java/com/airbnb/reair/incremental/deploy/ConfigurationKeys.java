@@ -66,6 +66,11 @@ public class ConfigurationKeys {
   public static final String COPY_JOB_TIMEOUT_SECONDS = "airbnb.reair.copy.timeout.seconds";
   // If a replication job fails, the number of times to retry the job.
   public static final String JOB_RETRIES = "airbnb.reair.job.retries";
+  // After a copy, whether to set / check that modified times for the copied files match between
+  // the source and the destination. Set to false for file systems that don't support changes
+  // to the modified time.
+  public static final String SYNC_MODIFIED_TIMES_FOR_FILE_COPY =
+      "airbnb.reair.copy.sync_modified_times";
 
   // Following are settings pertinent to batch replication only.
 
