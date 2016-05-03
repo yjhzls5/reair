@@ -56,8 +56,8 @@ public class ObjectConflictHandler implements Configurable {
     HiveObjectSpec spec =
         new HiveObjectSpec(existingDestTable.getDbName(), existingDestTable.getTableName());
 
-    if (existingDestTable.getParameters().get(HiveParameterKeys.SRC_CLUSTER) != null &&
-        !existingDestTable.getParameters().get(HiveParameterKeys.SRC_CLUSTER)
+    if (existingDestTable.getParameters().get(HiveParameterKeys.SRC_CLUSTER) != null
+        && !existingDestTable.getParameters().get(HiveParameterKeys.SRC_CLUSTER)
         .equals(srcCluster.getName())) {
       LOG.warn("Table " + spec + " exists on destination, and it's "
           + "missing tags that indicate that it was replicated.");

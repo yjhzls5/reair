@@ -169,7 +169,9 @@ public class ReplicationLauncher {
         dbKeyValueStore,
         persistedJobInfoStore,
         filter,
-        new DirectoryCopier(conf, destCluster.getTmpDir(), true),
+        new DirectoryCopier(conf,
+            destCluster.getTmpDir(),
+            conf.getBoolean(ConfigurationKeys.SYNC_MODIFIED_TIMES_FOR_FILE_COPY, true)),
         numWorkers,
         maxJobsInMemory,
         startAfterAuditLogId);
