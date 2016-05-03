@@ -100,8 +100,10 @@ public class ConfiguredClusterFactory implements ClusterFactory {
     }
 
     Configuration conf = optionalConf.get();
-    String srcHdfsTmp = conf.get(
-        ConfigurationKeys.SRC_HDFS_TMP);
-    return new DirectoryCopier(conf, new Path(srcHdfsTmp), true);
+    String destHdfsTmp = conf.get(
+        ConfigurationKeys.DEST_HDFS_TMP);
+    return new DirectoryCopier(conf, 
+        new Path(destHdfsTmp),
+        conf.getBoolean(ConfigurationKeys.SYNC_MODIFIED_TIMES_FOR_FILE_COPY, true));
   }
 }
