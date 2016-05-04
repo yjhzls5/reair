@@ -100,7 +100,7 @@ public class ReplicationJobFactory {
    * @param table the table to copy
    * @return job to copy the table
    *
-   * @throws SQLException if there's an error writing to the DB
+   * @throws StateUpdateException if there's an error writing to the DB
    */
   public ReplicationJob createJobForCopyTable(
       long auditLogId,
@@ -148,6 +148,8 @@ public class ReplicationJobFactory {
    * @param auditLogEntryCreateTime when the audit log entry was created
    * @param spec specification for the partition
    * @return the job to copy the partition
+   *
+   * @throws StateUpdateException if there's an error writing to the DB
    */
   public ReplicationJob createJobForCopyPartition(
       long auditLogId,
@@ -182,7 +184,7 @@ public class ReplicationJobFactory {
    * @param namedPartition partition to copy
    * @return the job to copy the partition
    *
-   * @throws SQLException if there's an error writing to the DB
+   * @throws StateUpdateException if there's an error writing to the DB
    */
   public ReplicationJob createJobForCopyPartition(
       long auditLogId,
@@ -221,7 +223,7 @@ public class ReplicationJobFactory {
    * @param namedPartitions partitions to copy
    * @return the job to copy all of the specified partitions
    *
-   * @throws SQLException if there's an error writing to the DB
+   * @throws StateUpdateException if there's an error writing to the DB
    */
   public ReplicationJob createJobForCopyDynamicPartitions(
       long auditLogId,
@@ -282,7 +284,7 @@ public class ReplicationJobFactory {
    * @param table the table to drop
    * @return the job to drop the table
    *
-   * @throws SQLException if there's an error writing to the DB
+   * @throws StateUpdateException if there's an error writing to the DB
    */
   public ReplicationJob createJobForDropTable(
       long auditLogId,
@@ -321,7 +323,7 @@ public class ReplicationJobFactory {
    * @param namedPartition the partition to drop
    * @return the job to drop the partition
    *
-   * @throws SQLException if there is an error writing to the DB
+   * @throws StateUpdateException if there is an error writing to the DB
    */
   public ReplicationJob createJobForDropPartition(
       long auditLogId,
@@ -362,7 +364,7 @@ public class ReplicationJobFactory {
    * @param renameToTable the table to rename to
    * @return the job to rename the specified table
    *
-   * @throws SQLException if there's an error writing to the DB
+   * @throws StateUpdateException if there's an error writing to the DB
    */
   public ReplicationJob createJobForRenameTable(
       long auditLogId,
@@ -413,7 +415,7 @@ public class ReplicationJobFactory {
    * @param renameToPartition partition to rename to
    * @return a job to rename the partition
    *
-   * @throws SQLException if there's an error writing to the DB
+   * @throws StateUpdateException if there's an error writing to the DB
    */
   public ReplicationJob createJobForRenamePartition(
       long auditLogId,
@@ -464,7 +466,7 @@ public class ReplicationJobFactory {
    *
    * @param auditLogEntry the audit log entry associated with the actions that need to be replicated
 
-   * @throws SQLException if there's an error writing to the DB
+   * @throws StateUpdateException if there's an error writing to the DB
    */
   public List<ReplicationJob> createReplicationJobs(
       AuditLogEntry auditLogEntry,
