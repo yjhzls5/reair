@@ -70,6 +70,12 @@ public class ExchangePartitionParser {
     }
   }
 
+  private String trimWhitespace(String str) {
+    str = StringUtils.stripEnd(str, " \t\n");
+    str = StringUtils.stripStart(str, " \t\n");
+    return str;
+  }
+
   /**
    * Get the partition that is being exchanged by this query.
    *
@@ -93,8 +99,7 @@ public class ExchangePartitionParser {
     StringBuilder sb = new StringBuilder();
 
     for (String columnSpec : partitionSpecSplit) {
-      columnSpec = StringUtils.stripEnd(columnSpec, " \t\n");
-      columnSpec = StringUtils.stripStart(columnSpec, " \t\n");
+      columnSpec = trimWhitespace(columnSpec);
       // columnSpec should be something of the form ds='1'
       String[] columnSpecSplit = columnSpec.split("=");
       if (columnSpecSplit.length != 2) {
@@ -104,8 +109,8 @@ public class ExchangePartitionParser {
       if (sb.length() != 0) {
         sb.append("/");
       }
-      String partitionColumnName = columnSpecSplit[0];
-      String partitionColumnValue = columnSpecSplit[1].replace("'", "");
+      String partitionColumnName = trimWhitespace(columnSpecSplit[0]);
+      String partitionColumnValue = trimWhitespace(columnSpecSplit[1]).replace("'", "");
       sb.append(partitionColumnName);
       sb.append("=");
       sb.append(partitionColumnValue);
