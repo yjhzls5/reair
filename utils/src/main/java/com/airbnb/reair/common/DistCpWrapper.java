@@ -168,6 +168,10 @@ public class DistCpWrapper {
       }
     }
 
+    if (syncModificationTimes) {
+      FsUtils.syncModificationTimes(conf, srcDir, distcpDestDir, Optional.empty());
+    }
+
     if (!FsUtils.equalDirs(conf, srcDir, distcpDestDir, Optional.empty(), syncModificationTimes)) {
       LOG.error("Source and destination sizes don't match!");
       if (atomic) {
@@ -177,10 +181,6 @@ public class DistCpWrapper {
       }
     } else {
       LOG.debug("Size of source and destinations match");
-    }
-
-    if (syncModificationTimes) {
-      FsUtils.syncModificationTimes(conf, srcDir, distcpDestDir, Optional.empty());
     }
 
     if (atomic) {

@@ -16,7 +16,8 @@ public class ExchangePartitionParserTest {
   @Test
   public void testParse1() {
     String query = "ALTER TABLE test_db.test_table_exchange_to EXCHANGE "
-        + "PARTITION(ds='1', hr='2') " + "WITH TABLE test_db.test_table_exchange_from";
+        + "PARTITION( ds='1', hr = '2') "
+        + "WITH TABLE test_db.test_table_exchange_from";
 
     ExchangePartitionParser parser = new ExchangePartitionParser();
     boolean parsed = parser.parse(query);
