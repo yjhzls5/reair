@@ -1,6 +1,6 @@
 package com.airbnb.reair.incremental.primitives;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 import org.apache.hadoop.fs.Path;
 
@@ -70,7 +70,7 @@ public class TaskEstimate {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("taskType", taskType.toString())
+    return MoreObjects.toStringHelper(this).add("taskType", taskType.toString())
       .add("updateMetadata", updateMetadata)
       .add("updateData", updateData)
       .add("srcPath", srcPath)

@@ -78,6 +78,7 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
       HiveObjectSpec spec = input.getRight();
       RunInfo status = null;
 
+      LOG.info(String.format("Working on %s with estimate %s", spec, estimate));
       switch (estimate.getTaskType()) {
         case COPY_PARTITION:
           CopyPartitionTask copyPartitionTask = new CopyPartitionTask(
