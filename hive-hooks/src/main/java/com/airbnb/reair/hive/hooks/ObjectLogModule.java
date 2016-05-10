@@ -6,7 +6,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.hooks.Entity;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
-import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.hive.ql.hooks.WriteEntity.WriteType;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TJSONProtocol;
@@ -15,6 +15,7 @@ import java.net.URI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,11 +31,12 @@ public class ObjectLogModule extends BaseLogModule {
   // for that query.
   //
   // The category describes why the object was logged.
+  // INPUT - the query modified or altered this object
   // OUTPUT - the query modified or altered this object
   // RENAMED_FROM - the query renamed this object into the OUTPUT object
   // REFERENCE_TABLE - when a partition is changed, the table object is
   // logged as well for reference
-  public enum ObjectCategory {OUTPUT, RENAME_FROM, REFERENCE_TABLE}
+  public enum ObjectCategory {INPUT, OUTPUT, RENAME_FROM, REFERENCE_TABLE}
 
   private final Set<ReadEntity> readEntities;
   private final Set<WriteEntity> writeEntities;
@@ -45,7 +47,7 @@ public class ObjectLogModule extends BaseLogModule {
    * Constructor.
    *
    * @param connection the connection to use for connecting to the DB
-   * @param sessionState session information from Hive for this query
+   * @param sessionStateLite session information from Hive for this query
    * @param readEntities the entities that were read by the query
    * @param writeEntities the entities that were written by the query
    * @param auditLogId the audit log ID from the core log module that's associated with this query
@@ -53,12 +55,12 @@ public class ObjectLogModule extends BaseLogModule {
    * @throws ConfigurationException if there's an error with the configuration
    */
   public ObjectLogModule(final Connection connection,
-                         final SessionState sessionState,
+                         final SessionStateLite sessionStateLite,
                          final Set<ReadEntity> readEntities,
                          final Set<WriteEntity> writeEntities,
                          long auditLogId)
            throws ConfigurationException {
-    super(connection, TABLE_NAME_KEY, sessionState);
+    super(connection, TABLE_NAME_KEY, sessionStateLite);
     this.readEntities = readEntities;
     this.writeEntities = writeEntities;
     this.auditLogId = auditLogId;
@@ -93,63 +95,105 @@ public class ObjectLogModule extends BaseLogModule {
     Set<org.apache.hadoop.hive.ql.metadata.Table>
         tableForPartition = new HashSet<>();
 
-    String commandType = sessionState.getCommandType();
-    // TODO: ALTERTABLE_EXCHANGEPARTITION is not yet implemented in Hive
-    // see https://issues.apache.org/jira/browse/HIVE-11554. Use
-    // HiveOperation class once this is in.
-    boolean renameTable = "ALTERTABLE_RENAME".equals(commandType);
-    boolean renamePartition =
-        "ALTERTABLE_RENAMEPART".equals(commandType)
-        || "ALTERTABLE_EXCHANGEPARTITION".equals(commandType);
-    boolean renameOperation = renameTable || renamePartition;
+    String commandType = sessionStateLite.getCommandType();
 
-    // When renaming a table, the read entities contain
-    // source table. When renaming a partition, the read entities
-    // contain the renamed partition as well as the partition's
-    // table. For the partition case, filter out the table in
-    // the read entities.
-    String renameFromObject = null;
-    if (renameOperation) {
+    String[] thriftCommandTypes = {
+        "THRIFT_ADD_PARTITION",
+        "THRIFT_ALTER_PARTITION",
+        "THRIFT_ALTER_TABLE",
+        "THRIFT_CREATE_DATABASE",
+        "THRIFT_CREATE_TABLE",
+        "THRIFT_DROP_DATABASE",
+        "THRIFT_DROP_PARTITION",
+        "THRIFT_DROP_TABLE"
+    };
+
+    if (Arrays.asList(thriftCommandTypes).contains(commandType)) {
+
+      // Serialize both the inputs and outputs. Additionally for partitions we
+      // ensure we also serialize the table entity associated with the
+      // partition as a reference.
       for (ReadEntity entity : readEntities) {
-        if (renamePartition && entity.getType() == Entity.Type.TABLE) {
+        if (entity.getType() == Entity.Type.PARTITION) {
+          addToObjectsTable(
+              ps,
+              auditLogId,
+              ObjectCategory.REFERENCE_TABLE,
+              new ReadEntity(entity.getT())
+          );
+        }
+
+        addToObjectsTable(ps, auditLogId, ObjectCategory.INPUT, entity);
+      }
+
+      for (WriteEntity entity : writeEntities) {
+        if (entity.getType() == Entity.Type.PARTITION) {
+          addToObjectsTable(
+              ps,
+              auditLogId,
+              ObjectCategory.REFERENCE_TABLE,
+              new WriteEntity(entity.getT(), WriteType.INSERT)
+          );
+        }
+
+        addToObjectsTable(ps, auditLogId, ObjectCategory.OUTPUT, entity);
+      }
+    } else {
+
+      // TODO: ALTERTABLE_EXCHANGEPARTITION is not yet implemented in Hive
+      // see https://issues.apache.org/jira/browse/HIVE-11554. Use
+      // HiveOperation class once this is in.
+      boolean renameTable = "ALTERTABLE_RENAME".equals(commandType);
+      boolean renamePartition =
+          "ALTERTABLE_RENAMEPART".equals(commandType)
+          || "ALTERTABLE_EXCHANGEPARTITION".equals(commandType);
+      boolean renameOperation = renameTable || renamePartition;
+
+      // When renaming a table, the read entities contain
+      // source table. When renaming a partition, the read entities
+      // contain the renamed partition as well as the partition's
+      // table. For the partition case, filter out the table in
+      // the read entities.
+      String renameFromObject = null;
+      if (renameOperation) {
+        for (ReadEntity entity : readEntities) {
+          if (renamePartition && entity.getType() == Entity.Type.TABLE) {
+            continue;
+          }
+          addToObjectsTable(ps, auditLogId, ObjectCategory.RENAME_FROM, entity);
+          renameFromObject = toIdentifierString(entity);
+        }
+      }
+
+      for (Entity entity : writeEntities) {
+        // For rename operations, the source object is also in the
+        // write entities. For example a rename of `old_table` ->
+        // `new_table` will have `old_table` in read entities, and
+        // `old_table` and `new_table` in write entities. Since
+        // `old_table` is written to the table as a RENAMED_FROM
+        // entry, we don't also need a OUTPUT entry for `old_table`
+        if (renameOperation && toIdentifierString(entity).equals(renameFromObject)) {
           continue;
         }
+
+        // Otherwise add it as an output
+        addToObjectsTable(ps, auditLogId, ObjectCategory.OUTPUT, entity);
+
+        // Save the table for the partitions as reference objects
+        if (entity.getType() == Entity.Type.PARTITION
+            || entity.getType() == Entity.Type.DUMMYPARTITION) {
+          tableForPartition.add(
+              entity.getPartition().getTable());
+        }
+      }
+
+      for (org.apache.hadoop.hive.ql.metadata.Table t : tableForPartition) {
+        // Using DDL_NO_LOCK but the value shouldn't matter
+        WriteEntity entity = new WriteEntity(t,
+            WriteEntity.WriteType.DDL_NO_LOCK);
         addToObjectsTable(ps, auditLogId,
-            ObjectCategory.RENAME_FROM, entity);
-        renameFromObject = toIdentifierString(entity);
+            ObjectCategory.REFERENCE_TABLE, entity);
       }
-    }
-
-    for (Entity entity : writeEntities) {
-      // For rename operations, the source object is also in the
-      // write entities. For example a rename of `old_table` ->
-      // `new_table` will have `old_table` in read entities, and
-      // `old_table` and `new_table` in write entities. Since
-      // `old_table` is written to the table as a RENAMED_FROM
-      // entry, we don't also need a OUTPUT entry for `old_table`
-      if (renameOperation && toIdentifierString(entity).equals(renameFromObject)) {
-        continue;
-      }
-
-      // Otherwise add it as an output
-      addToObjectsTable(ps, auditLogId,
-          ObjectCategory.OUTPUT, entity);
-
-      // Save the table for the partitions as reference objects
-      if (entity.getType() == Entity.Type.PARTITION
-          || entity.getType() == Entity.Type.DUMMYPARTITION) {
-        tableForPartition.add(
-            entity.getPartition().getTable());
-      }
-    }
-
-    for (org.apache.hadoop.hive.ql.metadata.Table t :
-        tableForPartition) {
-      // Using DDL_NO_LOCK but the value shouldn't matter
-      WriteEntity entity = new WriteEntity(t,
-          WriteEntity.WriteType.DDL_NO_LOCK);
-      addToObjectsTable(ps, auditLogId,
-          ObjectCategory.REFERENCE_TABLE, entity);
     }
   }
 

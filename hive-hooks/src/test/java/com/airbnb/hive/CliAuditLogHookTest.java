@@ -8,8 +8,8 @@ import com.airbnb.reair.db.DbConnectionFactory;
 import com.airbnb.reair.db.EmbeddedMySqlDb;
 import com.airbnb.reair.db.StaticDbConnectionFactory;
 import com.airbnb.reair.db.TestDbCredentials;
-import com.airbnb.reair.hive.hooks.AuditLogHook;
 import com.airbnb.reair.hive.hooks.AuditLogHookUtils;
+import com.airbnb.reair.hive.hooks.CliAuditLogHook;
 import com.airbnb.reair.hive.hooks.HiveOperation;
 import com.airbnb.reair.utils.ReplicationTestUtils;
 
@@ -29,10 +29,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AuditLogHookTest {
+public class CliAuditLogHookTest {
 
   private static final Log LOG = LogFactory.getLog(
-      AuditLogHookTest.class);
+      CliAuditLogHookTest.class);
 
   protected static EmbeddedMySqlDb embeddedMySqlDb;
 
@@ -87,12 +87,9 @@ public class AuditLogHookTest {
     resetState();
 
     TestDbCredentials testDbCredentials = new TestDbCredentials();
-    final DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(
-        ReplicationTestUtils.getJdbcUrl(embeddedMySqlDb),
-        testDbCredentials.getReadWriteUsername(),
-        testDbCredentials.getReadWritePassword());
-
-    final AuditLogHook auditLogHook = new AuditLogHook(testDbCredentials);
+    final DbConnectionFactory dbConnectionFactory = getDbConnectionFactory();
+    final CliAuditLogHook cliAuditLogHook =
+        new CliAuditLogHook(testDbCredentials);
 
     // Set up the source
     org.apache.hadoop.hive.ql.metadata.Table inputTable =
@@ -127,7 +124,7 @@ public class AuditLogHookTest {
         OUTPUT_OBJECTS_TABLE_NAME,
         MAP_RED_STATS_TABLE_NAME);
     AuditLogHookUtils.insertAuditLogEntry(
-        auditLogHook,
+        cliAuditLogHook,
         HiveOperation.QUERY,
         DEFAULT_QUERY_STRING,
         inputTables,
@@ -216,13 +213,9 @@ public class AuditLogHookTest {
     resetState();
 
     final TestDbCredentials testDbCredentials = new TestDbCredentials();
-    final DbConnectionFactory dbConnectionFactory = new StaticDbConnectionFactory(
-        ReplicationTestUtils.getJdbcUrl(embeddedMySqlDb),
-        testDbCredentials.getReadWriteUsername(),
-        testDbCredentials.getReadWritePassword());
-
-    final AuditLogHook auditLogHook = new AuditLogHook(testDbCredentials);
-
+    final DbConnectionFactory dbConnectionFactory = getDbConnectionFactory();
+    final CliAuditLogHook cliAuditLogHook =
+        new CliAuditLogHook(testDbCredentials);
 
     // Make a partitioned output table
     org.apache.hadoop.hive.ql.metadata.Table qlTable =
@@ -253,7 +246,7 @@ public class AuditLogHookTest {
         OUTPUT_OBJECTS_TABLE_NAME,
         MAP_RED_STATS_TABLE_NAME);
     AuditLogHookUtils.insertAuditLogEntry(
-        auditLogHook,
+        cliAuditLogHook,
         HiveOperation.QUERY,
         DEFAULT_QUERY_STRING,
         new ArrayList<>(),

@@ -28,10 +28,10 @@ public class MapRedStatsLogModule extends BaseLogModule {
   private final long auditLogId;
 
   public MapRedStatsLogModule(final Connection connection,
-                              final SessionState sessionState,
+                              final SessionStateLite sessionStateLite,
                               long auditLogId)
            throws ConfigurationException {
-    super(connection, TABLE_NAME_KEY, sessionState);
+    super(connection, TABLE_NAME_KEY, sessionStateLite);
     this.auditLogId = auditLogId;
   }
 
@@ -52,7 +52,7 @@ public class MapRedStatsLogModule extends BaseLogModule {
         tableName);
 
     // Insert a DB row for each Hive stage
-    Map<String, MapRedStats> statsPerStage = sessionState.getMapRedStats();
+    Map<String, MapRedStats> statsPerStage = sessionStateLite.getMapRedStats();
     for (String stage: statsPerStage.keySet()) {
       MapRedStats stats = statsPerStage.get(stage);
       PreparedStatement ps = connection.prepareStatement(query);
