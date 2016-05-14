@@ -24,13 +24,15 @@ public class DistCpWrapperOptions {
   // Whether to set the modification times to be the same for the copied files
   private boolean syncModificationTimes = true;
   // Size number of mappers for the distcp job based on the source directory
-  // size and the bytes per mapper
+  // size and the number of files.
   private long bytesPerMapper = (long) 256e6;
+  private int filesPerMapper = 100;
   // If the distCp job runs longer than this many ms, fail the job
   private long distcpJobTimeout = 1800 * 1000;
-  // If the input data size is smaller than this many ms, use a local -cp
-  // command to copy the files.
-  private long localCopyThreshold = (long) 256e6;
+  // If the input data size is smaller than this many MB, and fewer than
+  // this many files, use a local -cp command to copy the files.
+  private long localCopyCountThreshold = (long) 100;
+  private long localCopySizeThreshold = (long) 256e6;
   // Poll for the progress of DistCp every N ms
   private long distCpPollInterval = 2500;
 
@@ -74,8 +76,8 @@ public class DistCpWrapperOptions {
     return this;
   }
 
-  public DistCpWrapperOptions setLocalCopyThreshold(long localCopyThreshold) {
-    this.localCopyThreshold = localCopyThreshold;
+  public DistCpWrapperOptions setLocalCopySizeThreshold(long localCopySizeThreshold) {
+    this.localCopySizeThreshold = localCopySizeThreshold;
     return this;
   }
 
@@ -111,12 +113,20 @@ public class DistCpWrapperOptions {
     return bytesPerMapper;
   }
 
+  public int getFilesPerMapper() {
+    return filesPerMapper;
+  }
+
   public long getDistcpJobTimeout() {
     return distcpJobTimeout;
   }
 
-  public long getLocalCopyThreshold() {
-    return localCopyThreshold;
+  public long getLocalCopySizeThreshold() {
+    return localCopySizeThreshold;
+  }
+
+  public long getLocalCopyCountThreshold() {
+    return localCopyCountThreshold;
   }
 
   public long getDistCpPollInterval() {
