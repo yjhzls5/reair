@@ -238,9 +238,6 @@ public class ReplicationLauncher {
         .withArgName("ID")
         .create());
 
-    options.addOption(OptionBuilder.withLongOpt("reset-state")
-        .create());
-
     CommandLineParser parser = new BasicParser();
     CommandLine cl = parser.parse(options, argv);
 
@@ -257,17 +254,7 @@ public class ReplicationLauncher {
       startAfterId = Optional.of(
           Long.parseLong(cl.getOptionValue("start-after-id")));
       LOG.info("startAfterId="  + startAfterId);
-    }
-
-    if (cl.hasOption("reset-state")) {
       resetState = true;
-      LOG.info("resetState=" + resetState);
-    }
-
-    // Require specifying the start ID if resetting the state to make it easier to reason
-    if (resetState && startAfterId == null) {
-      throw new ConfigurationException("Start after ID must be specified when resetting "
-          + "state");
     }
 
     // Threads shouldn't exit with an exception - terminate to facilitate debugging.
