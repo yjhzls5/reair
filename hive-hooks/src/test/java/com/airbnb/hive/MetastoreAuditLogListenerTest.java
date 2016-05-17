@@ -947,8 +947,8 @@ public class MetastoreAuditLogListenerTest {
 
     Mockito.when(
         handler.get_table(
-            Mockito.anyString(),
-            Mockito.anyString()
+            "test_db",
+            "test_table"
         )
     ).thenReturn(table);
 
@@ -1022,7 +1022,7 @@ public class MetastoreAuditLogListenerTest {
         "type",
         "serialized_object"
     );
-    
+
     List<String> outputObjectsRow = ReplicationTestUtils.getRow(
         dbConnectionFactory,
         DB_NAME,
