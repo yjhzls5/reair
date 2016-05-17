@@ -18,6 +18,8 @@ import com.airbnb.reair.utils.ReplicationTestUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaStore;
+import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -34,6 +36,7 @@ import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -639,7 +642,7 @@ public class MetastoreAuditLogListenerTest {
     // Set up the source.
     StorageDescriptor sd = new StorageDescriptor();
     sd.setSerdeInfo(new SerDeInfo());
-    sd.setLocation("dummy/");
+    sd.setLocation("hdfs://dummy/");
 
     Table table = new Table();
     table.setDbName("test_db");
@@ -731,10 +734,10 @@ public class MetastoreAuditLogListenerTest {
       "TABLE",
       "{\"1\":{\"str\":\"test_table\"},\"2\":{\"str\":\"test_db\"},\"4\":{\"i32"
         + "\":0},\"5\":{\"i32\":0},\"6\":{\"i32\":0},\"7\":{\"rec\":{\"2\":{\"s"
-        + "tr\":\"dummy/\"},\"5\":{\"tf\":0},\"6\":{\"i32\":0},\"7\":{\"rec\":{"
-        + "}}}},\"8\":{\"lst\":[\"rec\",1,{\"1\":{\"str\":\"ds\"},\"2\":{\"str"
-        + "\":\"string\"},\"3\":{\"str\":\"UTC date\"}}]},\"12\":{\"str\":\"EXT"
-        + "ERNAL_TABLE\"}}"
+        + "tr\":\"hdfs://dummy/\"},\"5\":{\"tf\":0},\"6\":{\"i32\":0},\"7\":{\""
+        + "rec\":{}}}},\"8\":{\"lst\":[\"rec\",1,{\"1\":{\"str\":\"ds\"},\"2\":"
+        + "{\"str\":\"string\"},\"3\":{\"str\":\"UTC date\"}}]},\"12\":{\"str\""
+        + ":\"EXTERNAL_TABLE\"}}"
     );
 
     assertEquals(expectedDbRow, outputObjectsRow);
@@ -752,8 +755,8 @@ public class MetastoreAuditLogListenerTest {
         "PARTITION",
         "{\"1\":{\"lst\":[\"str\",1,\"2016-01-01\"]},\"2\":{\"str\":\"test_db\""
           + "},\"3\":{\"str\":\"test_table\"},\"4\":{\"i32\":0},\"5\":{\"i32\":"
-          + "0},\"6\":{\"rec\":{\"2\":{\"str\":\"dummy/ds=2016-01-01\"},\"5\":{"
-          + "\"tf\":0},\"6\":{\"i32\":0}}}}"
+          + "0},\"6\":{\"rec\":{\"2\":{\"str\":\"hdfs://dummy/ds=2016-01-01\"},"
+          + "\"5\":{\"tf\":0},\"6\":{\"i32\":0}}}}"
     );
 
     assertEquals(expectedDbRow, outputObjectsRow);
@@ -774,7 +777,7 @@ public class MetastoreAuditLogListenerTest {
     // Set up the source.
     StorageDescriptor sd = new StorageDescriptor();
     sd.setSerdeInfo(new SerDeInfo());
-    sd.setLocation("dummy/");
+    sd.setLocation("hdfs://dummy/");
 
     Table table = new Table();
     table.setDbName("test_db");
@@ -850,10 +853,10 @@ public class MetastoreAuditLogListenerTest {
         "TABLE",
         "{\"1\":{\"str\":\"test_table\"},\"2\":{\"str\":\"test_db\"},\"4\":{\"i"
           + "32\":0},\"5\":{\"i32\":0},\"6\":{\"i32\":0},\"7\":{\"rec\":{\"2\":"
-          + "{\"str\":\"dummy/\"},\"5\":{\"tf\":0},\"6\":{\"i32\":0},\"7\":{\"r"
-          + "ec\":{}}}},\"8\":{\"lst\":[\"rec\",1,{\"1\":{\"str\":\"ds\"},\"2\""
-          + ":{\"str\":\"string\"},\"3\":{\"str\":\"UTC date\"}}]},\"12\":{\"st"
-          + "r\":\"EXTERNAL_TABLE\"}}"
+          + "{\"str\":\"hdfs://dummy/\"},\"5\":{\"tf\":0},\"6\":{\"i32\":0},\"7"
+          + "\":{\"rec\":{}}}},\"8\":{\"lst\":[\"rec\",1,{\"1\":{\"str\":\"ds\""
+          + "},\"2\":{\"str\":\"string\"},\"3\":{\"str\":\"UTC date\"}}]},\"12"
+          + "\":{\"str\":\"EXTERNAL_TABLE\"}}"
     );
 
     assertEquals(expectedDbRow, inputObjectsRow);
@@ -871,8 +874,8 @@ public class MetastoreAuditLogListenerTest {
         "PARTITION",
         "{\"1\":{\"lst\":[\"str\",1,\"2016-01-01\"]},\"2\":{\"str\":\"test_db\""
           + "},\"3\":{\"str\":\"test_table\"},\"4\":{\"i32\":0},\"5\":{\"i32\":"
-          + "0},\"6\":{\"rec\":{\"2\":{\"str\":\"dummy/ds=2016-01-01\"},\"5\":{"
-          + "\"tf\":0},\"6\":{\"i32\":0}}}}"
+          + "0},\"6\":{\"rec\":{\"2\":{\"str\":\"hdfs://dummy/ds=2016-01-01\"},"
+          + "\"5\":{\"tf\":0},\"6\":{\"i32\":0}}}}"
     );
 
     assertEquals(expectedDbRow, inputObjectsRow);
@@ -909,11 +912,18 @@ public class MetastoreAuditLogListenerTest {
 
     // Set up the source.
     StorageDescriptor sd = new StorageDescriptor();
+    sd.setSerdeInfo(new SerDeInfo());
     sd.setLocation("hdfs://dummy");
+
+    Table table = new Table();
+    table.setDbName("test_db");
+    table.setTableName("test_table");
+    table.setTableType("EXTERNAL_TABLE");
+    table.setSd(sd);
 
     List<FieldSchema> partitionCols = new ArrayList<>();
     partitionCols.add(new FieldSchema("ds", "string", "UTC date"));
-    sd.setCols(partitionCols);
+    table.setPartitionKeys(partitionCols);
 
     Partition oldPartition = new Partition();
     oldPartition.setDbName("test_db");
@@ -933,11 +943,20 @@ public class MetastoreAuditLogListenerTest {
     newPartitionValues.add("2016-01-02");
     newPartition.setValues(newPartitionValues);
 
+    HMSHandler handler = Mockito.mock(HMSHandler.class);
+
+    Mockito.when(
+        handler.get_table(
+            "test_db",
+            "test_table"
+        )
+    ).thenReturn(table);
+
     AlterPartitionEvent event = new AlterPartitionEvent(
         oldPartition,
         newPartition,
         false,
-        null
+        handler
     );
 
     metastoreAuditLogListener.onAlterPartition(event);
@@ -989,10 +1008,8 @@ public class MetastoreAuditLogListenerTest {
         "PARTITION",
         "{\"1\":{\"lst\":[\"str\",1,\"2016-01-01\"]},\"2\":{\"str\":\"test_db\""
           + "},\"3\":{\"str\":\"test_table\"},\"4\":{\"i32\":0},\"5\":{\"i32\":"
-          + "0},\"6\":{\"rec\":{\"1\":{\"lst\":[\"rec\",1,{\"1\":{\"str\":\"ds"
-          + "\"},\"2\":{\"str\":\"string\"},\"3\":{\"str\":\"UTC date\"}}]},\"2"
-          + "\":{\"str\":\"hdfs://dummy\"},\"5\":{\"tf\":0},\"6\":{\"i32\":0}}}"
-          + "}"
+          + "0},\"6\":{\"rec\":{\"2\":{\"str\":\"hdfs://dummy\"},\"5\":{\"tf\":"
+          + "0},\"6\":{\"i32\":0},\"7\":{\"rec\":{}}}}}"
     );
 
     assertEquals(expectedDbRow, inputObjectsRow);
@@ -1019,10 +1036,8 @@ public class MetastoreAuditLogListenerTest {
         "PARTITION",
         "{\"1\":{\"lst\":[\"str\",1,\"2016-01-02\"]},\"2\":{\"str\":\"test_db\""
           + "},\"3\":{\"str\":\"test_table\"},\"4\":{\"i32\":0},\"5\":{\"i32\":"
-          + "0},\"6\":{\"rec\":{\"1\":{\"lst\":[\"rec\",1,{\"1\":{\"str\":\"ds"
-          + "\"},\"2\":{\"str\":\"string\"},\"3\":{\"str\":\"UTC date\"}}]},\"2"
-          + "\":{\"str\":\"hdfs://dummy\"},\"5\":{\"tf\":0},\"6\":{\"i32\":0}}}"
-          + "}"
+          + "0},\"6\":{\"rec\":{\"2\":{\"str\":\"hdfs://dummy\"},\"5\":{\"tf\":"
+          + "0},\"6\":{\"i32\":0},\"7\":{\"rec\":{}}}}}"
     );
 
     assertEquals(expectedDbRow, outputObjectsRow);
