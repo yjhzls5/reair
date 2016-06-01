@@ -49,12 +49,12 @@ my_db1.my_table1
 my_db2.my_table2
 ```
 
-* Launch the job using the `hadoop jar` command on the destination, specifying the config file and the list of tables to copy. A larger heap for the client may be needed for large batches.
+* Launch the job using the `hadoop jar` command on the destination, specifying the config file and the list of tables to copy. A larger heap for the client may be needed for large batches, so set `HADOOP_HEAPSIZE` appropriately. Also, depending on how the warehouse is set up, you may need to run the process as a different user (e.g. `hive`).
 
 ```
 export HADOOP_OPTS="-Dlog4j.configuration=file://<path to log4j.properties>"
 export HADOOP_HEAPSIZE=8096
-hadoop jar main/build/libs/airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.batch.hive.MetastoreReplicationJob --config-files my_config_file.xml --table-list my_tables_to_copy.txt
+sudo -u hive hadoop jar main/build/libs/airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.batch.hive.MetastoreReplicationJob --config-files my_config_file.xml --table-list my_tables_to_copy.txt
 ```
 
 * Additional CLI Options: `--step`, `--override-input`. These arguments are useful if want to run one of the three MR job individually for faster failure recovery. `--step` indicates which step to run. `--override-input` provides the path for the input when running the second and third stage MR jobs. The input path will usually be the output for the first stage MR job.
@@ -83,7 +83,7 @@ cd reair
 
 * Create and setup the tables on MySQL required for the audit log. You can create the tables by running the create table commands in all of the .sql files [here](hive-hooks/src/main/resources/). If you're planning to use the same DB to store the tables for incremental replication, also run the create table commands [here](main/src/main/resources/create_tables.sql).
 
-* Configure Hive to use the audit log hook by adding the following sections to `hive-site.xml` from the [audit log configuration template](hive-hooks/src/main/resources/hook_configuration_template.xml). Note: Replace with appropriate values.
+* Configure Hive (on the **source** warehouse) to use the audit log hook by adding the following sections to `hive-site.xml` from the [audit log configuration template](hive-hooks/src/main/resources/hook_configuration_template.xml) after replacing with appropriate values.
 
 * Run a test query and verify that you see the appropriate rows in the `audit_log` and `audit_objects` tables.
 
@@ -102,11 +102,11 @@ cd reair
 
 Once the build finishes, the JAR to run the incremental replication process can be found under `main/build/libs/airbnb-reair-main-1.0.0-all.jar`
 
-* To start replicating, set options to point to the appropriate logging configuration and kick off the replication launcher by using the `hadoop jar` command on the destination cluster. An example `log4j.properties` file is provided [here](main/src/main/resources/log4j.properties). Be sure to specify the configuration file that was filled out in the prior step.
+* To start replicating, set options to point to the appropriate logging configuration and kick off the replication launcher by using the `hadoop jar` command on the destination cluster. An example `log4j.properties` file is provided [here](main/src/main/resources/log4j.properties). Be sure to specify the configuration file that was filled out in the prior step. As with batch replication, you may need to run the process as a different user.
 
 ```
 export HADOOP_OPTS="-Dlog4j.configuration=file://<path to log4j.properties>"
-hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.incremental.deploy.ReplicationLauncher --config-files my_config_file.xml
+sudo -u hive hadoop jar airbnb-reair-main-1.0.0-all.jar com.airbnb.reair.incremental.deploy.ReplicationLauncher --config-files my_config_file.xml
 ```
 
 If you use the recommended [`log4j.properties`](main/src/main/resources/log4j.properties) file that is shipped with the tool, messages with the `INFO` level will be printed to `stderr`, but more detailed logging messages with >= `DEBUG` logging level will be recorded to a log file in the current working directory.
