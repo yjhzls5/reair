@@ -208,24 +208,24 @@ public class MetastoreAuditLogListener extends MetaStoreEventListener {
    * <p>For auditing purposes the read/write differential is the old and new
    * partition respectively.</p>
    *
-   * <p>Additionally the AlterPartitionEvent does not provide access to the
-   * underlying table associated with the partitions, hence it is necessary to
-   * create a minimal viable object in order to instantiate a metadata Partition
-   * object.</p>
-   * XXX
+   * <p>Note that a bug in the AlterPartitionEvent which has been resolved in
+   * a later version does not provide access to the underlying table associated
+   * with the partitions, hence it is necessary to fetch it from the metastore.
+   * </p>
+   *
    * @param event The add partition event
    */
   @Override
   public void onAlterPartition(AlterPartitionEvent event) throws MetaException {
     try {
 
-      // Table is invariant and thus arbitrary choice between old and new.
+      // Table is invariant and thus an arbitrary choice between old and new.
       Table table = new Table(
-          event.getOldPartition().getDbName(),
-          event.getOldPartition().getTableName()
+          event.getHandler().get_table(
+              event.getOldPartition().getDbName(),
+              event.getOldPartition().getTableName()
+          )
       );
-
-      table.setPartCols(event.getOldPartition().getSd().getCols());
 
       Set<ReadEntity> readEntities = new HashSet<>();
 
