@@ -537,14 +537,25 @@ public class ReplicationJobFactory {
     OperationType operationType = null;
     switch (auditLogEntry.getCommandType()) {
       case DROPTABLE:
+      case THRIFT_DROP_TABLE:
       case DROPVIEW:
       case ALTERTABLE_DROPPARTS:
+      case THRIFT_DROP_PARTITION:
         operationType = OperationType.DROP;
         break;
       case ALTERTABLE_RENAME:
       case ALTERVIEW_RENAME:
       case ALTERTABLE_RENAMEPART:
         operationType = OperationType.RENAME;
+        break;
+      case THRIFT_ALTER_TABLE:
+        String inputTableName = auditLogEntry.getInputTable().getTableName();
+        if (auditLogEntry.getOutputTables().size() == 1
+            && !auditLogEntry.getOutputTables().get(0).getTableName().equals(inputTableName)) {
+          operationType = OperationType.RENAME;
+        } else {
+          operationType = OperationType.COPY;
+        }
         break;
       default:
         operationType = OperationType.COPY;
@@ -600,10 +611,10 @@ public class ReplicationJobFactory {
         // user specified filter. In this case, we still do the rename.
         if (outputTables.size() == 0 && outputPartitions.size() == 0) {
           // This means that the table was filtered out
-        } else if (auditLogEntry.getRenameFromTable() != null) {
+        } else if (auditLogEntry.getInputTable() != null) {
           // Handle a rename table
           replicationJobs.add(createJobForRenameTable(auditLogEntry.getId(),
-              auditLogEntry.getCreateTime().getTime(), auditLogEntry.getRenameFromTable(),
+              auditLogEntry.getCreateTime().getTime(), auditLogEntry.getInputTable(),
               auditLogEntry.getOutputTables().get(0)));
         } else if (auditLogEntry.getRenameFromPartition() != null) {
           // Handle a rename partition

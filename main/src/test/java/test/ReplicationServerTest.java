@@ -11,9 +11,12 @@ import com.airbnb.reair.db.DbKeyValueStore;
 import com.airbnb.reair.db.EmbeddedMySqlDb;
 import com.airbnb.reair.db.StaticDbConnectionFactory;
 import com.airbnb.reair.db.TestDbCredentials;
+import com.airbnb.reair.hive.hooks.AuditCoreLogModule;
 import com.airbnb.reair.hive.hooks.AuditLogHookUtils;
 import com.airbnb.reair.hive.hooks.CliAuditLogHook;
 import com.airbnb.reair.hive.hooks.HiveOperation;
+import com.airbnb.reair.hive.hooks.MetastoreAuditLogListener;
+import com.airbnb.reair.hive.hooks.ObjectLogModule;
 import com.airbnb.reair.incremental.DirectoryCopier;
 import com.airbnb.reair.incremental.ReplicationServer;
 import com.airbnb.reair.incremental.auditlog.AuditLogReader;
@@ -338,7 +341,8 @@ public class ReplicationServerTest extends MockClusterTest {
 
   private void simulatedRenameTable(String dbName,
       String oldTableName,
-      String newTableName)
+      String newTableName,
+      boolean isThriftAuditLog)
     throws Exception {
     Table srcTable = srcMetastore.getTable(dbName, oldTableName);
     Table renamedTable = new Table(srcTable);
@@ -358,23 +362,38 @@ public class ReplicationServerTest extends MockClusterTest {
         new org.apache.hadoop.hive.ql.metadata.Table(renamedTable);
     outputTables.add(qlRenamedTable);
 
+    if (isThriftAuditLog) {
+      HiveConf hiveConf = AuditLogHookUtils.getMetastoreHiveConf(
+          embeddedMySqlDb,
+          AUDIT_LOG_DB_NAME,
+          AUDIT_LOG_TABLE_NAME,
+          AUDIT_LOG_OBJECTS_TABLE_NAME
+      );
 
-    HiveConf hiveConf = AuditLogHookUtils.getHiveConf(
-        embeddedMySqlDb,
-        AUDIT_LOG_DB_NAME,
-        AUDIT_LOG_TABLE_NAME,
-        AUDIT_LOG_OBJECTS_TABLE_NAME,
-        AUDIT_LOG_MAP_RED_STATS_TABLE_NAME);
-    AuditLogHookUtils.insertAuditLogEntry(
-        cliAuditLogHook,
-        HiveOperation.ALTERTABLE_RENAME,
-        "Example query string",
-        inputTables,
-        new ArrayList<>(),
-        outputTables,
-        new ArrayList<>(),
-        new HashMap<>(),
-        hiveConf);
+      AuditLogHookUtils.insertThriftAlterTableLogEntry(
+          srcTable,
+          renamedTable,
+          hiveConf
+      );
+    } else {
+      HiveConf hiveConf = AuditLogHookUtils.getHiveConf(
+          embeddedMySqlDb,
+          AUDIT_LOG_DB_NAME,
+          AUDIT_LOG_TABLE_NAME,
+          AUDIT_LOG_OBJECTS_TABLE_NAME,
+          AUDIT_LOG_MAP_RED_STATS_TABLE_NAME);
+
+      AuditLogHookUtils.insertAuditLogEntry(
+          cliAuditLogHook,
+          HiveOperation.ALTERTABLE_RENAME,
+          "Example query string",
+          inputTables,
+          new ArrayList<>(),
+          outputTables,
+          new ArrayList<>(),
+          new HashMap<>(),
+          hiveConf);
+    }
   }
 
   private void simulateCreatePartitionedTable(String dbName, String tableName) throws Exception {
@@ -825,13 +844,48 @@ public class ReplicationServerTest extends MockClusterTest {
     assertTrue(destMetastore.existsTable(dbName, tableName));
 
     // Simulate the rename
-    simulatedRenameTable(dbName, tableName, newTableName);
+    simulatedRenameTable(dbName, tableName, newTableName, false);
 
     // Propagate the rename
     replicationServer.setStartAfterAuditLogId(1);
     replicationServer.run(1);
 
-    // Verify that the partition is still there on the destination
+    // Verify that the table is renamed on the destination
+    assertFalse(destMetastore.existsTable(dbName, tableName));
+    assertTrue(destMetastore.existsTable(dbName, newTableName));
+  }
+
+  /**
+   * Test whether the rename table operation from THRIFT audit log is properly propagated.
+   *
+   * @throws Exception if there is an error setting up or running this test
+   */
+  @Test
+  public void testRenameTableByThrift() throws Exception {
+    // Reset the state
+    resetState();
+    clearMetastores();
+
+    final String dbName = "test_db";
+    final String tableName = "test_table";
+    final String newTableName = "new_test_table";
+
+    // Create a table on the source, and replicate it
+    simulatedCreateUnpartitionedTable(dbName, tableName);
+    final ReplicationServer replicationServer = createReplicationServer();
+    replicationServer.run(1);
+
+    // Verify that the table is on the destination
+    assertTrue(destMetastore.existsTable(dbName, tableName));
+
+    // Simulate the rename
+    simulatedRenameTable(dbName, tableName, newTableName, true);
+
+    // Propagate the rename
+    replicationServer.setStartAfterAuditLogId(1);
+    replicationServer.run(1);
+
+    // Verify that the table is renamed on the destination
     assertFalse(destMetastore.existsTable(dbName, tableName));
     assertTrue(destMetastore.existsTable(dbName, newTableName));
   }
@@ -868,7 +922,7 @@ public class ReplicationServerTest extends MockClusterTest {
     destMetastore.alterTable(dbName, tableName, table);
 
     // Simulate the rename
-    simulatedRenameTable(dbName, tableName, newTableName);
+    simulatedRenameTable(dbName, tableName, newTableName, false);
 
     // Propagate the rename
     replicationServer.setStartAfterAuditLogId(1);

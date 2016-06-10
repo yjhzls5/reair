@@ -251,7 +251,7 @@ public class AuditLogReader {
     List<Table> outputTables = new LinkedList<>();
     List<NamedPartition> outputPartitions = new LinkedList<>();
     List<Table> referenceTables = new LinkedList<>();
-    Table renameFromTable = null;
+    Table inputTable = null;
     NamedPartition renameFromPartition = null;
 
     while (rs.next()) {
@@ -282,7 +282,7 @@ public class AuditLogReader {
             referenceTables,
             outputTables,
             outputPartitions,
-            renameFromTable,
+            inputTable,
             renameFromPartition);
         auditLogEntries.add(entry);
         // Reset these accumulated values
@@ -291,7 +291,7 @@ public class AuditLogReader {
         outputTables = new LinkedList<>();
         outputPartitions = new LinkedList<>();
         renameFromPartition = null;
-        renameFromTable = null;
+        inputTable = null;
       }
 
       previouslyReadId = id;
@@ -312,8 +312,8 @@ public class AuditLogReader {
           outputTables.add(table);
         } else if ("REFERENCE_TABLE".equals(objectCategory)) {
           referenceTables.add(table);
-        } else if ("RENAME_FROM".equals(objectCategory)) {
-          renameFromTable = table;
+        } else if ("RENAME_FROM".equals(objectCategory) || "INPUT".equals(objectCategory)) {
+          inputTable = table;
         } else {
           throw new RuntimeException("Unhandled category: " + objectCategory);
         }
@@ -363,7 +363,7 @@ public class AuditLogReader {
           referenceTables,
           outputTables,
           outputPartitions,
-          renameFromTable,
+          inputTable,
           renameFromPartition);
       auditLogEntries.add(entry);
     }

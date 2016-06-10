@@ -2,12 +2,16 @@ package com.airbnb.reair.hive.hooks;
 
 import com.airbnb.reair.db.DbConnectionFactory;
 import com.airbnb.reair.db.EmbeddedMySqlDb;
+import com.airbnb.reair.db.TestDbCredentials;
 import com.airbnb.reair.utils.ReplicationTestUtils;
 
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
 import org.apache.hadoop.hive.ql.MapRedStats;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
 
@@ -168,6 +172,32 @@ public class AuditLogHookUtils {
   }
 
   /**
+   * Insert a thrift audit log entry that represents renaming a table.
+   *
+   * @param oldTable the source table
+   * @param newTable the table renamed to
+   * @param hiveConf Hive configuration
+   * @throws Exception if there's an error inserting into the audit log
+   */
+  public static void insertThriftAlterTableLogEntry(
+      org.apache.hadoop.hive.metastore.api.Table oldTable,
+      org.apache.hadoop.hive.metastore.api.Table newTable,
+      HiveConf hiveConf
+  ) throws Exception {
+    final MetastoreAuditLogListener metastoreAuditLogListener =
+        new MetastoreAuditLogListener(hiveConf);
+
+    AlterTableEvent event = new AlterTableEvent(
+        oldTable,
+        newTable,
+        true,
+        null
+    );
+
+    metastoreAuditLogListener.onAlterTable(event);
+  }
+
+  /**
    * Get a hive conf filled with config values.
    *
    * @param mySqlDb the database hive should use to write the audit log to
@@ -189,6 +219,45 @@ public class AuditLogHookUtils {
     hiveConf.set(AuditCoreLogModule.TABLE_NAME_KEY, auditCoreLogTableName);
     hiveConf.set(ObjectLogModule.TABLE_NAME_KEY, outputObjectsTableName);
     hiveConf.set(MapRedStatsLogModule.TABLE_NAME_KEY, mapRedStatsTableName);
+    return hiveConf;
+  }
+
+  /**
+   * Get a hive conf for the metastore.
+   *
+   * @param mySqlDb the database hive should use to write the audit log to
+   * @param dbName the name of the database to be used
+   * @param auditCoreLogTableName the table name for the core audit log
+   * @param outputObjectsTableName the table name for the output objects
+   * @return the hive configuration with the config values set
+   */
+  public static HiveConf getMetastoreHiveConf(
+      EmbeddedMySqlDb mySqlDb,
+      String dbName,
+      String auditCoreLogTableName,
+      String outputObjectsTableName) {
+    final TestDbCredentials testDbCredentials = new TestDbCredentials();
+
+    HiveConf hiveConf = new HiveConf();
+
+    hiveConf.set(
+        MetastoreAuditLogListener.JDBC_URL_KEY,
+        ReplicationTestUtils.getJdbcUrl(mySqlDb, dbName)
+    );
+
+    hiveConf.set(AuditCoreLogModule.TABLE_NAME_KEY, auditCoreLogTableName);
+    hiveConf.set(ObjectLogModule.TABLE_NAME_KEY, outputObjectsTableName);
+
+    hiveConf.set(
+        MetastoreAuditLogListener.DB_USERNAME,
+        testDbCredentials.getReadWriteUsername()
+    );
+
+    hiveConf.set(
+        MetastoreAuditLogListener.DB_PASSWORD,
+        testDbCredentials.getReadWritePassword()
+    );
+
     return hiveConf;
   }
 }
