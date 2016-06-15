@@ -23,7 +23,7 @@ public class AuditLogEntry {
   private List<Table> outputTables;
   private List<NamedPartition> outputPartitions;
   private Table inputTable;
-  private NamedPartition renameFromPartition;
+  private NamedPartition inputPartition;
 
   /**
    * Constructs AuditLogEntry using specific values.
@@ -38,7 +38,7 @@ public class AuditLogEntry {
    * @param outputTables tables that were changed
    * @param outputPartitions partitions that were changed
    * @param inputTable if renaming a table, the table that was renamed from
-   * @param renameFromPartition if renaming a partition, the partition that was renamed from.
+   * @param inputPartition if renaming a partition, the partition that was renamed from.
    */
   public AuditLogEntry(
       long id,
@@ -50,7 +50,7 @@ public class AuditLogEntry {
       List<Table> outputTables,
       List<NamedPartition> outputPartitions,
       Table inputTable,
-      NamedPartition renameFromPartition) {
+      NamedPartition inputPartition) {
     this.id = id;
     this.createTime = createTime;
     this.commandType = commandType;
@@ -60,7 +60,7 @@ public class AuditLogEntry {
     this.outputTables = outputTables;
     this.outputPartitions = outputPartitions;
     this.inputTable = inputTable;
-    this.renameFromPartition = renameFromPartition;
+    this.inputPartition = inputPartition;
   }
 
   public long getId() {
@@ -94,8 +94,8 @@ public class AuditLogEntry {
     return "AuditLogEntry{" + "id=" + id + ", createTime=" + createTime + ", commandType="
         + commandType + ", outputDirectories=" + outputDirectories + ", referenceTables="
         + referenceTableStrings + ", outputTables=" + outputTableStrings + ", outputPartitions="
-        + outputPartitionStrings + ", renameFromTable=" + inputTable + ", renameFromPartition="
-        + renameFromPartition + '}';
+        + outputPartitionStrings + ", renameFromTable=" + inputTable + ", inputPartition="
+        + inputPartition + '}';
   }
 
   public List<String> getOutputDirectories() {
@@ -118,8 +118,8 @@ public class AuditLogEntry {
     return inputTable;
   }
 
-  public NamedPartition getRenameFromPartition() {
-    return renameFromPartition;
+  public NamedPartition getInputPartition() {
+    return inputPartition;
   }
 
   public String getCommand() {

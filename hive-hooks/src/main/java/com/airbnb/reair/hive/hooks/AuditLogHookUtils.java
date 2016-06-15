@@ -6,12 +6,13 @@ import com.airbnb.reair.db.TestDbCredentials;
 import com.airbnb.reair.utils.ReplicationTestUtils;
 
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.HiveMetaStore;
+import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
 import org.apache.hadoop.hive.ql.MapRedStats;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
-import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.session.SessionState;
 
@@ -179,11 +180,10 @@ public class AuditLogHookUtils {
    * @param hiveConf Hive configuration
    * @throws Exception if there's an error inserting into the audit log
    */
-  public static void insertThriftAlterTableLogEntry(
+  public static void insertThriftRenameTableLogEntry(
       org.apache.hadoop.hive.metastore.api.Table oldTable,
       org.apache.hadoop.hive.metastore.api.Table newTable,
-      HiveConf hiveConf
-  ) throws Exception {
+      HiveConf hiveConf) throws Exception {
     final MetastoreAuditLogListener metastoreAuditLogListener =
         new MetastoreAuditLogListener(hiveConf);
 
@@ -195,6 +195,33 @@ public class AuditLogHookUtils {
     );
 
     metastoreAuditLogListener.onAlterTable(event);
+  }
+
+  /**
+   * Insert a thrift audit log entry that represents renaming a partition.
+   *
+   * @param hmsHandler the HMSHandler for the event
+   * @param oldPartition the old partition name
+   * @param newPartition the new partition name
+   * @param hiveConf Hive configuration
+   * @throws Exception if there's an error inserting into the audit log
+   */
+  public static void insertThriftRenamePartitionLogEntry(
+      HiveMetaStore.HMSHandler hmsHandler,
+      Partition oldPartition,
+      Partition newPartition,
+      HiveConf hiveConf) throws Exception {
+    final MetastoreAuditLogListener metastoreAuditLogListener =
+        new MetastoreAuditLogListener(hiveConf);
+
+    AlterPartitionEvent event = new AlterPartitionEvent(
+        oldPartition,
+        newPartition,
+        true,
+        hmsHandler
+    );
+
+    metastoreAuditLogListener.onAlterPartition(event);
   }
 
   /**

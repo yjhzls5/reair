@@ -557,6 +557,16 @@ public class ReplicationJobFactory {
           operationType = OperationType.COPY;
         }
         break;
+      case THRIFT_ALTER_PARTITION:
+        NamedPartition inputPartition = auditLogEntry.getInputPartition();
+        List<NamedPartition> outputPartitions = auditLogEntry.getOutputPartitions();
+        if (inputPartition != null && outputPartitions.size() == 1
+            && !inputPartition.getName().equals(outputPartitions.get(0).getName())) {
+          operationType = OperationType.RENAME;
+        } else {
+          operationType = OperationType.COPY;
+        }
+        break;
       default:
         operationType = OperationType.COPY;
     }
@@ -616,10 +626,10 @@ public class ReplicationJobFactory {
           replicationJobs.add(createJobForRenameTable(auditLogEntry.getId(),
               auditLogEntry.getCreateTime().getTime(), auditLogEntry.getInputTable(),
               auditLogEntry.getOutputTables().get(0)));
-        } else if (auditLogEntry.getRenameFromPartition() != null) {
+        } else if (auditLogEntry.getInputPartition() != null) {
           // Handle a rename partition
           replicationJobs.add(createJobForRenamePartition(auditLogEntry.getId(),
-              auditLogEntry.getCreateTime().getTime(), auditLogEntry.getRenameFromPartition(),
+              auditLogEntry.getCreateTime().getTime(), auditLogEntry.getInputPartition(),
               auditLogEntry.getOutputPartitions().get(0)));
         } else {
           throw new RuntimeException("Shouldn't happen!");

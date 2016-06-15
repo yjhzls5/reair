@@ -29,12 +29,14 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -370,7 +372,7 @@ public class ReplicationServerTest extends MockClusterTest {
           AUDIT_LOG_OBJECTS_TABLE_NAME
       );
 
-      AuditLogHookUtils.insertThriftAlterTableLogEntry(
+      AuditLogHookUtils.insertThriftRenameTableLogEntry(
           srcTable,
           renamedTable,
           hiveConf
@@ -394,6 +396,34 @@ public class ReplicationServerTest extends MockClusterTest {
           new HashMap<>(),
           hiveConf);
     }
+  }
+
+  private void simulatedRenamePartition(String dbName,
+      String tableName,
+      String oldPartitionName,
+      List<String> newPartitionValues) throws Exception {
+    Partition oldPartition = srcMetastore.getPartition(dbName, tableName, oldPartitionName);
+    Partition newPartition = new Partition(oldPartition);
+    newPartition.setValues(newPartitionValues);
+
+    HiveConf hiveConf = AuditLogHookUtils.getMetastoreHiveConf(
+        embeddedMySqlDb,
+        AUDIT_LOG_DB_NAME,
+        AUDIT_LOG_TABLE_NAME,
+        AUDIT_LOG_OBJECTS_TABLE_NAME
+    );
+
+    HiveMetaStore.HMSHandler handler = Mockito.mock(HiveMetaStore.HMSHandler.class);
+    Mockito.when(
+        handler.get_table(dbName, tableName)
+    ).thenReturn(srcMetastore.getTable(dbName, tableName));
+
+    AuditLogHookUtils.insertThriftRenamePartitionLogEntry(
+        handler,
+        oldPartition,
+        newPartition,
+        hiveConf
+    );
   }
 
   private void simulateCreatePartitionedTable(String dbName, String tableName) throws Exception {
@@ -888,6 +918,46 @@ public class ReplicationServerTest extends MockClusterTest {
     // Verify that the table is renamed on the destination
     assertFalse(destMetastore.existsTable(dbName, tableName));
     assertTrue(destMetastore.existsTable(dbName, newTableName));
+  }
+
+  /**
+   * Test whether the rename partition operation from THRIFT audit log is properly propagated.
+   *
+   * @throws Exception if there is an error setting up or running this test
+   */
+  @Test
+  public void testRenamePartitionByThrift() throws Exception {
+    // Reset the state
+    resetState();
+    clearMetastores();
+
+    // Create an partitioned table and a corresponding entry in the audit log
+    final String dbName = "test_db";
+    final String tableName = "test_table";
+    final String newPartitionName = "ds=1/hr=2";
+    final String oldPartitionName = "ds=1/hr=1";
+    final List<String> newPartitionValues = new ArrayList<>();
+    newPartitionValues.add("1"); // for `ds` partition
+    newPartitionValues.add("2"); // for `hr` partition
+
+    simulateCreatePartitionedTable(dbName, tableName);
+    simulateCreatePartition(dbName, tableName, oldPartitionName);
+
+    // Have the replication server rename it.
+    ReplicationServer replicationServer = createReplicationServer();
+    replicationServer.run(2);
+
+    // Simulate the rename
+    simulatedRenamePartition(dbName,
+        tableName,
+        oldPartitionName,
+        newPartitionValues);
+    replicationServer.setStartAfterAuditLogId(2);
+    replicationServer.run(1);
+
+    // Verify that the object was renamed
+    assertFalse(destMetastore.existsPartition(dbName, tableName, oldPartitionName));
+    assertTrue(destMetastore.existsPartition(dbName, tableName, newPartitionName));
   }
 
   /**

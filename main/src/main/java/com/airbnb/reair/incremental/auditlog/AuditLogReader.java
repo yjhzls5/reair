@@ -330,7 +330,7 @@ public class AuditLogReader {
 
         if ("OUTPUT".equals(objectCategory)) {
           outputPartitions.add(namedPartition);
-        } else if ("RENAME_FROM".equals(objectCategory)) {
+        } else if ("RENAME_FROM".equals(objectCategory) || "INPUT".equals(objectCategory)) {
           renameFromPartition = namedPartition;
         } else {
           throw new RuntimeException("Unhandled category: " + objectCategory);
