@@ -43,6 +43,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -693,7 +694,7 @@ public class ReplicationServerTest extends MockClusterTest {
         auditLogReader,
         dbKeyValueStore,
         persistedJobInfoStore,
-        replicationFilter,
+        Arrays.asList(replicationFilter),
         new DirectoryCopier(conf, srcCluster.getTmpDir(), false),
         1,
         1,

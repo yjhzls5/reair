@@ -470,13 +470,15 @@ public class ReplicationJobFactory {
    */
   public List<ReplicationJob> createReplicationJobs(
       AuditLogEntry auditLogEntry,
-      ReplicationFilter replicationFilter) throws StateUpdateException {
+      List<ReplicationFilter> replicationFilters) throws StateUpdateException {
     List<ReplicationJob> replicationJobs = new ArrayList<>();
 
-    if (!replicationFilter.accept(auditLogEntry)) {
-      LOG.debug(String.format("Audit log entry id: %s filtered out by %s", auditLogEntry,
-          replicationFilter.getClass().getSimpleName()));
-      return replicationJobs;
+    for (ReplicationFilter replicationFilter : replicationFilters) {
+      if (!replicationFilter.accept(auditLogEntry)) {
+        LOG.debug(String.format("Audit log entry id: %s filtered out by %s", auditLogEntry,
+            replicationFilter.getClass().getSimpleName()));
+        return replicationJobs;
+      }
     }
 
 
@@ -507,19 +509,21 @@ public class ReplicationJobFactory {
         exchangeToPartition.setDbName(exchangeToSpec.getDbName());
         exchangeToPartition.setTableName(exchangeToSpec.getTableName());
         exchangeToPartition.setValues(parser.getPartitionValues());
-        if (!replicationFilter.accept(exchangeToTable,
-            new NamedPartition(exchangeToSpec.getPartitionName(), exchangeToPartition))) {
-          LOG.debug(
-              String.format("Exchange partition from audit log" + " id: %s filtered out by %s",
-                  auditLogEntry.getId(), replicationFilter.getClass().getSimpleName()));
-          return replicationJobs;
-        } else {
-          ReplicationJob job = createJobForCopyPartition(auditLogEntry.getId(),
-              auditLogEntry.getCreateTime().getTime(), exchangeToSpec);
 
-          replicationJobs.add(job);
-          return replicationJobs;
+        for (ReplicationFilter replicationFilter : replicationFilters) {
+          if (!replicationFilter.accept(exchangeToTable,
+              new NamedPartition(exchangeToSpec.getPartitionName(), exchangeToPartition))) {
+            LOG.debug(
+                String.format("Exchange partition from audit log" + " id: %s filtered out by %s",
+                    auditLogEntry.getId(), replicationFilter.getClass().getSimpleName()));
+            return replicationJobs;
+          }
         }
+        ReplicationJob job = createJobForCopyPartition(auditLogEntry.getId(),
+            auditLogEntry.getCreateTime().getTime(), exchangeToSpec);
+
+        replicationJobs.add(job);
+        return replicationJobs;
       } else {
         LOG.warn("Error parsing query " + auditLogEntry.getCommand());
       }
@@ -576,7 +580,7 @@ public class ReplicationJobFactory {
     List<Table> referenceTables = auditLogEntry.getReferenceTables();
 
     // Filter out tables and partitions that we may not want to replicate
-    filterObjects(replicationFilter, outputTables, outputPartitions,
+    filterObjects(replicationFilters, outputTables, outputPartitions,
         createTableLookupMap(referenceTables));
 
     switch (operationType) {
@@ -647,12 +651,12 @@ public class ReplicationJobFactory {
   /**
    * Based on the supplied filter, remove tables and partitions that should not be replicated.
    *
-   * @param filter the filter to remove undesired objects
+   * @param filters the filters to remove undesired objects
    * @param tables the tables to filter
    * @param partitions the partitions to filter
    */
   private void filterObjects(
-      ReplicationFilter filter,
+      List<ReplicationFilter> filters,
       List<Table> tables,
       List<NamedPartition> partitions,
       Map<HiveObjectSpec, Table> tableLookupMap) {
@@ -677,10 +681,13 @@ public class ReplicationJobFactory {
 
       Table table =
           tableLookupMap.get(new HiveObjectSpec(partition.getDbName(), partition.getTableName()));
-      if (!filter.accept(table, pwn)) {
-        LOG.debug(
-            String.format("%s filtering out: %s", filter.getClass().getName(), partitionSpec));
-        partitionIterator.remove();
+      for (ReplicationFilter filter : filters) {
+        if (!filter.accept(table, pwn)) {
+          LOG.debug(
+              String.format("%s filtering out: %s", filter.getClass().getName(), partitionSpec));
+          partitionIterator.remove();
+          break;
+        }
       }
     }
 
@@ -690,9 +697,12 @@ public class ReplicationJobFactory {
     while (tableIterator.hasNext()) {
       Table table = tableIterator.next();
       HiveObjectSpec tableSpec = new HiveObjectSpec(table);
-      if (!filter.accept(table)) {
-        LOG.debug(String.format("%s filtering out: %s", filter.getClass().getName(), tableSpec));
-        tableIterator.remove();
+      for (ReplicationFilter filter : filters) {
+        if (!filter.accept(table)) {
+          LOG.debug(String.format("%s filtering out: %s", filter.getClass().getName(), tableSpec));
+          tableIterator.remove();
+          break;
+        }
       }
     }
   }
