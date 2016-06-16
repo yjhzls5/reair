@@ -22,8 +22,8 @@ public class AuditLogEntry {
   private List<Table> referenceTables;
   private List<Table> outputTables;
   private List<NamedPartition> outputPartitions;
-  private Table renameFromTable;
-  private NamedPartition renameFromPartition;
+  private Table inputTable;
+  private NamedPartition inputPartition;
 
   /**
    * Constructs AuditLogEntry using specific values.
@@ -37,8 +37,8 @@ public class AuditLogEntry {
    * @param referenceTables the partition's table if the outputs include partitions
    * @param outputTables tables that were changed
    * @param outputPartitions partitions that were changed
-   * @param renameFromTable if renaming a table, the table that was renamed from
-   * @param renameFromPartition if renaming a partition, the partition that was renamed from.
+   * @param inputTable if renaming a table, the table that was renamed from
+   * @param inputPartition if renaming a partition, the partition that was renamed from.
    */
   public AuditLogEntry(
       long id,
@@ -49,8 +49,8 @@ public class AuditLogEntry {
       List<Table> referenceTables,
       List<Table> outputTables,
       List<NamedPartition> outputPartitions,
-      Table renameFromTable,
-      NamedPartition renameFromPartition) {
+      Table inputTable,
+      NamedPartition inputPartition) {
     this.id = id;
     this.createTime = createTime;
     this.commandType = commandType;
@@ -59,8 +59,8 @@ public class AuditLogEntry {
     this.outputDirectories = outputDirectories;
     this.outputTables = outputTables;
     this.outputPartitions = outputPartitions;
-    this.renameFromTable = renameFromTable;
-    this.renameFromPartition = renameFromPartition;
+    this.inputTable = inputTable;
+    this.inputPartition = inputPartition;
   }
 
   public long getId() {
@@ -94,8 +94,8 @@ public class AuditLogEntry {
     return "AuditLogEntry{" + "id=" + id + ", createTime=" + createTime + ", commandType="
         + commandType + ", outputDirectories=" + outputDirectories + ", referenceTables="
         + referenceTableStrings + ", outputTables=" + outputTableStrings + ", outputPartitions="
-        + outputPartitionStrings + ", renameFromTable=" + renameFromTable + ", renameFromPartition="
-        + renameFromPartition + '}';
+        + outputPartitionStrings + ", renameFromTable=" + inputTable + ", inputPartition="
+        + inputPartition + '}';
   }
 
   public List<String> getOutputDirectories() {
@@ -114,12 +114,12 @@ public class AuditLogEntry {
     return referenceTables;
   }
 
-  public Table getRenameFromTable() {
-    return renameFromTable;
+  public Table getInputTable() {
+    return inputTable;
   }
 
-  public NamedPartition getRenameFromPartition() {
-    return renameFromPartition;
+  public NamedPartition getInputPartition() {
+    return inputPartition;
   }
 
   public String getCommand() {
