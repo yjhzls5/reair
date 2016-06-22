@@ -582,8 +582,13 @@ public class ReplicationJobFactory {
     switch (operationType) {
       case COPY:
         // Handle the tables. The table is present in add partition
-        // calls, so skip in those cases.
-        if (auditLogEntry.getCommandType() != HiveOperation.ALTERTABLE_ADDPARTS) {
+        // calls, so skip in those cases. Also, for load commands, the table is mentioned as well
+        // in case of a partition load, so that can be omitted.
+        boolean shouldNotAddTables =
+            auditLogEntry.getCommandType() == HiveOperation.ALTERTABLE_ADDPARTS
+                || (auditLogEntry.getCommandType() == HiveOperation.LOAD
+                && auditLogEntry.getOutputPartitions().size() > 0);
+        if (!shouldNotAddTables) {
           for (Table t : outputTables) {
             replicationJobs.add(createJobForCopyTable(auditLogEntry.getId(),
                 auditLogEntry.getCreateTime().getTime(), t));
