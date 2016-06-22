@@ -46,8 +46,11 @@ public class PersistedJobInfoStore {
 
   private static final Log LOG = LogFactory.getLog(PersistedJobInfoStore.class);
 
-  private static final String[] completedStateStrings = {ReplicationStatus.SUCCESSFUL.name(),
-      ReplicationStatus.FAILED.name(), ReplicationStatus.NOT_COMPLETABLE.name()};
+  private static final String[] completedStateStrings = {
+      ReplicationStatus.SUCCESSFUL.name(),
+      ReplicationStatus.FAILED.name(),
+      ReplicationStatus.NOT_COMPLETABLE.name(),
+      ReplicationStatus.ABORTED.name()};
 
   private DbConnectionFactory dbConnectionFactory;
   private String dbTableName;
@@ -133,8 +136,10 @@ public class PersistedJobInfoStore {
           }
         }));
     String query = String.format("SELECT id, create_time, operation, status, src_path, "
-        + "src_cluster, src_db, " + "src_table, src_partitions, src_tldt, "
-        + "rename_to_db, rename_to_table, rename_to_partition, " + "rename_to_path, extras "
+        + "src_cluster, src_db, "
+        + "src_table, src_partitions, src_tldt, "
+        + "rename_to_db, rename_to_table, rename_to_partition, "
+        + "rename_to_path, extras "
         + "FROM %s WHERE status NOT IN (%s) ORDER BY id", dbTableName, completedStateList);
 
     List<PersistedJobInfo> persistedJobInfos = new ArrayList<>();
