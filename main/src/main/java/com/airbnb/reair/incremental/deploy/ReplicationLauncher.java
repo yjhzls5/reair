@@ -34,6 +34,8 @@ import org.apache.thrift.transport.TServerTransport;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class ReplicationLauncher {
@@ -127,25 +129,31 @@ public class ReplicationLauncher {
     final Cluster srcCluster = clusterFactory.getSrcCluster();
     final Cluster destCluster = clusterFactory.getDestCluster();
 
-    String objectFilterClassName = conf.get(
+    String objectFilterClassNames = conf.get(
         ConfigurationKeys.OBJECT_FILTER_CLASS);
-    // Instantiate the class
-    Object obj = null;
 
-    try {
-      Class<?> clazz = Class.forName(objectFilterClassName);
-      obj = clazz.newInstance();
-      if (!(obj instanceof ReplicationFilter)) {
-        throw new ConfigurationException(String.format(
-            "%s is not of type %s",
-            obj.getClass().getName(),
-            ReplicationFilter.class.getName()));
+    final List<ReplicationFilter> replicationFilters = new ArrayList<>();
+    String[] classNames = objectFilterClassNames.split(",");
+    for (String objectFilterClassName : classNames) {
+      objectFilterClassName = objectFilterClassName.trim().replaceAll("\\r|\\n", "");
+      // Instantiate the class
+      Object obj = null;
+      try {
+        Class<?> clazz = Class.forName(objectFilterClassName);
+        obj = clazz.newInstance();
+        if (!(obj instanceof ReplicationFilter)) {
+          throw new ConfigurationException(String.format(
+              "%s is not of type %s",
+              obj.getClass().getName(),
+              ReplicationFilter.class.getName()));
+        }
+      } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+        throw new ConfigurationException(e);
       }
-    } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
-      throw new ConfigurationException(e);
+      ReplicationFilter filter = (ReplicationFilter) obj;
+      filter.setConf(conf);
+      replicationFilters.add(filter);
     }
-    ReplicationFilter filter = (ReplicationFilter) obj;
-    filter.setConf(conf);
 
     int numWorkers = conf.getInt(
         ConfigurationKeys.WORKER_THREADS,
@@ -168,7 +176,7 @@ public class ReplicationLauncher {
         auditLogReader,
         dbKeyValueStore,
         persistedJobInfoStore,
-        filter,
+        replicationFilters,
         clusterFactory.getDirectoryCopier(),
         numWorkers,
         maxJobsInMemory,

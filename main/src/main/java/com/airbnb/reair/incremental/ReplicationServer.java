@@ -71,7 +71,7 @@ public class ReplicationServer implements TReplicationService.Iface {
   private ParallelJobExecutor jobExecutor;
   private ParallelJobExecutor copyPartitionJobExecutor;
 
-  private ReplicationFilter replicationFilter;
+  private List<ReplicationFilter> replicationFilters;
 
   // Collect stats with counters
   private ReplicationCounters counters = new ReplicationCounters();
@@ -147,7 +147,7 @@ public class ReplicationServer implements TReplicationService.Iface {
    * @param auditLogReader audit log reader
    * @param keyValueStore key/value store for persisting the read position of the audit log
    * @param jobInfoStore store for persisting replication job information
-   * @param replicationFilter the filter for replication entries
+   * @param replicationFilters the filters for replication entries
    * @param directoryCopier directory copier
    * @param numWorkers number of worker threads to launch for processing replication jobs
    * @param maxJobsInMemory maximum number of jobs to store in memory
@@ -160,7 +160,7 @@ public class ReplicationServer implements TReplicationService.Iface {
       AuditLogReader auditLogReader,
       DbKeyValueStore keyValueStore,
       final PersistedJobInfoStore jobInfoStore,
-      ReplicationFilter replicationFilter,
+      List<ReplicationFilter> replicationFilters,
       DirectoryCopier directoryCopier,
       int numWorkers,
       int maxJobsInMemory,
@@ -179,7 +179,7 @@ public class ReplicationServer implements TReplicationService.Iface {
     this.destinationObjectFactory = new DestinationObjectFactory();
     this.destinationObjectFactory.setConf(conf);
 
-    this.replicationFilter = replicationFilter;
+    this.replicationFilters = replicationFilters;
 
     this.maxJobsInMemory = maxJobsInMemory;
 
@@ -423,7 +423,7 @@ public class ReplicationServer implements TReplicationService.Iface {
       // Convert the audit log entry into a replication job, which has
       // elements persisted to the DB
       List<ReplicationJob> replicationJobs =
-          jobFactory.createReplicationJobs(auditLogEntry.get(), replicationFilter);
+          jobFactory.createReplicationJobs(auditLogEntry.get(), replicationFilters);
 
       LOG.debug(
           String.format("Audit log entry id: %s converted to %s", entry.getId(), replicationJobs));
