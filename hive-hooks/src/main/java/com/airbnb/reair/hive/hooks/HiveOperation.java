@@ -92,5 +92,32 @@ public enum HiveOperation {
   THRIFT_DROP_PARTITION,
   THRIFT_DROP_TABLE,
   TRUNCATETABLE,
-  UNLOCKTABLE
+  UNLOCKTABLE;
+
+  /**
+   * Checks to see if the given operation is an operation that was coming from the Hive metastore
+   * Thrift server.
+   *
+   * @param operation the type of operation.
+   * @return if the given operation is from the Thrift server
+   */
+  public static boolean isThriftOperation(HiveOperation operation) {
+    if (operation == null) {
+      return false;
+    }
+
+    switch (operation) {
+      case THRIFT_ADD_PARTITION:
+      case THRIFT_ALTER_PARTITION:
+      case THRIFT_ALTER_TABLE:
+      case THRIFT_CREATE_DATABASE:
+      case THRIFT_CREATE_TABLE:
+      case THRIFT_DROP_DATABASE:
+      case THRIFT_DROP_PARTITION:
+      case THRIFT_DROP_TABLE:
+        return true;
+      default:
+        return false;
+    }
+  }
 }
