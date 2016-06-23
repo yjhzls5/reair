@@ -466,4 +466,30 @@ public class ReplicationUtils {
   public static String genValue(String... columns) {
     return Joiner.on("\t").useForNull("NULL").join(columns);
   }
+
+  /**
+   * Normalizes the DB name and table name in a table object.
+   *
+   * @param table the table object whose names are to be normalized
+   * @return the table object with normalized names
+   */
+  public static Table normalizeNames(Table table) {
+    table.setDbName(table.getDbName().toLowerCase());
+    table.setTableName(table.getTableName().toLowerCase());
+
+    return table;
+  }
+
+  /**
+   * Normalizes the DB name and table name in a table object.
+   *
+   * @param partition the partition object whose names are to be normalized
+   * @return the partition object with normalized names
+   */
+  public static Partition normalizeNames(Partition partition) {
+    partition.setDbName(partition.getDbName().toLowerCase());
+    partition.setTableName(partition.getTableName().toLowerCase());
+
+    return partition;
+  }
 }

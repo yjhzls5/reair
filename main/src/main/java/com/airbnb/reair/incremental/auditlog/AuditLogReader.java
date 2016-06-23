@@ -308,6 +308,7 @@ public class AuditLogReader {
         } catch (MetadataException e) {
           throw new AuditLogEntryException(e);
         }
+        ReplicationUtils.normalizeNames(table);
         if ("OUTPUT".equals(objectCategory)) {
           outputTables.add(table);
         } else if ("REFERENCE_TABLE".equals(objectCategory)) {
@@ -325,6 +326,7 @@ public class AuditLogReader {
         } catch (MetadataException e) {
           throw new AuditLogEntryException(e);
         }
+        ReplicationUtils.normalizeNames(partition);
         String partitionName = getPartitionNameFromOutputCol(objectName);
         NamedPartition namedPartition = new NamedPartition(partitionName, partition);
 
