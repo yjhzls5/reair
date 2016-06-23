@@ -8,7 +8,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 /**
  * To filter out Thrift events from the audit log.
  */
-public class HiveAuditLogReplicationFilter implements ReplicationFilter {
+public class RemoveThriftEntriesReplicationFilter implements ReplicationFilter {
 
   private Configuration conf;
 
