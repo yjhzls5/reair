@@ -107,6 +107,12 @@ public class CopyCompleteTableTask implements ReplicationTask {
       for (String partitionName : partitionNames) {
         Partition partition =
             srcMs.getPartition(spec.getDbName(), spec.getTableName(), partitionName);
+
+        if (partition == null) {
+          throw new HiveMetastoreException(String.format("Tried to get %s, but got null!",
+              spec));
+        }
+
         HiveObjectSpec partitionSpec =
             new HiveObjectSpec(spec.getDbName(), spec.getTableName(), partitionName);
         specToPartition.put(partitionSpec, partition);

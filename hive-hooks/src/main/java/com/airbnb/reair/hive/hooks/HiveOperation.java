@@ -92,5 +92,21 @@ public enum HiveOperation {
   THRIFT_DROP_PARTITION,
   THRIFT_DROP_TABLE,
   TRUNCATETABLE,
-  UNLOCKTABLE
+  UNLOCKTABLE;
+
+  public static boolean isThriftOperation(HiveOperation operation) {
+    switch(operation) {
+      case THRIFT_ADD_PARTITION:
+      case THRIFT_ALTER_PARTITION:
+      case THRIFT_ALTER_TABLE:
+      case THRIFT_CREATE_DATABASE:
+      case THRIFT_CREATE_TABLE:
+      case THRIFT_DROP_DATABASE:
+      case THRIFT_DROP_PARTITION:
+      case THRIFT_DROP_TABLE:
+        return true;
+      default:
+        return false;
+    }
+  }
 }

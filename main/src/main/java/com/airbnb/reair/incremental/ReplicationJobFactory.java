@@ -531,7 +531,10 @@ public class ReplicationJobFactory {
     }
     // End exchange partitions workaround
 
-    if (auditLogEntry.getOutputTables().size() == 0
+    // Filter out CLI commands that don't have any outputs. This logic will need to be revisited
+    // when the definition of inputs / outputs is revised for drop operations.
+    if (!HiveOperation.isThriftOperation(auditLogEntry.getCommandType())
+        && auditLogEntry.getOutputTables().size() == 0
         && auditLogEntry.getOutputPartitions().size() == 0) {
       LOG.debug(String.format(
           "Audit log entry id: %s filtered out " + "since it has no output tables or partitions",
@@ -580,8 +583,20 @@ public class ReplicationJobFactory {
     List<NamedPartition> outputPartitions = new ArrayList<>(auditLogEntry.getOutputPartitions());
     List<Table> referenceTables = auditLogEntry.getReferenceTables();
 
+    // Look at inputs as Thrift drop operations have that in the inputs
+    List<Table> inputTables = new ArrayList<>();
+    if (auditLogEntry.getInputTable() != null) {
+      inputTables.add(auditLogEntry.getInputTable());
+    }
+    List<NamedPartition> inputPartitions = new ArrayList<>();
+    if (auditLogEntry.getInputPartition() != null) {
+      inputPartitions.add(auditLogEntry.getInputPartition());
+    }
+
     // Filter out tables and partitions that we may not want to replicate
     filterObjects(replicationFilters, outputTables, outputPartitions,
+        createTableLookupMap(referenceTables));
+    filterObjects(replicationFilters, inputTables, inputPartitions,
         createTableLookupMap(referenceTables));
 
     switch (operationType) {
@@ -623,6 +638,17 @@ public class ReplicationJobFactory {
         for (NamedPartition p : outputPartitions) {
           replicationJobs.add(createJobForDropPartition(auditLogEntry.getId(),
               auditLogEntry.getCreateTime().getTime(), p));
+        }
+        // Thrift operations have the dropped object in the inputs
+        if (HiveOperation.isThriftOperation(auditLogEntry.getCommandType())) {
+          for (Table t : inputTables) {
+            replicationJobs.add(createJobForDropTable(auditLogEntry.getId(),
+                auditLogEntry.getCreateTime().getTime(), t));
+          }
+          for (NamedPartition p : inputPartitions) {
+            replicationJobs.add(createJobForDropPartition(auditLogEntry.getId(),
+                auditLogEntry.getCreateTime().getTime(), p));
+          }
         }
         break;
       case RENAME:

@@ -128,10 +128,11 @@ public class DestinationObjectFactory implements Configurable {
 
     Optional<Path> srcLocation = ReplicationUtils.getLocation(srcPartition);
     // If applicable, update the location for the partition
-    if (srcLocation.isPresent() && !srcLocation.get().toString().startsWith("s3")) {
+    if (srcLocation.isPresent()) {
       String destLocation = modifyLocation(srcCluster, destCluster, srcLocation.get().toString());
       destPartition.getSd().setLocation(destLocation);
     }
+
     destPartition.putToParameters(HiveParameterKeys.SRC_CLUSTER, srcCluster.getName());
 
     // Merge the parameters for the partition, with the parameter values

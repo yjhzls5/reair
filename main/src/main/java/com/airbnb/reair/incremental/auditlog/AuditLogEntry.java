@@ -94,7 +94,7 @@ public class AuditLogEntry {
     return "AuditLogEntry{" + "id=" + id + ", createTime=" + createTime + ", commandType="
         + commandType + ", outputDirectories=" + outputDirectories + ", referenceTables="
         + referenceTableStrings + ", outputTables=" + outputTableStrings + ", outputPartitions="
-        + outputPartitionStrings + ", renameFromTable=" + inputTable + ", inputPartition="
+        + outputPartitionStrings + ", inputTable=" + inputTable + ", inputPartition="
         + inputPartition + '}';
   }
 
