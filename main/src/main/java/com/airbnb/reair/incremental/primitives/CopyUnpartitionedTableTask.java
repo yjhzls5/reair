@@ -1,6 +1,7 @@
 package com.airbnb.reair.incremental.primitives;
 
 import com.airbnb.reair.common.DistCpException;
+import com.airbnb.reair.common.FsUtils;
 import com.airbnb.reair.common.HiveMetastoreClient;
 import com.airbnb.reair.common.HiveMetastoreException;
 import com.airbnb.reair.common.HiveObjectSpec;
@@ -125,8 +126,16 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
 
     if (needToCopy) {
       if (!allowDataCopy) {
-        LOG.debug(String.format("Need to copy %s to %s, but data " + "copy is not allowed", srcPath,
+        LOG.debug(String.format("Need to copy %s to %s, but data " +
+            "copy is not allowed", srcPath,
             destPath));
+        return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
+      }
+
+      if (!FsUtils.dirExists(conf, srcPath.get())) {
+        LOG.debug(String.format("Need to copy %s to %s, but " +
+            "source directory is missing",
+            srcPath, destPath));
         return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
       }
 
