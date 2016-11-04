@@ -297,10 +297,10 @@ public class MetastoreReplicationJob extends Configured implements Tool {
           LOG.info("Deleting " + step3Out);
           FsUtils.deleteDirectory(this.getConf(), step3Out);
           if (cl.hasOption("override-input")) {
-            step2Out = new Path(cl.getOptionValue("override-input"));
+            step1Out = new Path(cl.getOptionValue("override-input"));
           }
 
-          return this.runCommitChangeJob(new Path(step2Out, "part*"), step3Out);
+          return this.runCommitChangeJob(new Path(step1Out, "part*"), step3Out);
         default:
           LOG.error("Invalid step specified: " + step);
           return 1;
