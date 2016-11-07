@@ -324,6 +324,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         ConfigurationKeys.BATCH_JOB_METASTORE_PARALLELISM,
         ConfigurationKeys.BATCH_JOB_COPY_PARALLELISM,
         ConfigurationKeys.SYNC_MODIFIED_TIMES_FOR_FILE_COPY,
+        ConfigurationKeys.BATCH_JOB_VERIFY_COPY_CHECKSUM,
         MRJobConfig.MAP_SPECULATIVE,
         MRJobConfig.REDUCE_SPECULATIVE
         );
