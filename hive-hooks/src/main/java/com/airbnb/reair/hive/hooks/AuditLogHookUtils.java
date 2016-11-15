@@ -5,6 +5,8 @@ import com.airbnb.reair.db.EmbeddedMySqlDb;
 import com.airbnb.reair.db.TestDbCredentials;
 import com.airbnb.reair.utils.ReplicationTestUtils;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -19,12 +21,16 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class AuditLogHookUtils {
+
+  private static final Log LOG = LogFactory.getLog(AuditLogHookUtils.class);
+
   /**
    * In the MySQL DB, setup the DB and the tables for the audit log to work
    * properly.
@@ -162,10 +168,26 @@ public class AuditLogHookUtils {
 
     SessionState sessionState = new SessionState(hiveConf);
     sessionState.setCmd(command);
-    sessionState.setCommandType(
-        operation == null ? null :
-            org.apache.hadoop.hive.ql.plan.HiveOperation.valueOf(
-                operation.toString()));
+
+    // Map the HiveOperation to the ...ql.plan.HiveOperation when possible.
+    // ALTERTABLE_EXCHANGEPARTITION may be the only one that can't be mapped.
+    org.apache.hadoop.hive.ql.plan.HiveOperation commandType = null;
+
+    if (operation != null) {
+      for (org.apache.hadoop.hive.ql.plan.HiveOperation op :
+          org.apache.hadoop.hive.ql.plan.HiveOperation.values()) {
+        if (op.toString().equals(operation.toString())) {
+          commandType = op;
+        }
+      }
+      if (commandType == null) {
+        LOG.warn(String.format("Could not find corresponding enum for %s in %s",
+            operation.toString(),
+            org.apache.hadoop.hive.ql.plan.HiveOperation.class.getName()));
+      }
+    }
+
+    sessionState.setCommandType(commandType);
     sessionState.setMapRedStats(mapRedStatsPerStage);
 
     // Run the hook

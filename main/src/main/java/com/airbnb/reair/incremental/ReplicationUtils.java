@@ -394,6 +394,11 @@ public class ReplicationUtils {
       }
     }
 
+    // No common directory
+    if (commonDir.length() == 0) {
+      return Optional.empty();
+    }
+
     return Optional.of(new Path(scheme, authority, commonDir));
   }
 

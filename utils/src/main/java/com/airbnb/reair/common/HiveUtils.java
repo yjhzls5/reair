@@ -15,7 +15,8 @@ public class HiveUtils {
    * @return true if the given table is partitioned.
    */
   public static boolean isPartitioned(Table table) {
-    return table.getPartitionKeys().size() > 0;
+    return table.getPartitionKeys() != null
+        && table.getPartitionKeys().size() > 0;
   }
 
   /**
