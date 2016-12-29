@@ -86,7 +86,16 @@ public class BatchUtils {
           dstFs.delete(tmpDstPath, false);
         }
 
-        FSDataOutputStream outputStream = dstFs.create(tmpDstPath, progressable);
+        // Keep the same replication factor and block size as the source file.
+        FSDataOutputStream outputStream = dstFs.create(
+            tmpDstPath,
+            srcStatus.getPermission(),
+            true,
+            conf.getInt("io.file.buffer.size", 4096),
+            srcStatus.getReplication(),
+            srcStatus.getBlockSize(),
+            progressable);
+
         IOUtils.copyBytes(inputStream, outputStream, conf);
         inputStream.close();
         outputStream.close();
