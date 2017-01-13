@@ -59,8 +59,47 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
- * A Map/Reduce job that copies HDFS files from source directories to a destination directory.
+ * A Map/Reduce job that copies HDFS files from one or more source directories to a destination
+ * directory.
  * In case of conflict in sources, the source with largest timestamp value is copied.
+ *
+ * <p>See https://github.com/airbnb/reair/blob/master/docs/hdfs_copy.md for usage.
+ *
+ * <p>ReplicationJob was a tool that was developed to address some of the shortcomings of DistCp
+ * when copying directories with a large number of files (e.g. /user/hive/warehouse). It was
+ * included in the repo since it might be useful, but it's not directly used for Hive replication.
+ *
+ * <p>It can potentially replace DistCp in incremental replication, but since incremental
+ * replication generally runs copies for shallow directories with a relatively small number of
+ * files (e.g. /user/hive/warehouse/my_table/ds=2016-01-01), there isn't a strong need.
+ *
+ * <p>There are 2 Map-Reduce jobs in this job:
+ *
+ * <p>1. runDirectoryComparisonJob
+ *
+ * <p>1.1. job.setInputFormatClass(DirScanInputFormat.class) -
+ *      take all source roots and destination root as inputs,
+ *      do an initial glob on inputs to get initial dir list,
+ *      then breadth-first search on the initial dir list until it reaches max_level and get enough
+ *      directories (note that the search in each level is done in a multi-threaded way).
+ *
+ * <p>1.2. job.setMapperClass(ListFileMapper.class) -
+ *      list the files in those dirs (and recursively on the leaf dirs)
+ *
+ * <p>1.3. job.setReducerClass(DirectoryCompareReducer.class)
+ *      for the same file path name, use the newest one from all source roots to compare with the
+ *      one in destination, generate the action, and write the action into the reducer output.
+ *
+ * <p>2. runSyncJob
+ *
+ * <p>2.1. job.setInputFormatClass(TextInputFormat.class);
+ *
+ * <p>2.2. job.setMapperClass(HdfsSyncMapper.class) -
+ *      Redistribute all file actions based on hash of filenames.
+ *
+ * <p>2.3. job.setReducerClass(HdfsSyncReducer.class) -
+ *      Take the action.  Note that only ADD and UPDATE are supported.
+ *      TODO: DELETE needs to be added.
  */
 public class ReplicationJob extends Configured implements Tool {
   private static final Log LOG = LogFactory.getLog(ReplicationJob.class);
