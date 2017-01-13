@@ -28,8 +28,8 @@ import java.io.IOException;
  * entities, the reducer will figure out the action to take. For table entities, the reducer will
  * pass them through to the next stage.
  */
-public class PartitionCompareReducer extends Reducer<LongWritable, Text, Text, Text> {
-  private static final Log LOG = LogFactory.getLog(PartitionCompareReducer.class);
+public class Stage1PartitionCompareReducer extends Reducer<LongWritable, Text, Text, Text> {
+  private static final Log LOG = LogFactory.getLog(Stage1PartitionCompareReducer.class);
 
   private static final DestinationObjectFactory destinationObjectFactory =
       new DestinationObjectFactory();
@@ -43,7 +43,7 @@ public class PartitionCompareReducer extends Reducer<LongWritable, Text, Text, T
   private long count = 0;
   private TaskEstimator estimator;
 
-  public PartitionCompareReducer() {
+  public Stage1PartitionCompareReducer() {
   }
 
   protected void setup(Context context) throws IOException, InterruptedException {

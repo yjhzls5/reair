@@ -67,7 +67,7 @@ import java.util.UUID;
  * (COPY_PARTITIONED_TABLE), and then generate a list of tasks, one for each partition from union
  * of src and destination.
  *
- * <p>1.3 job.setReducerClass(PartitionCompareReducer.class);
+ * <p>1.3 job.setReducerClass(Stage1PartitionCompareReducer.class);
  * - Pass through all other tasks, except the CHECK_PARTITION tasks, which are re-analyzed to be
  * COPY_PARTITION, DROP_PARTITION, NO_OP, etc, using an equal check on the HDFS file.
  *
@@ -393,7 +393,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     job.setJarByClass(this.getClass());
     job.setInputFormatClass(MetastoreScanInputFormat.class);
     job.setMapperClass(Stage1ProcessTableMapper.class);
-    job.setReducerClass(PartitionCompareReducer.class);
+    job.setReducerClass(Stage1PartitionCompareReducer.class);
 
     job.setOutputKeyClass(LongWritable.class);
     job.setOutputValueClass(Text.class);
@@ -439,7 +439,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     job.setJarByClass(this.getClass());
     job.setInputFormatClass(TextInputFormat.class);
     job.setMapperClass(Stage1ProcessTableMapperWithTextInput.class);
-    job.setReducerClass(PartitionCompareReducer.class);
+    job.setReducerClass(Stage1PartitionCompareReducer.class);
 
     FileInputFormat.setInputPaths(job, input);
     FileInputFormat.setMaxInputSplitSize(job,
