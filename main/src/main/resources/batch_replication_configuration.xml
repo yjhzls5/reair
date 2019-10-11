@@ -1,0 +1,189 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+  <property>
+    <name>airbnb.reair.clusters.src.name</name>
+    <value>shjx</value>
+    <comment>
+      Name of the source cluster. It can be an arbitrary string and is used in
+      logs, tags, etc.
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.src.ha.namenodes</name>
+    <value>dfs.ha.namenodes.shjx;nn1,nn2</value>
+    <comment>Source cluster ha namedodes .</comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.src.ha.nn1</name>
+    <value>dfs.namenode.rpc-address.shjx.nn1;shaubd1024133.56qq.com:8020</value>
+    <comment>Source cluster ha namedodes nn1.</comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.src.ha.nn2</name>
+    <value>dfs.namenode.rpc-address.shjx.nn2;shaubd1024132.56qq.com:8020</value>
+    <comment>Source cluster ha namedodes nn2.</comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.src.metastore.url</name>
+    <value>thrift://shaubd1024132.56qq.com:9083</value>
+    <comment>Source metastore Thrift URL.</comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.src.hdfs.root</name>
+    <value>hdfs://shjx/</value>
+    <comment>Source cluster HDFS root. Note trailing slash.</comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.src.hdfs.tmp</name>
+    <value>hdfs://shaubd1024133.56qq.com:8020/tmp/replication</value>
+    <comment>
+      Directory for temporary files on the source cluster.
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.dest.name</name>
+    <value>nameservice1</value>
+    <comment>
+      Name of the destination cluster. It can be an arbitrary string and is used in
+      logs, tags, etc.
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.dest.ha.namenodes</name>
+    <value>dfs.ha.namenodes.nameservice1;namenode102,namenode113</value>
+    <comment>Dest cluster ha namedodes .</comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.dest.ha.nn1</name>
+    <value>dfs.namenode.rpc-address.nameservice1.namenode102;prod-bigdata-hadoop-01.sh:8020</value>
+    <comment>Dest cluster ha namedodes nn1.</comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.dest.ha.nn2</name>
+    <value>dfs.namenode.rpc-address.nameservice1.namenode113;prod-bigdata-hadoop-02.sh:8020</value>
+    <comment>Dest cluster ha namedodes nn2.</comment>
+  </property>
+
+
+  <property>
+    <name>airbnb.reair.clusters.dest.metastore.url</name>
+    <value>thrift://prod-bigdata-hadoop-02.sh:9083</value>
+    <comment>Destination metastore Thrift URL.</comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.dest.hdfs.root</name>
+    <value>hdfs://nameservice1/</value>
+    <comment>Destination cluster HDFS root. Note trailing slash.</comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.dest.hdfs.tmp</name>
+    <value>hdfs://nameservice1/tmp/hive_replication</value>
+    <comment>
+      Directory for temporary files on the source cluster. Table / partition
+      data is copied to this location before it is moved to the final location,
+      so it should be on the same filesystem as the final location.
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.batch.output.dir</name>
+    <value>hdfs://nameservice1/user/test/test_output</value>
+    <comment>
+      This configuration must be provided. It gives location to store each stage
+      MR job output.
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.batch.metastore.blacklist</name>
+    <value></value>
+    <!--<value>testdb:test.*,tmp_.*:.*</value>-->
+    <comment>
+      Comma separated regex blacklist. dbname_regex:tablename_regex,...
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.batch.metastore.parallelism</name>
+    <value>150</value>
+    <comment>
+      The parallelism to use for jobs requiring metastore calls. This translates to the number of
+      mappers or reducers in the relevant jobs.
+    </comment>
+  </property>
+
+
+  <property>
+    <name>airbnb.reair.batch.copy.parallelism</name>
+    <value>1000</value>
+    <comment>
+      The parallelism to use for jobs that copy files. This translates to the number of reducers
+      in the relevant jobs.
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.batch.overwrite.newer</name>
+    <value>true</value>
+    <comment>
+      Whether the batch job will overwrite newer tables/partitions on the destination. Default is true. When false ,return NO_OP
+    </comment>
+  </property>
+ 
+  <property>
+    <name>mapreduce.map.speculative</name>
+    <value>false</value>
+    <comment>
+      Speculative execution is currently not supported for batch replication.
+    </comment>
+  </property>
+
+  <property>
+    <name>mapreduce.reduce.speculative</name>
+    <value>false</value>
+    <comment>
+      Speculative execution is currently not supported for batch replication.
+    </comment>
+  </property>
+
+    <property>
+        <name>mapreduce.reduce.memory.mb</name>
+        <value>2048</value>
+        <comment>
+            mapreduce.reduce.memory.mb for Stage2DirectoryCopyReducer
+        </comment>
+    </property>
+
+
+  <property>
+    <name>airbnb.reair.clusters.batch.metastore.dbmappinglist</name>
+    <value>dw_app:hcb_dw_app,dim:hcb_dim,default:hcb_default,dwd:hcb_dwd,dws:hcb_dws,ods:hcb_ods</value>
+    <comment>
+      Comma separated DB mappings,srcdb:destnewdb
+    </comment>
+  </property>
+
+  <property>
+    <name>io.file.buffer.size</name>
+    <value>4096000</value>
+    <comment>
+      hdfs copy file is buffer
+    </comment>
+  </property>
+
+
+</configuration>
