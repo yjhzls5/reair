@@ -87,7 +87,10 @@ public class CopyPartitionedTableTask implements ReplicationTask {
     }
 
     // Check the table that exists already in the destination cluster
-    Table existingTable = destMs.getTable(spec.getDbName(), spec.getTableName());
+    // TODO: 2019/10/8  change dest to new db
+    Table existingTable = destMs.getTable(
+            this.objectModifier.modifyDestDb(spec.getDbName()),
+            spec.getTableName());
 
     Table destTable =
         objectModifier.createDestTable(srcCluster, destCluster, freshSrcTable, existingTable);
@@ -108,12 +111,16 @@ public class CopyPartitionedTableTask implements ReplicationTask {
         }
       }
 
+      
       objectConflictHandler.handleCopyConflict(srcCluster, destCluster, freshSrcTable,
           existingTable);
     }
 
     // Refresh in case the conflict handler did something
-    existingTable = destMs.getTable(spec.getDbName(), spec.getTableName());
+    // TODO: 2019/10/8 change dest to new db 
+    existingTable = destMs.getTable(
+            objectModifier.modifyDestDb(spec.getDbName()),
+            spec.getTableName());
 
     // Figure out what to do with the table
     MetadataAction action = MetadataAction.NOOP;
@@ -128,6 +135,8 @@ public class CopyPartitionedTableTask implements ReplicationTask {
     switch (action) {
       case CREATE:
         LOG.debug("Creating " + spec + " since it does not exist on " + "the destination");
+
+        // TODO: 2019/10/8 attention ,dest new db ,according db mapping config   
         ReplicationUtils.createDbIfNecessary(srcMs, destMs, destTable.getDbName());
         LOG.debug("Creating: " + destTable);
         destMs.createTable(destTable);

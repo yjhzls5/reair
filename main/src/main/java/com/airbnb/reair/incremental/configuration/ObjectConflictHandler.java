@@ -44,6 +44,7 @@ public class ObjectConflictHandler implements Configurable {
    * @param srcTable source table
    * @param existingDestTable the Hive Thift table object corresponding to the conflicting object on
    *                          the destination cluster
+   *
    * @return whether or not the conflict was resolved and the table can be copied
    *
    * @throws HiveMetastoreException if there an error making a metastore call
@@ -76,16 +77,23 @@ public class ObjectConflictHandler implements Configurable {
       // cluster could be renamed to something else for further
       // inspection.
       LOG.warn(String.format(
-          "For %s, there is a mismatch in the " + "partitioning keys. src: %s dest: %s", spec,
-          srcTable.getPartitionKeys(), existingDestTable.getPartitionKeys()));
+              "For src table: %s, dest table: %s ,there is a mismatch in the " + "partitioning keys. src: %s dest: %s",
+              srcTable.getDbName()+"."+srcTable.getTableName(),
+              spec,
+              srcTable.getPartitionKeys(),
+              existingDestTable.getPartitionKeys()));
 
       boolean dropData = !locationOnS3(existingDestTable.getSd());
       LOG.warn("Not dropping data at location " + ReplicationUtils.getLocation(existingDestTable));
       HiveMetastoreClient destMs = destCluster.getMetastoreClient();
 
       LOG.debug(String.format("Dropping %s on destination (delete " + "data: %s)", spec, dropData));
-      destMs.dropTable(spec.getDbName(), spec.getTableName(), dropData);
-      LOG.debug("Dropped " + spec);
+      // TODO: 2019/10/8 ensure to drop the dest new db's table
+      destMs.dropTable(
+              spec.getDbName(),
+              spec.getTableName(), dropData);
+      LOG.warn("Dropped src:" +srcTable.getDbName() + "." + srcTable.getTableName() + " ,dest table:" +
+              spec );
     }
 
     return true;

@@ -1,5 +1,6 @@
 package com.airbnb.reair.batch.hive;
 
+import com.airbnb.reair.batch.BatchUtils;
 import com.airbnb.reair.common.HiveMetastoreClient;
 import com.airbnb.reair.common.HiveMetastoreException;
 import com.airbnb.reair.common.HiveObjectSpec;
@@ -20,6 +21,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Reducer to process partition entities.
@@ -60,6 +62,11 @@ public class Stage1PartitionCompareReducer extends Reducer<LongWritable, Text, T
 
       this.directoryCopier = clusterFactory.getDirectoryCopier();
 
+      // set the dbmap
+      Map<String,String> dbMap = BatchUtils.getDBMap(context.getConfiguration()) ;
+      destinationObjectFactory.setDbMap(dbMap);
+
+
       this.estimator = new TaskEstimator(conf,
           destinationObjectFactory,
           srcCluster,
@@ -85,7 +92,6 @@ public class Stage1PartitionCompareReducer extends Reducer<LongWritable, Text, T
         if (estimate.getTaskType() == TaskEstimate.TaskType.CHECK_PARTITION) {
           // Table exists in source, but not in dest. It should copy the table.
           TaskEstimate newEstimate = estimator.analyze(spec);
-
           result = MetastoreReplicationJob.serializeJobResult(newEstimate, spec);
         }
       } catch (HiveMetastoreException e) {

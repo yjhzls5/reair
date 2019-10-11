@@ -16,6 +16,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -51,6 +53,7 @@ public class Stage2DirectoryCopyMapper extends Mapper<LongWritable, Text, LongWr
     Pair<TaskEstimate, HiveObjectSpec> input = deseralizeJobResult(value.toString());
     TaskEstimate estimate = input.getLeft();
     HiveObjectSpec spec = input.getRight();
+
 
     switch (estimate.getTaskType()) {
       case COPY_PARTITION:
@@ -88,10 +91,14 @@ public class Stage2DirectoryCopyMapper extends Mapper<LongWritable, Text, LongWr
       return;
     }
 
-    if (!fs.mkdirs(dstPath)) {
+    // TODO: 2019/10/10 config perssion
+    if (!fs.mkdirs(dstPath, new FsPermission(FsAction.ALL, FsAction.ALL, FsAction.ALL))) {
       throw new IOException("Validate recreate destination directory failed: "
           + dstPath.toString());
+    }else {
+      LOG.info("2 hdfs mkdirs dstPath: "+ dstPath );
     }
+
   }
 
   private void updateDirectory(

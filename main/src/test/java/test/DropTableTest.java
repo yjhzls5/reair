@@ -44,8 +44,11 @@ public class DropTableTest extends MockClusterTest {
     assertTrue(destMetastore.existsTable(dbName, tableName));
 
     // Pretend that a drop operation needs to be performed
+
+    // TODO: 2019/10/9 dest new db , destinationObjectFactory need set dbMap
     DropTableTask dropTableTask =
-        new DropTableTask(srcCluster, destCluster, spec, ReplicationUtils.getTldt(srcTable));
+        new DropTableTask(srcCluster, destCluster, spec, ReplicationUtils.getTldt(srcTable),
+                destinationObjectFactory);
     dropTableTask.runTask();
 
     // Verify that the table doesn't exist on the destination

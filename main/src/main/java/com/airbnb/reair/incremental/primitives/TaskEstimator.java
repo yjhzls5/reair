@@ -81,7 +81,11 @@ public class TaskEstimator {
     Table tableOnSrc = srcMs.getTable(spec.getDbName(), spec.getTableName());
 
     HiveMetastoreClient destMs = destCluster.getMetastoreClient();
-    Table tableOnDest = destMs.getTable(spec.getDbName(), spec.getTableName());
+
+    // TODO: 2019/10/8
+    // change src db to dest db , according configed rule
+    Table tableOnDest = destMs.getTable(this.destObjectFactory.modifyDestDb(spec.getDbName()),
+            spec.getTableName());
 
     // If the souce table doesn't exist but the destination table doesn't,
     // then it's most likely a drop.
@@ -156,8 +160,12 @@ public class TaskEstimator {
         srcMs.getPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName());
 
     HiveMetastoreClient destMs = destCluster.getMetastoreClient();
-    Partition partitionOnDest =
-        destMs.getPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName());
+
+    // TODO: 2019/10/8
+    // change dest to new db
+    Partition partitionOnDest = destMs.getPartition(
+            this.destObjectFactory.modifyDestDb(spec.getDbName()),
+            spec.getTableName(), spec.getPartitionName());
 
     // If the source partition does not exist, but the destination does,
     // it's most likely a drop.
@@ -185,6 +193,8 @@ public class TaskEstimator {
       }
     }
 
+    // TODO: 2019/10/8
+    // change dest to new db
     Partition expectedDestPartition = destObjectFactory.createDestPartition(srcCluster, destCluster,
         partitionOnSrc, partitionOnDest);
 

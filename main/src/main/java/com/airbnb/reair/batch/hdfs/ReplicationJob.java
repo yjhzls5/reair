@@ -30,6 +30,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.GzipCodec;
@@ -546,7 +548,11 @@ public class ReplicationJob extends Configured implements Tool {
       if (!FsUtils.dirExists(getConf(), destDir)) {
         LOG.warn("Destination directory does not exist. Creating " + destDir);
         FileSystem destFs = destDir.getFileSystem(getConf());
-        fs.mkdirs(destDir);
+        // TODO: 2019/10/10 config
+        fs.mkdirs(destDir,
+                new FsPermission(FsAction.ALL, FsAction.ALL, FsAction.ALL) );
+        LOG.info("hdfs mkir destDir :" + destDir);
+
       }
 
       LOG.info("Starting stage 1 with log directory " + stage1LogDir);

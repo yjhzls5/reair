@@ -264,6 +264,7 @@ public class ReplicationUtils {
    * @return the data location of the given table, if present
    */
   public static Optional<Path> getLocation(Table table) {
+
     if (table == null || table.getSd() == null || table.getSd().getLocation() == null) {
       return Optional.empty();
     } else {

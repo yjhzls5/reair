@@ -271,12 +271,16 @@ public class ReplicationServer implements TReplicationService.Iface {
             persistedJobInfo.getSrcPath(), copyPartitionJobExecutor, directoryCopier);
         break;
       case DROP_TABLE:
+        // TODO: 2019/10/9 dest new db , destinationObjectFactory need set dbMap
         replicationTask = new DropTableTask(srcCluster, destCluster, tableSpec,
-            persistedJobInfo.getSrcObjectTldt());
+            persistedJobInfo.getSrcObjectTldt(),
+                destinationObjectFactory);
         break;
+      // TODO: 2019/10/9  destinationObjectFactory need set dbMap
       case DROP_PARTITION:
         replicationTask = new DropPartitionTask(srcCluster, destCluster, partitionSpec,
-            persistedJobInfo.getSrcObjectTldt());
+            persistedJobInfo.getSrcObjectTldt(),
+            destinationObjectFactory );
         break;
       case RENAME_TABLE:
         if (!persistedJobInfo.getRenameToDb().isPresent()

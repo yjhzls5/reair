@@ -6,6 +6,7 @@ import com.airbnb.reair.common.HiveObjectSpec;
 import com.airbnb.reair.common.HiveParameterKeys;
 import com.airbnb.reair.incremental.RunInfo;
 import com.airbnb.reair.incremental.configuration.Cluster;
+import com.airbnb.reair.incremental.configuration.DestinationObjectFactory;
 import com.airbnb.reair.multiprocessing.Lock;
 import com.airbnb.reair.multiprocessing.LockSet;
 
@@ -26,6 +27,9 @@ public class DropPartitionTask implements ReplicationTask {
   private Cluster destCluster;
   private HiveObjectSpec spec;
   private Optional<String> srcTldt;
+  private  DestinationObjectFactory destinationObjectFactory ;
+
+
 
   /**
    * Constructor for a task that drops a partition.
@@ -36,16 +40,20 @@ public class DropPartitionTask implements ReplicationTask {
    * @param srcTldt The expected modified time for the table to drop. This should be the
    *                transient_lastDdlTime value in the parameters field of the Thrift object. If the
    *                time does not match, the task will not drop the table.
+   * @param destinationObjectFactory the DestinationObjectFactory
    */
   public DropPartitionTask(
       Cluster srcCluster,
       Cluster destCluster,
       HiveObjectSpec spec,
-      Optional<String> srcTldt) {
+      Optional<String> srcTldt,
+      DestinationObjectFactory destinationObjectFactory
+      ) {
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     this.srcTldt = srcTldt;
     this.spec = spec;
+    this.destinationObjectFactory  = destinationObjectFactory ;
   }
 
   @Override
@@ -61,7 +69,9 @@ public class DropPartitionTask implements ReplicationTask {
 
     HiveMetastoreClient ms = destCluster.getMetastoreClient();
     Partition destPartition =
-        ms.getPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName());
+        ms.getPartition( destinationObjectFactory.modifyDestDb(spec.getDbName()),
+                spec.getTableName(),
+                spec.getPartitionName());
 
     if (destPartition == null) {
       LOG.warn("Missing " + spec + " on destination, so can't drop!");
@@ -75,7 +85,8 @@ public class DropPartitionTask implements ReplicationTask {
       LOG.debug(String.format("Destination partition %s matches expected" + " TLDT (%s)", spec,
           destTldt));
       LOG.debug("Dropping " + spec);
-      ms.dropPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName(), true);
+      ms.dropPartition(destinationObjectFactory.modifyDestDb(spec.getDbName()),
+              spec.getTableName(), spec.getPartitionName(), true);
       LOG.debug("Dropped " + spec);
       return new RunInfo(RunInfo.RunStatus.SUCCESSFUL, 0);
     } else {

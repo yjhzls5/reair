@@ -54,6 +54,12 @@ public class ConfigurationKeys {
 
   // Name to use for the source cluster
   public static final String SRC_CLUSTER_NAME = "airbnb.reair.clusters.src.name";
+  // source cluster ha config
+  public static final String SRC_CLUSTER_HA = "airbnb.reair.clusters.src.ha";
+  public static final String SRC_CLUSTER_HA_NAMENODES = "airbnb.reair.clusters.src.ha.namenodes";
+  public static final String SRC_CLUSTER_HA_NN1 = "airbnb.reair.clusters.src.ha.nn1";
+  public static final String SRC_CLUSTER_HA_NN2 = "airbnb.reair.clusters.src.ha.nn2";
+
   // URL to the source cluster's metastore Thrift server.
   public static final String SRC_CLUSTER_METASTORE_URL = "airbnb.reair.clusters.src.metastore.url";
   // The root of the HDFS directory for the source cluster
@@ -63,6 +69,12 @@ public class ConfigurationKeys {
 
   // Name to use for the destination cluster
   public static final String DEST_CLUSTER_NAME = "airbnb.reair.clusters.dest.name";
+
+  public static final String DEST_CLUSTER_HA_NAMENODES = "airbnb.reair.clusters.dest.ha.namenodes";
+  public static final String DEST_CLUSTER_HA_NN1 = "airbnb.reair.clusters.dest.ha.nn1";
+  public static final String DEST_CLUSTER_HA_NN2 = "airbnb.reair.clusters.dest.ha.nn2";
+
+
   // URL to the destination cluster's metastore Thrift server.
   public static final String DEST_CLUSTER_METASTORE_URL =
       "airbnb.reair.clusters.dest.metastore.url";
@@ -123,4 +135,14 @@ public class ConfigurationKeys {
   // Whether to try to compare checksums to validate file copies when possible
   public static final String BATCH_JOB_VERIFY_COPY_CHECKSUM =
       "airbnb.reair.batch.copy.checksum.verify";
+  // Comma separated DB mappings,srcdb:destnewdb
+  public static final String BATCH_JOB_METASTORE_DBMAPPINGLIST =
+            "airbnb.reair.clusters.batch.metastore.dbmappinglist";
+
+
+  //hdfs copy if buffer size
+  public static final String IO_FILE_BUFFER_SIZE =
+          "io.file.buffer.size";
+
+
 }

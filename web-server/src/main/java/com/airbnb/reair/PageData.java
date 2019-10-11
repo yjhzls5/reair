@@ -2,7 +2,6 @@ package com.airbnb.reair;
 
 import com.airbnb.reair.incremental.thrift.TReplicationJob;
 import com.airbnb.reair.incremental.thrift.TReplicationService;
-
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -72,6 +71,7 @@ public class PageData {
       lag = client.getLag();
     } finally {
       transport.close();
+
     }
   }
 

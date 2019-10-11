@@ -7,6 +7,7 @@ import com.airbnb.reair.common.HiveObjectSpec;
 import com.airbnb.reair.common.HiveParameterKeys;
 import com.airbnb.reair.incremental.RunInfo;
 import com.airbnb.reair.incremental.configuration.Cluster;
+import com.airbnb.reair.incremental.configuration.DestinationObjectFactory;
 import com.airbnb.reair.multiprocessing.Lock;
 import com.airbnb.reair.multiprocessing.LockSet;
 
@@ -24,6 +25,7 @@ public class DropTableTask implements ReplicationTask {
   private Cluster destCluster;
   private HiveObjectSpec spec;
   private Optional<String> sourceTldt;
+  private  DestinationObjectFactory destinationObjectFactory ;
 
   /**
    * TODO.
@@ -32,16 +34,19 @@ public class DropTableTask implements ReplicationTask {
    * @param destCluster TODO
    * @param spec TODO
    * @param sourceTldt TODO
+   * @param destinationObjectFactory the DestinationObjectFactory
    */
   public DropTableTask(
       Cluster srcCluster,
       Cluster destCluster,
       HiveObjectSpec spec,
-      Optional<String> sourceTldt) {
+      Optional<String> sourceTldt,
+      DestinationObjectFactory destinationObjectFactory) {
     this.srcCluster = srcCluster;
     this.destCluster = destCluster;
     this.spec = spec;
     this.sourceTldt = sourceTldt;
+    this.destinationObjectFactory = destinationObjectFactory;
   }
 
   @Override
@@ -56,7 +61,10 @@ public class DropTableTask implements ReplicationTask {
     String expectedTldt = sourceTldt.get();
 
     HiveMetastoreClient ms = destCluster.getMetastoreClient();
-    Table destTable = ms.getTable(spec.getDbName(), spec.getTableName());
+    // TODO: 2019/10/9 dest new db
+    Table destTable = ms.getTable(
+            destinationObjectFactory.modifyDestDb(spec.getDbName()),
+            spec.getTableName());
 
     if (destTable == null) {
       LOG.warn("Missing " + spec + " on destination, so can't drop!");
@@ -71,7 +79,10 @@ public class DropTableTask implements ReplicationTask {
       LOG.debug(
           String.format("Destination table %s matches expected" + " TLDT (%s)", spec, destTldt));
       LOG.debug("Dropping " + spec);
-      ms.dropTable(spec.getDbName(), spec.getTableName(), true);
+      // TODO: 2019/10/9 dest new db
+      ms.dropTable(
+              destTable.getDbName(),
+              spec.getTableName(), true);
       LOG.debug("Dropped " + spec);
       return new RunInfo(RunInfo.RunStatus.SUCCESSFUL, 0);
     } else {

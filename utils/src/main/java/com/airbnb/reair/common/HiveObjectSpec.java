@@ -7,6 +7,8 @@ import org.apache.hadoop.hive.metastore.api.Table;
  * partition) for every function gets old.
  */
 public class HiveObjectSpec {
+
+  // really ,the src db
   private String dbName = null;
 
   public String getDbName() {

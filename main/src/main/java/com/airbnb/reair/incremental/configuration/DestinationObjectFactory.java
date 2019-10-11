@@ -28,6 +28,17 @@ public class DestinationObjectFactory implements Configurable {
 
   private Optional<Configuration> conf;
 
+  // dbmapping, key src db, value dest new db ;
+  private Map<String,String> dbMap ;
+
+  public Map<String, String> getDbMap() {
+    return dbMap;
+  }
+
+  public void setDbMap(Map<String, String> dbMap) {
+    this.dbMap = dbMap;
+  }
+
   public DestinationObjectFactory() {}
 
   public void setConf(Configuration conf) {
@@ -65,6 +76,7 @@ public class DestinationObjectFactory implements Configurable {
     Path destPath;
     String srcFsRootWithSlash = FsUtils.getPathWithSlash(srcCluster.getFsRoot().toString());
     if (srcPath.toString().startsWith(srcFsRootWithSlash)) {
+      // TODO: 2019/10/8 is need to change path to dest new db ?
       String relativePath = FsUtils.getRelativePath(srcCluster.getFsRoot(), srcPath);
       destPath = new Path(destCluster.getFsRoot(), relativePath);
     } else {
@@ -92,7 +104,10 @@ public class DestinationObjectFactory implements Configurable {
       Cluster destCluster,
       Table srcTable,
       Table existingDestTable) {
+    
+    
     Table destTable = new Table(srcTable);
+
 
     // If applicable, update the location for the table
     Optional<Path> srcLocation = ReplicationUtils.getLocation(srcTable);
@@ -111,6 +126,9 @@ public class DestinationObjectFactory implements Configurable {
       newParameters.putAll(destTable.getParameters());
       destTable.setParameters(newParameters);
     }
+
+    // TODO: 2019/10/8  修改destTable db
+    destTable.setDbName( this.modifyDestDb(srcTable.getDbName()));
 
     return destTable;
   }
@@ -131,7 +149,9 @@ public class DestinationObjectFactory implements Configurable {
       Cluster destCluster,
       Partition srcPartition,
       Partition existingDestPartition) {
+
     Partition destPartition = new Partition(srcPartition);
+
 
     Optional<Path> srcLocation = ReplicationUtils.getLocation(srcPartition);
     // If applicable, update the location for the partition
@@ -150,6 +170,11 @@ public class DestinationObjectFactory implements Configurable {
       newParameters.putAll(destPartition.getParameters());
     }
 
+    // TODO: 2019/10/8 new db
+    destPartition.setDbName(
+            this.modifyDestDb(srcPartition.getDbName())
+    );
+
     return destPartition;
   }
 
@@ -164,4 +189,23 @@ public class DestinationObjectFactory implements Configurable {
       return true;
     }
   }
+
+  /**
+   * For dest DB name,
+   * if match the dbmapping return dest new dbname else return source dbname .
+   *
+   * @param srcDb source dbname
+   * @return the dest dbname
+   */
+  public String modifyDestDb( String srcDb) {
+
+    String destDb = srcDb;
+    if(dbMap != null && dbMap.get(srcDb) != null ){
+      destDb = dbMap.get(srcDb);
+    }
+
+    return destDb;
+
+  }
+
 }

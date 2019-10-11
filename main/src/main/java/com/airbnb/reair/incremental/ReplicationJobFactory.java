@@ -311,13 +311,15 @@ public class ReplicationJobFactory {
             Collections.emptyList(), ReplicationUtils.getTldt(table), Optional.empty(),
             Optional.empty(), extras);
 
+    // TODO: 2019/10/9 dest new db , destinationObjectFactory need set dbMap
     return new ReplicationJob(
         conf,
         new DropTableTask(
             srcCluster,
             destCluster,
             tableSpec,
-            ReplicationUtils.getTldt(table)),
+            ReplicationUtils.getTldt(table),
+                destinationObjectFactory),
         onStateChangeHandler,
         persistedJobInfo);
   }
@@ -353,13 +355,15 @@ public class ReplicationJobFactory {
             srcCluster.getName(), partitionSpec.getTableSpec(), partitionNames, partitionTldt,
             Optional.empty(), Optional.empty(), extras);
 
+    // TODO: 2019/10/9  destinationObjectFactory need set dbMap
     return new ReplicationJob(
         conf,
         new DropPartitionTask(
             srcCluster,
             destCluster,
             partitionSpec,
-            partitionTldt),
+            partitionTldt,
+            destinationObjectFactory),
         onStateChangeHandler,
         persistedJobInfo);
   }

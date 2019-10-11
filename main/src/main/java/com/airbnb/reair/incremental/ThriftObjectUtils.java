@@ -1,10 +1,10 @@
 package com.airbnb.reair.incremental;
 
 import com.airbnb.reair.incremental.db.PersistedJobInfo;
+
 import com.airbnb.reair.incremental.thrift.TReplicationJob;
 import com.airbnb.reair.incremental.thrift.TReplicationOperation;
 import com.airbnb.reair.incremental.thrift.TReplicationStatus;
-
 import org.apache.hadoop.fs.Path;
 
 import java.util.ArrayList;

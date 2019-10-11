@@ -10,6 +10,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.Trash;
+import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.fs.permission.FsPermission;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -435,7 +437,10 @@ public class FsUtils {
         LOG.debug("Parent directory exists: " + destPathParent);
       }
     } else {
-      destFs.mkdirs(destPathParent);
+      // TODO: 2019/10/10 config FsPermission
+      destFs.mkdirs(destPathParent ,
+              new FsPermission(FsAction.ALL, FsAction.ALL, FsAction.ALL) );
+      LOG.info("1 hdfs mkdir destPathParent: " + destPathParent);
     }
     boolean successful = srcFs.rename(src, dest);
     if (!successful) {

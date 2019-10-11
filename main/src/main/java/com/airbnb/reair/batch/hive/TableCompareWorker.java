@@ -1,9 +1,11 @@
 package com.airbnb.reair.batch.hive;
 
+import com.airbnb.reair.batch.BatchUtils;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import com.airbnb.reair.common.HiveMetastoreClient;
@@ -26,12 +28,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,6 +70,7 @@ public class TableCompareWorker {
   private Cluster dstCluster;
   // list of db and table blacklist.
   private List<BlackListPair> blackList;
+
   private DirectoryCopier directoryCopier;
   private TaskEstimator estimator;
   private ObjectConflictHandler objectConflictHandler = new ObjectConflictHandler();
@@ -91,6 +89,9 @@ public class TableCompareWorker {
 
       this.directoryCopier = clusterFactory.getDirectoryCopier();
 
+
+
+
       if (context.getConfiguration()
               .get(ConfigurationKeys.BATCH_JOB_METASTORE_BLACKLIST) == null) {
         this.blackList = Collections.<BlackListPair>emptyList();
@@ -106,6 +107,11 @@ public class TableCompareWorker {
               }
             });
       }
+
+      // dbmap
+      Map<String,String> dbMap = BatchUtils.getDBMap(context.getConfiguration()) ;
+      // TODO: 2019/10/9 dest new db
+      DESTINATION_OBJECT_FACTORY.setDbMap(dbMap);
 
       this.estimator = new TaskEstimator(conf,
           DESTINATION_OBJECT_FACTORY,
@@ -132,6 +138,7 @@ public class TableCompareWorker {
 
     HiveObjectSpec spec = new HiveObjectSpec(db, table);
 
+
     // Table exists in source, but not in dest. It should copy the table.
     TaskEstimate estimate = estimator.analyze(spec);
     ArrayList<String> ret = new ArrayList<>();
@@ -157,7 +164,12 @@ public class TableCompareWorker {
 
       // partition tables need to generate partitions.
       HashSet<String> partNames = Sets.newHashSet(srcClient.getPartitionNames(db, table));
-      HashSet<String> dstPartNames = Sets.newHashSet(dstClient.getPartitionNames(db, table));
+
+      // TODO: 2019/10/8 change to new db ;
+      HashSet<String> dstPartNames = Sets.newHashSet(dstClient.getPartitionNames(
+              DESTINATION_OBJECT_FACTORY.modifyDestDb(db),
+              table));
+
       ret.addAll(Lists.transform(Lists.newArrayList(Sets.union(partNames, dstPartNames)),
             new Function<String, String>() {
               public String apply(String str) {

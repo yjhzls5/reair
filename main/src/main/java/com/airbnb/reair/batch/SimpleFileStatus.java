@@ -1,5 +1,6 @@
 package com.airbnb.reair.batch;
 
+import com.airbnb.reair.batch.hive.MetastoreReplicationJob;
 import com.google.common.base.MoreObjects;
 
 import org.apache.hadoop.fs.Path;

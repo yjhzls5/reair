@@ -112,8 +112,11 @@ public class CopyPartitionTask implements ReplicationTask {
     }
 
     if (!conf.getBoolean(ConfigurationKeys.BATCH_JOB_OVERWRITE_NEWER, true)) {
+      // TODO: 2019/10/8 change dest to new db  
       Partition freshDestPartition =
-          destMs.getPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName());
+          destMs.getPartition(
+                  destObjectFactory.modifyDestDb(spec.getDbName()),
+                  spec.getTableName(), spec.getPartitionName());
       if (ReplicationUtils.isSrcOlder(freshSrcPartition, freshDestPartition)) {
         LOG.warn(String.format(
             "Source %s (%s) is older than destination (%s), so not copying",
@@ -126,7 +129,10 @@ public class CopyPartitionTask implements ReplicationTask {
 
     // Before copying a partition, first make sure that table is up to date
     Table srcTable = srcMs.getTable(spec.getDbName(), spec.getTableName());
-    Table destTable = destMs.getTable(spec.getDbName(), spec.getTableName());
+    // TODO: 2019/10/8 change dest to new db  
+    Table destTable = destMs.getTable(
+            destObjectFactory.modifyDestDb(spec.getDbName()),
+            spec.getTableName());
 
     if (srcTable == null) {
       LOG.warn("Source table " + spec + " doesn't exist, so not " + "copying");
@@ -146,8 +152,12 @@ public class CopyPartitionTask implements ReplicationTask {
       }
     }
 
+    // TODO: 2019/10/8  new db
+    // may be null
     Partition existingPartition =
-        destMs.getPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName());
+        destMs.getPartition(
+                this.destObjectFactory.modifyDestDb(spec.getDbName()),
+                spec.getTableName(), spec.getPartitionName());
 
     Partition destPartition = destObjectFactory.createDestPartition(srcCluster, destCluster,
         freshSrcPartition, existingPartition);

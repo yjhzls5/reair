@@ -3,6 +3,7 @@ package com.airbnb.reair.batch;
 import com.airbnb.reair.common.FsUtils;
 import com.airbnb.reair.incremental.deploy.ConfigurationKeys;
 
+import com.google.common.collect.Maps;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -11,10 +12,14 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.util.Progressable;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Utilities for batch replication.
@@ -72,10 +77,26 @@ public class BatchUtils {
         }
 
         Path dstParentPath = new Path(dstDir);
-        if (!dstFs.exists(dstParentPath) && !dstFs.mkdirs(dstParentPath)) {
-          LOG.info("Could not create directory: " + dstDir);
-          return "Could not create directory: " + dstDir;
+
+        // define dstParentPath
+        if(!dstFs.exists(dstParentPath)){
+          // TODO: 2019/10/10 config default dir permission
+          if(dstFs.mkdirs(dstParentPath,
+                  new FsPermission(FsAction.ALL, FsAction.ALL, FsAction.ALL))){
+              LOG.info("3 hdfs mkdirs dstParentPath: "+ dstParentPath);
+          }else {
+            LOG.info("Could not create directory: " + dstDir);
+            return "Could not create directory: " + dstDir;
+          }
+
         }
+
+
+//        if (!dstFs.exists(dstParentPath)
+//                && !dstFs.mkdirs(dstParentPath)) {
+//          LOG.info("Could not create directory: " + dstDir);
+//          return "Could not create directory: " + dstDir;
+//        }
 
         Path tmpDstPath = new Path(
             tmpDirPath,
@@ -87,11 +108,12 @@ public class BatchUtils {
 
         // Keep the same replication factor and block size as the source file.
         try (FSDataInputStream inputStream = srcFs.open(srcPath);
+
           FSDataOutputStream outputStream = dstFs.create(
             tmpDstPath,
             srcStatus.getPermission(),
             true,
-            conf.getInt("io.file.buffer.size", 4096),
+            conf.getInt( ConfigurationKeys.IO_FILE_BUFFER_SIZE, 4096),
             srcStatus.getReplication(),
             srcStatus.getBlockSize(),
             progressable)) {
@@ -118,6 +140,13 @@ public class BatchUtils {
 
         dstFs.rename(tmpDstPath, dstPath);
         dstFs.setTimes(dstPath, srcStatus.getModificationTime(), srcStatus.getAccessTime());
+
+
+        // 文件权限不一致，设置文件权限？
+        dstFs.setPermission(dstPath, srcStatus.getPermission());
+
+        LOG.debug("srcPath :" + srcPath+ ",srcPersission: "+ srcStatus.getPermission() );
+
         LOG.info(dstPath.toString() + " file copied");
         progressable.progress();
         return null;
@@ -130,4 +159,32 @@ public class BatchUtils {
 
     return lastError;
   }
+
+
+  /**
+   * get the Map of dbmap from Configuration
+   *
+   * @param conf the job Configuration
+   * @return Map<String,String> if no config ,return EMPTY_MAP .
+   */
+  public static Map<String,String> getDBMap(Configuration conf){
+    // dbmap
+    Map<String,String> dbMap = Maps.newHashMap();
+    if (conf.get(ConfigurationKeys.BATCH_JOB_METASTORE_DBMAPPINGLIST) == null) {
+      dbMap = Collections.EMPTY_MAP;
+
+    } else {
+      String configDBMap  = conf.get(ConfigurationKeys.BATCH_JOB_METASTORE_DBMAPPINGLIST) ;
+      String[] dbMappings = configDBMap.split(",") ;
+      for(String stringDbmapping : dbMappings){
+        String[] dbmapping = stringDbmapping.split(":") ;
+        if(dbmapping.length ==2 ){
+          dbMap.put(dbmapping[0],dbmapping[1] ) ;
+        }
+      }
+    }
+    return dbMap;
+  }
+
+
 }

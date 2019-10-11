@@ -27,6 +27,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.GzipCodec;
@@ -39,6 +40,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.velocity.VelocityContext;
+
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -313,6 +315,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
       LOG.info("Deleting " + step3Out);
       FsUtils.deleteDirectory(getConf(), step3Out);
 
+
       if (runMetastoreCompareJob(tableListFileOnHdfs, step1Out) != 0) {
         return -1;
       }
@@ -374,8 +377,12 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         ConfigurationKeys.SYNC_MODIFIED_TIMES_FOR_FILE_COPY,
         ConfigurationKeys.BATCH_JOB_VERIFY_COPY_CHECKSUM,
         ConfigurationKeys.BATCH_JOB_OVERWRITE_NEWER,
+        ConfigurationKeys.BATCH_JOB_METASTORE_DBMAPPINGLIST,
+        ConfigurationKeys.IO_FILE_BUFFER_SIZE,
         MRJobConfig.MAP_SPECULATIVE,
-        MRJobConfig.REDUCE_SPECULATIVE
+        MRJobConfig.REDUCE_SPECULATIVE,
+        MRJobConfig.REDUCE_MEMORY_MB
+
         );
 
     for (String key : mergeKeys) {
@@ -384,6 +391,47 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         merged.set(key, value);
       }
     }
+
+    // for src cluster ha conf
+    merged.set("dfs.ha.automatic-failover.enabled", "true");
+
+    String nameservices =  inputConfig.get(ConfigurationKeys.SRC_CLUSTER_NAME);
+    merged.set("dfs.client.failover.proxy.provider." + nameservices ,
+            ConfiguredFailoverProxyProvider.class.getName());
+
+    String nameservicesDest =  inputConfig.get(ConfigurationKeys.DEST_CLUSTER_NAME);
+
+    merged.set("dfs.nameservices",nameservices
+            + ","
+            + nameservicesDest );
+
+    //以下key，value以分号分割如  dfs.ha.namenodes.nameservice1;namenode217,namenode148
+    String[] namenodes = inputConfig.get(ConfigurationKeys.SRC_CLUSTER_HA_NAMENODES).split(";");
+    String[] namenode1 = inputConfig.get(ConfigurationKeys.SRC_CLUSTER_HA_NN1).split(";");
+    String[] namenode2 = inputConfig.get(ConfigurationKeys.SRC_CLUSTER_HA_NN2).split(";");
+    merged.set(namenodes[0],namenodes[1] );
+    merged.set(namenode1[0],namenode1[1] );
+    merged.set(namenode2[0],namenode2[1] );
+
+
+    // for dest cluster ha conf
+    merged.set("dfs.client.failover.proxy.provider." + nameservicesDest ,
+            ConfiguredFailoverProxyProvider.class.getName());
+
+    //以下key，value以分号分割如  dfs.ha.namenodes.nameservice1;namenode217,namenode148
+    String[] namenodesDest = inputConfig.get(ConfigurationKeys.DEST_CLUSTER_HA_NAMENODES)
+            .split(";");
+    String[] namenode1Dest = inputConfig.get(ConfigurationKeys.DEST_CLUSTER_HA_NN1)
+            .split(";");
+    String[] namenode2Dest = inputConfig.get(ConfigurationKeys.DEST_CLUSTER_HA_NN2)
+            .split(";");
+    merged.set(namenodesDest[0],namenodesDest[1] );
+    merged.set(namenode1Dest[0],namenode1Dest[1] );
+    merged.set(namenode2Dest[0],namenode2Dest[1] );
+
+
+
+
   }
 
   private int runMetastoreCompareJob(Path output)
@@ -418,8 +466,10 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     int result;
     if (inputTableListPath.isPresent()) {
+        // appoint db.table
       result = runMetastoreCompareJobWithTextInput(inputTableListPath.get(), outputPath);
     } else {
+        //copy all db.table
       result = runMetastoreCompareJob(outputPath);
     }
 
@@ -607,10 +657,11 @@ public class MetastoreReplicationJob extends Configured implements Tool {
           return;
         }
 
+        LOG.info( String.format("start processTable table: %s.%s" ,columns[0], columns[1]));
+
         for (String result : worker.processTable(columns[0], columns[1])) {
           context.write(new LongWritable((long)result.hashCode()), new Text(result));
         }
-
         LOG.info(
             String.format("database %s, table %s processed", key.toString(), value.toString()));
       } catch (HiveMetastoreException e) {

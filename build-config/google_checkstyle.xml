@@ -10,7 +10,7 @@
     -  Google Java Style
        https://google-styleguide.googlecode.com/svn-history/r130/trunk/javaguide.html
 
-    Checkstyle is very configurable. Be sure to read the documentation at
+    Checkstyle is very configurable. Be sure to read the dTReplicationServiceocumentation at
     http://checkstyle.sf.net (or in your downloaded distribution).
 
     Most Checks are configurable, be sure to consult the documentation.

@@ -68,6 +68,7 @@ public class Stage2DirectoryCopyReducer extends Reducer<LongWritable, Text, Text
           context,
           false,
           context.getTaskAttemptID().toString());
+
       if (result == null) {
         context.write(new Text(CopyStatus.COPIED.toString()),
             new Text(ReplicationUtils.genValue(value.toString(), " ",

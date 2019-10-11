@@ -1,5 +1,6 @@
 package com.airbnb.reair.batch.hive;
 
+import com.airbnb.reair.batch.BatchUtils;
 import com.airbnb.reair.common.DistCpException;
 import com.airbnb.reair.common.HiveMetastoreClient;
 import com.airbnb.reair.common.HiveMetastoreException;
@@ -31,6 +32,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -64,6 +66,12 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
       this.dstClient = this.dstCluster.getMetastoreClient();
 
       this.directoryCopier = clusterFactory.getDirectoryCopier();
+
+      // for dest new db
+      Map<String, String> dbMap = BatchUtils.getDBMap(context.getConfiguration()) ;
+      DESTINATION_OBJECT_FACTORY.setDbMap(dbMap);
+
+
     } catch (HiveMetastoreException | ConfigurationException e) {
       throw new IOException(e);
     }
@@ -126,7 +134,7 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
 
         case DROP_PARTITION:
           Partition dstPart = dstClient.getPartition(
-                                  spec.getDbName(),
+                                  DESTINATION_OBJECT_FACTORY.modifyDestDb(spec.getDbName()),
                                   spec.getTableName(),
                                   spec.getPartitionName());
           if (dstPart == null) {
@@ -137,14 +145,17 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
           DropPartitionTask dropPartitionTask = new DropPartitionTask(srcCluster,
               dstCluster,
               spec,
-              ReplicationUtils.getTldt(dstPart));
+              ReplicationUtils.getTldt(dstPart),
+              DESTINATION_OBJECT_FACTORY);
 
           status = dropPartitionTask.runTask();
           context.write(value, new Text(status.getRunStatus().toString()));
           break;
 
         case DROP_TABLE:
-          Table dstTable = dstClient.getTable(spec.getDbName(), spec.getTableName());
+          Table dstTable = dstClient.getTable(
+                  DESTINATION_OBJECT_FACTORY.modifyDestDb(spec.getDbName()),
+                  spec.getTableName());
           if (dstTable == null) {
             context.write(value, new Text(RunInfo.RunStatus.SUCCESSFUL.toString()));
             break;
@@ -153,7 +164,8 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
           DropTableTask dropTableTask = new DropTableTask(srcCluster,
               dstCluster,
               spec,
-              ReplicationUtils.getTldt(dstTable));
+              ReplicationUtils.getTldt(dstTable),
+              DESTINATION_OBJECT_FACTORY );
           status = dropTableTask.runTask();
           context.write(value, new Text(status.getRunStatus().toString()));
           break;

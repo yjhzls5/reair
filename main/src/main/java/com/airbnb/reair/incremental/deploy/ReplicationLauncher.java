@@ -14,8 +14,8 @@ import com.airbnb.reair.incremental.configuration.ConfigurationException;
 import com.airbnb.reair.incremental.configuration.ConfiguredClusterFactory;
 import com.airbnb.reair.incremental.db.PersistedJobInfoStore;
 import com.airbnb.reair.incremental.filter.ReplicationFilter;
-import com.airbnb.reair.incremental.thrift.TReplicationService;
 
+import com.airbnb.reair.incremental.thrift.TReplicationService;
 import com.timgroup.statsd.NoOpStatsDClient;
 import com.timgroup.statsd.NonBlockingStatsDClient;
 import com.timgroup.statsd.StatsDClient;

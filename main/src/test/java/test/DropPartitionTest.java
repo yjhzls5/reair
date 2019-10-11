@@ -48,8 +48,10 @@ public class DropPartitionTest extends MockClusterTest {
     assertTrue(destMetastore.existsTable(dbName, tableName));
 
     // Pretend that a drop operation needs to be performed
+    // TODO: 2019/10/9  destinationObjectFactory need set dbMap
     DropPartitionTask dropPartitionTask = new DropPartitionTask(srcCluster, destCluster,
-        partitionSpec, ReplicationUtils.getTldt(srcPartition));
+        partitionSpec, ReplicationUtils.getTldt(srcPartition),
+            destinationObjectFactory);
     dropPartitionTask.runTask();
 
     // Verify that the table exists, but the partition doest

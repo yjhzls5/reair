@@ -101,7 +101,11 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
     }
 
     // Check the table that exists already in the destination cluster
-    Table existingTable = destMs.getTable(spec.getDbName(), spec.getTableName());
+    // TODO: 2019/10/8 change dest new db
+    Table existingTable = destMs.getTable(
+            objectModifier.modifyDestDb(spec.getDbName()),
+            spec.getTableName());
+
 
     if (existingTable != null) {
       LOG.debug("Table " + spec + " exists on destination");
@@ -126,7 +130,10 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
         objectModifier.createDestTable(srcCluster, destCluster, freshSrcTable, existingTable);
 
     // Refresh in case the conflict handler did something
-    existingTable = destMs.getTable(spec.getDbName(), spec.getTableName());
+    // TODO: 2019/10/8 change dest new db
+    existingTable = destMs.getTable(
+            objectModifier.modifyDestDb(spec.getDbName()),
+            spec.getTableName());
 
     // Copy HDFS data if the location has changed in the destination object.
     // Usually, this is the case, but for S3 backed tables, the location
@@ -141,6 +148,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
     long bytesCopied = 0;
 
     if (needToCopy) {
+      // batch job ,allowDataCopy=false
       if (!allowDataCopy) {
         LOG.debug(String.format("Need to copy %s to %s, but data "
             + "copy is not allowed", srcPath,
