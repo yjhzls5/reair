@@ -139,6 +139,17 @@ public class ConfigurationKeys {
   public static final String BATCH_JOB_METASTORE_DBMAPPINGLIST =
             "airbnb.reair.clusters.batch.metastore.dbmappinglist";
 
+  // Whether the batch job will appoint the partition ,when true ,
+  // partition table only process the partitions between start(include) and end(exclude) .
+  public static final String BATCH_JOB_PARTITION_APPOINT =
+          "airbnb.reair.batch.partition.appoint";
+//  When appoint the partition,the start partitioin.
+  public static final String BATCH_JOB_PARTITION_START =
+          "airbnb.reair.batch.partition.start";
+//  When appoint the partition,the end partitioin, exclude the value .
+  public static final String BATCH_JOB_PARTITION_END =
+          "airbnb.reair.batch.partition.end";
+
 
   //hdfs copy if buffer size
   public static final String IO_FILE_BUFFER_SIZE =

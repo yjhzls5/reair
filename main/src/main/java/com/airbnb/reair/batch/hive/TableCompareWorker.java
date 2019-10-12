@@ -159,6 +159,7 @@ public class TableCompareWorker {
             dstCluster,
             spec,
             Optional.<Path>empty());
+        // deal metastore, if necessary ,create or alter the table
         copyPartitionedTableTaskJob.runTask();
       }
 

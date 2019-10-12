@@ -10,6 +10,7 @@ import com.airbnb.reair.incremental.configuration.Cluster;
 import com.airbnb.reair.incremental.configuration.DestinationObjectFactory;
 import com.airbnb.reair.incremental.deploy.ConfigurationKeys;
 
+import com.google.common.base.Strings;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -153,7 +154,53 @@ public class TaskEstimator {
     if (!spec.isPartition()) {
       throw new RuntimeException("Argument should be a partition " + spec);
     }
+
     boolean updateData = false;
+
+    // if partition appointed ,return NO_OP
+    if(conf.getBoolean(ConfigurationKeys.BATCH_JOB_PARTITION_APPOINT,  false)){
+
+      if(spec.getPartitionName().length() ==
+              conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_START).length() ){
+        // partiton schedeme same
+        if( spec.getPartitionName().compareTo(
+                conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_START)) < 0 ){
+          LOG.info(String.format(
+                  "appoint partition %s and %s ,but table %s not between ,return TaskType.NO_OP",
+                  conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_START),
+                  conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_END),
+                  spec
+                  )
+
+          );
+          return new TaskEstimate(TaskEstimate.TaskType.NO_OP, false, false, Optional.empty(),
+                  Optional.empty());
+        }
+
+        if(spec.getPartitionName().compareTo(
+                conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_END )) > 0 ){
+
+          LOG.info(String.format(
+                  "appoint partition %s and %s ,but table %s not between ,return TaskType.NO_OP",
+                  conf.getTrimmed(ConfigurationKeys.BATCH_JOB_PARTITION_START),
+                  conf.getTrimmed(ConfigurationKeys.BATCH_JOB_PARTITION_END),
+                  spec
+                  )
+
+          );
+          return new TaskEstimate(TaskEstimate.TaskType.NO_OP, false, false, Optional.empty(),
+                  Optional.empty());
+        }
+      }else {
+        // partition scheme isn't same ,do nothing
+
+      }
+
+
+
+    }
+
+
 
     HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
     Partition partitionOnSrc =
@@ -166,6 +213,9 @@ public class TaskEstimator {
     Partition partitionOnDest = destMs.getPartition(
             this.destObjectFactory.modifyDestDb(spec.getDbName()),
             spec.getTableName(), spec.getPartitionName());
+
+
+
 
     // If the source partition does not exist, but the destination does,
     // it's most likely a drop.

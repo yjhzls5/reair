@@ -143,6 +143,32 @@
       Whether the batch job will overwrite newer tables/partitions on the destination. Default is true. When false ,return NO_OP
     </comment>
   </property>
+
+  <property>
+    <name>airbnb.reair.batch.partition.appoint</name>
+    <value>true</value>
+    <comment>
+      Whether the batch job will appoint the partition ,when true ,
+      partition table only process the partitions between start(include) and end(exclude) .
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.batch.partition.start</name>
+    <value>dt=2019-10-10</value>
+    <comment>
+      When appoint the partition,the start partitioin.
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.batch.partition.end</name>
+    <value>dt=2019-10-15</value>
+    <comment>
+      When appoint the partition,the end partitioin, exclude the value .
+    </comment>
+  </property>
+
  
   <property>
     <name>mapreduce.map.speculative</name>
