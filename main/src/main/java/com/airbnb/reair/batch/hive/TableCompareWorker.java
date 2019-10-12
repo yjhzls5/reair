@@ -187,6 +187,32 @@ public class TableCompareWorker {
     return ret;
   }
 
+
+  /**
+   * process db's all tables
+   * @param dbName dbname
+   * @return
+   * @throws IOException
+   * @throws HiveMetastoreException
+   */
+  protected List<String> processDb(final String dbName )
+          throws IOException, HiveMetastoreException {
+
+    List<String> result = Lists.newArrayList();
+
+    List<String> dbTables = this.srcClient.getAllTables(dbName) ;
+    if(dbTables != null ){
+      for(String tableName : dbTables){
+        result.addAll(this.processTable(dbName, tableName) );
+      }
+    }
+
+    return result;
+
+  }
+
+
+
   protected void cleanup() throws IOException, InterruptedException {
     this.srcClient.close();
     this.dstClient.close();

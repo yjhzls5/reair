@@ -1,7 +1,5 @@
 package com.airbnb.reair.batch.hive;
 
-import com.google.common.collect.ImmutableList;
-
 import com.airbnb.reair.batch.template.TemplateRenderException;
 import com.airbnb.reair.batch.template.VelocityUtils;
 import com.airbnb.reair.common.FsUtils;
@@ -11,14 +9,8 @@ import com.airbnb.reair.incremental.ReplicationUtils;
 import com.airbnb.reair.incremental.configuration.ConfigurationException;
 import com.airbnb.reair.incremental.deploy.ConfigurationKeys;
 import com.airbnb.reair.incremental.primitives.TaskEstimate;
-
-import org.apache.commons.cli.BasicParser;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import com.google.common.collect.ImmutableList;
+import org.apache.commons.cli.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,16 +33,10 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.velocity.VelocityContext;
 
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Optional;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * MetastoreReplicationJobs runs 3 jobs to replicate the Hive metadata and HDFS data.
@@ -651,19 +637,35 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     protected void map(LongWritable key, Text value, Context context)
         throws IOException, InterruptedException {
       try {
+
         String [] columns = value.toString().split("\\.");
-        if (columns.length != 2) {
-          LOG.error(String.format("invalid input at line %d: %s", key.get(), value.toString()));
-          return;
+
+        // support config db name to sync.
+        if(columns.length ==1 ){
+          String dbName = columns[0] ;
+          LOG.info( String.format("start processTable db: %s." ,columns[0]));
+          for (String result : worker.processDb(dbName) ){
+            context.write(new LongWritable((long)result.hashCode()), new Text(result));
+          }
+
+          LOG.info(
+                  String.format("database %s, %s  processed", key.toString(), value.toString()));
+
+        }else {
+          if (columns.length != 2) {
+            LOG.error(String.format("invalid input at line %d: %s", key.get(), value.toString()));
+            return;
+          }
+
+          LOG.info( String.format("start processTable table: %s.%s" ,columns[0], columns[1]));
+          for (String result : worker.processTable(columns[0], columns[1])) {
+            context.write(new LongWritable((long)result.hashCode()), new Text(result));
+          }
+          LOG.info(
+                  String.format("database %s, table %s processed", key.toString(), value.toString()));
+
         }
 
-        LOG.info( String.format("start processTable table: %s.%s" ,columns[0], columns[1]));
-
-        for (String result : worker.processTable(columns[0], columns[1])) {
-          context.write(new LongWritable((long)result.hashCode()), new Text(result));
-        }
-        LOG.info(
-            String.format("database %s, table %s processed", key.toString(), value.toString()));
       } catch (HiveMetastoreException e) {
         throw new IOException(
             String.format(
