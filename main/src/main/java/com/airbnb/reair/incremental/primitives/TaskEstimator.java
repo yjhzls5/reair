@@ -11,6 +11,7 @@ import com.airbnb.reair.incremental.configuration.DestinationObjectFactory;
 import com.airbnb.reair.incremental.deploy.ConfigurationKeys;
 
 import com.google.common.base.Strings;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -91,8 +92,14 @@ public class TaskEstimator {
     // If the souce table doesn't exist but the destination table doesn't,
     // then it's most likely a drop.
     if (tableOnSrc == null && tableOnDest != null) {
-      return new TaskEstimate(TaskEstimate.TaskType.DROP_TABLE, false, false, Optional.empty(),
-          Optional.empty());
+
+      if(conf.getBoolean(ConfigurationKeys.BATCH_JOB_DROP_TABLE_BOOLEAN, true)){
+        return new TaskEstimate(TaskEstimate.TaskType.DROP_TABLE, false, false, Optional.empty(),
+                Optional.empty());
+      }else {
+        return new TaskEstimate(TaskEstimate.TaskType.NO_OP, false, false, Optional.empty(),
+                Optional.empty());
+      }
     }
 
     // Nothing to do if the source table doesn't exist
@@ -140,8 +147,15 @@ public class TaskEstimator {
       return new TaskEstimate(TaskEstimate.TaskType.NO_OP, false, false, Optional.empty(),
           Optional.empty());
     } else if (!isPartitionedTable) {
-      return new TaskEstimate(TaskEstimate.TaskType.COPY_UNPARTITIONED_TABLE, updateMetadata,
-          updateData, srcPath, destPath);
+
+      if(conf.getBoolean(ConfigurationKeys.BATCH_JOB_PARTITION_TABLE_ONLY_BOOLEAN, false)){
+        return new TaskEstimate(TaskEstimate.TaskType.NO_OP, updateMetadata,
+                updateData, srcPath, destPath);
+      }else {
+        return new TaskEstimate(TaskEstimate.TaskType.COPY_UNPARTITIONED_TABLE, updateMetadata,
+                updateData, srcPath, destPath);
+      }
+
     } else {
       return new TaskEstimate(TaskEstimate.TaskType.COPY_PARTITIONED_TABLE, true, false,
           Optional.empty(), Optional.empty());
@@ -159,48 +173,56 @@ public class TaskEstimator {
 
     // if partition appointed ,return NO_OP
     if(conf.getBoolean(ConfigurationKeys.BATCH_JOB_PARTITION_APPOINT,  false)){
+      if(StringUtils.isNotBlank(conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_START))){
+        if(spec.getPartitionName().length() ==
+                conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_START).length() ){
+          // partiton schedeme same
+          if(
+                  spec.getPartitionName().compareTo(
+                          conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_START)) < 0 ){
+            LOG.info(String.format(
+                    "appoint partition %s and %s ,but table %s not between ,return TaskType.NO_OP",
+                    conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_START),
+                    conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_END),
+                    spec
+                    )
 
-      if(spec.getPartitionName().length() ==
-              conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_START).length() ){
-        // partiton schedeme same
-        if( spec.getPartitionName().compareTo(
-                conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_START)) < 0 ){
-          LOG.info(String.format(
-                  "appoint partition %s and %s ,but table %s not between ,return TaskType.NO_OP",
-                  conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_START),
-                  conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_END),
-                  spec
-                  )
+            );
+            return new TaskEstimate(TaskEstimate.TaskType.NO_OP, false, false, Optional.empty(),
+                    Optional.empty());
+          }
 
-          );
-          return new TaskEstimate(TaskEstimate.TaskType.NO_OP, false, false, Optional.empty(),
-                  Optional.empty());
+        }else {
+          // partition scheme isn't same ,do nothing
+
         }
-
-        if(spec.getPartitionName().compareTo(
-                conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_END )) > 0 ){
-
-          LOG.info(String.format(
-                  "appoint partition %s and %s ,but table %s not between ,return TaskType.NO_OP",
-                  conf.getTrimmed(ConfigurationKeys.BATCH_JOB_PARTITION_START),
-                  conf.getTrimmed(ConfigurationKeys.BATCH_JOB_PARTITION_END),
-                  spec
-                  )
-
-          );
-          return new TaskEstimate(TaskEstimate.TaskType.NO_OP, false, false, Optional.empty(),
-                  Optional.empty());
-        }
-      }else {
-        // partition scheme isn't same ,do nothing
-
       }
 
+      if(StringUtils.isNotBlank(conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_END))){
+        if(spec.getPartitionName().length() ==
+                conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_END).length() ){
+          // partiton schedeme same
+          if( spec.getPartitionName().compareTo(
+                          conf.get(ConfigurationKeys.BATCH_JOB_PARTITION_END )) > 0 ){
 
+            LOG.info(String.format(
+                    "appoint partition %s and %s ,but table %s not between ,return TaskType.NO_OP",
+                    conf.getTrimmed(ConfigurationKeys.BATCH_JOB_PARTITION_START),
+                    conf.getTrimmed(ConfigurationKeys.BATCH_JOB_PARTITION_END),
+                    spec
+                    )
+
+            );
+            return new TaskEstimate(TaskEstimate.TaskType.NO_OP, false, false, Optional.empty(),
+                    Optional.empty());
+          }
+        }else {
+          // partition scheme isn't same ,do nothing
+
+        }
+      }
 
     }
-
-
 
     HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
     Partition partitionOnSrc =
@@ -220,8 +242,19 @@ public class TaskEstimator {
     // If the source partition does not exist, but the destination does,
     // it's most likely a drop.
     if (partitionOnSrc == null && partitionOnDest != null) {
-      return new TaskEstimate(TaskEstimate.TaskType.DROP_PARTITION, false, false, Optional.empty(),
-          Optional.empty());
+      if(conf.getBoolean(ConfigurationKeys.BATCH_JOB_DROP_PARTITION_BOOLEAN, true )){
+        return new TaskEstimate(TaskEstimate.TaskType.DROP_PARTITION, false, false, Optional.empty(),
+                Optional.empty());
+      }else {
+
+        LOG.info("partitionOnSrc null ,partitionOnDest exist, but config BATCH_JOB_DROP_PARTITION_BOOLEAN is false ,return TaskType.NO_OP ," +
+                partitionOnDest
+                );
+        return new TaskEstimate(TaskEstimate.TaskType.NO_OP, false, false, Optional.empty(),
+                Optional.empty());
+      }
+
+
     }
 
     if (partitionOnSrc == null) {

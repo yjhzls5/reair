@@ -155,7 +155,7 @@
 
   <property>
     <name>airbnb.reair.batch.partition.start</name>
-    <value>dt=2019-10-10</value>
+    <value>dt=2019-10-08</value>
     <comment>
       When appoint the partition,the start partitioin.
     </comment>
@@ -163,7 +163,7 @@
 
   <property>
     <name>airbnb.reair.batch.partition.end</name>
-    <value>dt=2019-10-15</value>
+    <value>dt=2019-10-17</value>
     <comment>
       When appoint the partition,the end partitioin, exclude the value .
     </comment>
@@ -200,6 +200,36 @@
     <value>dw_app:hcb_dw_app,dim:hcb_dim,default:hcb_default,dwd:hcb_dwd,dws:hcb_dws,ods:hcb_ods</value>
     <comment>
       Comma separated DB mappings,srcdb:destnewdb
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.batch.metastore.droptable</name>
+    <value>false</value>
+    <comment>
+      Wether drop table when src table not exist but dest table exist.
+      default true:drop;
+      false:no_op .
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.batch.metastore.droppartition</name>
+    <value>false</value>
+    <comment>
+      Wether drop partition when src partition not exist but dest partition exist.
+      default true:drop;
+      false:no_op .
+    </comment>
+  </property>
+
+  <property>
+    <name>airbnb.reair.clusters.batch.metastore.partitiontable.only</name>
+    <value>false</value>
+    <comment>
+      Whether  only deal the partition table,
+      true:only deal partition talbe;
+      default false:all table deal .
     </comment>
   </property>
 

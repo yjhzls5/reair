@@ -11,6 +11,7 @@ import com.airbnb.reair.incremental.deploy.ConfigurationKeys;
 import com.airbnb.reair.incremental.primitives.TaskEstimate;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.cli.*;
+import org.apache.commons.configuration.ConfigurationKey;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -368,6 +369,9 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         ConfigurationKeys.BATCH_JOB_PARTITION_START,
         ConfigurationKeys.BATCH_JOB_PARTITION_END,
         ConfigurationKeys.IO_FILE_BUFFER_SIZE,
+        ConfigurationKeys.BATCH_JOB_DROP_TABLE_BOOLEAN,
+        ConfigurationKeys.BATCH_JOB_DROP_PARTITION_BOOLEAN,
+        ConfigurationKeys.BATCH_JOB_PARTITION_TABLE_ONLY_BOOLEAN,
         MRJobConfig.MAP_SPECULATIVE,
         MRJobConfig.REDUCE_SPECULATIVE,
         MRJobConfig.REDUCE_MEMORY_MB

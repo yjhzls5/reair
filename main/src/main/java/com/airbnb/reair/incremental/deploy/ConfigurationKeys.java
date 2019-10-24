@@ -150,6 +150,25 @@ public class ConfigurationKeys {
   public static final String BATCH_JOB_PARTITION_END =
           "airbnb.reair.batch.partition.end";
 
+  //
+  public static final String BATCH_JOB_DROP_TABLE_BOOLEAN =
+          "airbnb.reair.clusters.batch.metastore.droptable";
+
+  // Wether drop partition when src partition not exist but dest partition exist.
+  //     default true:drop;
+  //     false:no_op .
+  public static final String BATCH_JOB_DROP_PARTITION_BOOLEAN =
+          "airbnb.reair.clusters.batch.metastore.droppartition";
+
+  //  When appoint the partition,the end partitioin, exclude the value .
+  public static final String BATCH_JOB_PARTITION_TABLE_ONLY_BOOLEAN =
+          "airbnb.reair.clusters.batch.metastore.partitiontable.only";
+
+
+
+
+
+
 
   //hdfs copy if buffer size
   public static final String IO_FILE_BUFFER_SIZE =
