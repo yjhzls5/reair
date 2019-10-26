@@ -129,12 +129,20 @@
 
   <property>
     <name>airbnb.reair.batch.copy.parallelism</name>
-    <value>1000</value>
+    <value>800</value>
     <comment>
       The parallelism to use for jobs that copy files. This translates to the number of reducers
       in the relevant jobs.
     </comment>
   </property>
+
+    <property>
+        <name>airbnb.reair.batch.copy.reduce.vcores</name>
+        <value>1</value>
+        <comment>
+            The mapreduce.reduce.cpu.vcores to use for jobs that copy files.
+        </comment>
+    </property>
 
   <property>
     <name>airbnb.reair.batch.overwrite.newer</name>
@@ -155,7 +163,7 @@
 
   <property>
     <name>airbnb.reair.batch.partition.start</name>
-    <value>dt=2019-10-08</value>
+    <value>dt=2019-10-13</value>
     <comment>
       When appoint the partition,the start partitioin.
     </comment>
@@ -163,7 +171,7 @@
 
   <property>
     <name>airbnb.reair.batch.partition.end</name>
-    <value>dt=2019-10-17</value>
+    <value>dt=2019-10-23</value>
     <comment>
       When appoint the partition,the end partitioin, exclude the value .
     </comment>

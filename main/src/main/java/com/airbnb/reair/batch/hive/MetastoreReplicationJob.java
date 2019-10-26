@@ -361,6 +361,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
         ConfigurationKeys.BATCH_JOB_INPUT_LIST,
         ConfigurationKeys.BATCH_JOB_METASTORE_PARALLELISM,
         ConfigurationKeys.BATCH_JOB_COPY_PARALLELISM,
+        ConfigurationKeys.BATCH_JOB_COPY_REDUCE_VCORES,
         ConfigurationKeys.SYNC_MODIFIED_TIMES_FOR_FILE_COPY,
         ConfigurationKeys.BATCH_JOB_VERIFY_COPY_CHECKSUM,
         ConfigurationKeys.BATCH_JOB_OVERWRITE_NEWER,
@@ -511,6 +512,10 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     Job job = Job.getInstance(this.getConf(), "Stage 2: HDFS Copy Job");
 
+    //because this step need large resource , individual set the REDUCE_CPU_VCORES.
+    job.getConfiguration().set(MRJobConfig.REDUCE_CPU_VCORES,
+            this.getConf().getInt(ConfigurationKeys.BATCH_JOB_COPY_REDUCE_VCORES, 2) + "" );
+
     job.setJarByClass(this.getClass());
     job.setInputFormatClass(TextInputFormat.class);
     job.setMapperClass(Stage2DirectoryCopyMapper.class);
@@ -530,6 +535,9 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     job.setNumReduceTasks(getConf().getInt(
         ConfigurationKeys.BATCH_JOB_COPY_PARALLELISM,
         150));
+
+
+
 
     boolean success = job.waitForCompletion(true);
 

@@ -132,6 +132,9 @@ public class ConfigurationKeys {
   // The number of reducers to use for jobs where reducers perform file copies
   public static final String BATCH_JOB_COPY_PARALLELISM =
       "airbnb.reair.batch.copy.parallelism";
+    // The number of reducers to use for jobs where reducers perform file copies
+    public static final String BATCH_JOB_COPY_REDUCE_VCORES =
+            "airbnb.reair.batch.copy.reduce.vcores";
   // Whether to try to compare checksums to validate file copies when possible
   public static final String BATCH_JOB_VERIFY_COPY_CHECKSUM =
       "airbnb.reair.batch.copy.checksum.verify";
