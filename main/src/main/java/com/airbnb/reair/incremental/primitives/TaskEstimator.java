@@ -135,7 +135,7 @@ public class TaskEstimator {
     Optional<Path> destPath = ReplicationUtils.getLocation(expectedDestTable);
 
     if (!isPartitionedTable && srcPath.isPresent() && !srcPath.equals(destPath)) {
-      updateData = !directoryCopier.equalDirs(srcPath.get(), destPath.get());
+      updateData = !directoryCopier.equalDirs(srcPath.get(), destPath.get(), true);
     }
 
     // See if we need to update the metadata
@@ -286,7 +286,7 @@ public class TaskEstimator {
 
     // See if we need to update the data
     if (srcPath.isPresent() && !srcPath.equals(destPath)) {
-      updateData = !directoryCopier.equalDirs(srcPath.get(), destPath.get());
+      updateData = !directoryCopier.equalDirs(srcPath.get(), destPath.get(), true);
     }
 
     // A metadata update is required if the destination partition doesn't

@@ -118,6 +118,7 @@ public class Stage3CommitChangeMapper extends Mapper<LongWritable, Text, Text, T
           break;
 
         case COPY_UNPARTITIONED_TABLE:
+          
           CopyUnpartitionedTableTask copyUnpartitionedTableTask = new CopyUnpartitionedTableTask(
               conf,
               DESTINATION_OBJECT_FACTORY,

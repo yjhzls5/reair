@@ -10,6 +10,7 @@ import com.airbnb.reair.incremental.RunInfo;
 import com.airbnb.reair.incremental.configuration.DestinationObjectFactory;
 import com.airbnb.reair.incremental.configuration.HardCodedCluster;
 import com.airbnb.reair.incremental.configuration.ObjectConflictHandler;
+import com.airbnb.reair.incremental.filter.HiddenFileFilter;
 import com.airbnb.reair.incremental.primitives.CopyPartitionTask;
 import com.airbnb.reair.incremental.primitives.CopyPartitionedTableTask;
 import com.airbnb.reair.incremental.primitives.CopyUnpartitionedTableTask;
@@ -151,7 +152,9 @@ public class HiveCopy {
     HardCodedCluster destCluster = new HardCodedCluster(destName, destMetastoreHost,
         destMetastorePort, null, null, destHdfsRoot, destTmpDir);
 
-    DirectoryCopier directoryCopier = new DirectoryCopier(conf, destTmpDir, true);
+    DirectoryCopier directoryCopier = new DirectoryCopier(conf, destTmpDir, true,
+            Optional.ofNullable(new HiddenFileFilter())
+    );
 
     ObjectConflictHandler conflictHandler = new ObjectConflictHandler();
     conflictHandler.setConf(conf);
@@ -188,7 +191,9 @@ public class HiveCopy {
           ms.getPartition(spec.getDbName(), spec.getTableName(), spec.getPartitionName());
       CopyPartitionTask job = new CopyPartitionTask(conf, destinationObjectFactory, conflictHandler,
           srcCluster, destCluster, spec, ReplicationUtils.getLocation(srcPartition),
-          Optional.<Path>empty(), new DirectoryCopier(conf, srcCluster.getTmpDir(), true), true);
+          Optional.<Path>empty(), new DirectoryCopier(conf, srcCluster.getTmpDir(), true ,
+              Optional.ofNullable(new HiddenFileFilter())
+              ), true);
       if (job.runTask().getRunStatus() == RunInfo.RunStatus.SUCCESSFUL) {
         return 0;
       } else {

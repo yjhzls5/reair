@@ -3,6 +3,7 @@ package com.airbnb.reair.incremental.configuration;
 import com.airbnb.reair.incremental.DirectoryCopier;
 import com.airbnb.reair.incremental.deploy.ConfigurationKeys;
 
+import com.airbnb.reair.incremental.filter.HiddenFileFilter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
@@ -104,8 +105,12 @@ public class ConfiguredClusterFactory implements ClusterFactory {
     Configuration conf = optionalConf.get();
     String destHdfsTmp = conf.get(
         ConfigurationKeys.DEST_HDFS_TMP);
-    return new DirectoryCopier(conf, 
+
+    return new DirectoryCopier(conf,
         new Path(destHdfsTmp),
-        conf.getBoolean(ConfigurationKeys.SYNC_MODIFIED_TIMES_FOR_FILE_COPY, true));
+        conf.getBoolean(ConfigurationKeys.SYNC_MODIFIED_TIMES_FOR_FILE_COPY, true ),
+        Optional.ofNullable(new HiddenFileFilter())
+    );
   }
+
 }
