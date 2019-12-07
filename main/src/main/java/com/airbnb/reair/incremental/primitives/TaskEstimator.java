@@ -15,11 +15,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -282,10 +284,11 @@ public class TaskEstimator {
 
     // See if we need to update the data
     // TODO: 2019/12/7 增加逻辑，由于之前同步分区下有子目录存在问题，该处仅处理分区下面有子文件夹的分区
-
     if ( conf.getBoolean(ConfigurationKeys.BATCH_JOB_SUBDIR_ONLY, false) ){
-
-
+      if( !hasSubDirectory( srcPath.get() )){
+        return new TaskEstimate(TaskEstimate.TaskType.NO_OP, false, false, Optional.empty(),
+                Optional.empty());
+      }
     }
 
 
@@ -310,4 +313,33 @@ public class TaskEstimator {
           srcPath, destPath);
     }
   }
+
+
+  /**
+   * 判断分区下是否有子目录
+   * @param src
+   * @return
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  private boolean hasSubDirectory(
+          Path src) throws IOException{
+
+    boolean hasSubDirectory = false ;
+    FileSystem srcFs = src.getFileSystem(this.conf);
+    FileStatus[] fsArray = srcFs.listStatus(src);
+
+    for (FileStatus f:fsArray) {
+      if(f.isDirectory()) {
+        hasSubDirectory = true;
+        break;
+      }
+    }
+
+    return hasSubDirectory ;
+
+  }
+
+
+
 }
