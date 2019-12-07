@@ -83,6 +83,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
   public RunInfo runTask()
       throws ConfigurationException, HiveMetastoreException, DistCpException, IOException {
     LOG.debug("Copying " + spec);
+    LOG.info("Copying " + spec);
 
     HiveMetastoreClient destMs = destCluster.getMetastoreClient();
     HiveMetastoreClient srcMs = srcCluster.getMetastoreClient();
@@ -91,12 +92,12 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
     Table freshSrcTable = srcMs.getTable(spec.getDbName(), spec.getTableName());
 
     if (freshSrcTable == null) {
-      LOG.warn("Source table " + spec + " doesn't exist, so not " + "copying");
+      LOG.info("Source table " + spec + " doesn't exist, so not " + "copying");
       return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
     }
 
     if (HiveUtils.isPartitioned(freshSrcTable)) {
-      LOG.warn("Source table " + spec + " is a partitioned table, so " + "not copying");
+      LOG.info("Source table " + spec + " is a partitioned table, so " + "not copying");
       return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
     }
 
@@ -113,7 +114,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
       if (!conf.getBoolean(ConfigurationKeys.BATCH_JOB_OVERWRITE_NEWER, true)) {
         Table freshDestTable = existingTable;
         if (ReplicationUtils.isSrcOlder(freshSrcTable, freshDestTable)) {
-          LOG.warn(String.format(
+          LOG.info(String.format(
               "Source %s (%s) is older than destination (%s), so not copying",
               spec,
               ReplicationUtils.getLastModifiedTime(freshSrcTable),
@@ -143,21 +144,23 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
     Optional<Path> destPath = ReplicationUtils.getLocation(destTable);
 
     boolean needToCopy = srcPath.isPresent() && !srcPath.equals(destPath)
-        && !directoryCopier.equalDirs(srcPath.get(), destPath.get());
+            // TODO: 2019/11/1 add pathfilter
+
+        && !directoryCopier.equalDirs(srcPath.get(), destPath.get(), true);
 
     long bytesCopied = 0;
 
     if (needToCopy) {
       // batch job ,allowDataCopy=false
       if (!allowDataCopy) {
-        LOG.debug(String.format("Need to copy %s to %s, but data "
+        LOG.info(String.format("Need to copy %s to %s, but data "
             + "copy is not allowed", srcPath,
             destPath));
         return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
       }
 
       if (!FsUtils.dirExists(conf, srcPath.get())) {
-        LOG.debug(String.format("Need to copy %s to %s, but "
+        LOG.info(String.format("Need to copy %s to %s, but "
             + "source directory is missing",
             srcPath, destPath));
         return new RunInfo(RunInfo.RunStatus.NOT_COMPLETABLE, 0);
@@ -182,7 +185,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
     switch (action) {
 
       case CREATE:
-        LOG.debug("Creating " + spec + " since it does not exist on " + "the destination");
+        LOG.info("Creating " + spec + " since it does not exist on " + "the destination");
         ReplicationUtils.createDbIfNecessary(srcMs, destMs, destTable.getDbName());
         LOG.debug("Creating: " + destTable);
         destMs.createTable(destTable);
@@ -198,7 +201,7 @@ public class CopyUnpartitionedTableTask implements ReplicationTask {
         break;
 
       case NOOP:
-        LOG.debug("Destination table is up to date - not doing " + "anything for " + spec);
+        LOG.info("Destination table is up to date - not doing " + "anything for " + spec);
         break;
 
       default:

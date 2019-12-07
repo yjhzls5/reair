@@ -126,6 +126,12 @@ public class ConfigurationKeys {
   // Whether to overwrite newer tables/partitions on the destination. Default is true.
   public static final String BATCH_JOB_OVERWRITE_NEWER =
       "airbnb.reair.batch.overwrite.newer";
+
+  // Whether to only deal datapath has subdir. Default is false.
+  // src use tez,partition path has subdir ,eg. dt=2019-10-10/1
+  public static final String BATCH_JOB_SUBDIR_ONLY =
+          "airbnb.reair.batch.subdir.only";
+
   // The number of reducers to use for jobs where reducers perform metastore operations
   public static final String BATCH_JOB_METASTORE_PARALLELISM =
           "airbnb.reair.batch.metastore.parallelism";

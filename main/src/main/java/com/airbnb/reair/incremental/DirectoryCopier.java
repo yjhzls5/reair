@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 
 import java.io.IOException;
 import java.util.List;
@@ -27,6 +28,8 @@ public class DirectoryCopier {
   private Configuration conf;
   private Path tmpDir;
   private boolean checkFileModificationTimes;
+  // the DFS PathFilter
+  private Optional<PathFilter> pathFilterOptional = Optional.empty();
 
   /**
    * Constructor for the directory copier.
@@ -42,6 +45,20 @@ public class DirectoryCopier {
     this.conf = conf;
     this.tmpDir = tmpDir;
     this.checkFileModificationTimes = checkFileModificationTimes;
+  }
+
+  /**
+   *
+   * @param conf
+   * @param tmpDir
+   * @param checkFileModificationTimes
+   * @param
+   */
+  public DirectoryCopier(Configuration conf, Path tmpDir, boolean checkFileModificationTimes, Optional<PathFilter> pathFilterOptional) {
+    this.conf = conf;
+    this.tmpDir = tmpDir;
+    this.checkFileModificationTimes = checkFileModificationTimes;
+    this.pathFilterOptional = pathFilterOptional;
   }
 
   /**
@@ -135,7 +152,30 @@ public class DirectoryCopier {
    *
    * @throws IOException if there's an error reading the filesystem
    */
+
+  @Deprecated
   public boolean equalDirs(Path srcDir, Path destDir) throws IOException {
     return FsUtils.equalDirs(conf, srcDir, destDir, Optional.empty(), checkFileModificationTimes);
   }
+
+
+  /**
+   * Checks to see if two directories contain the same files. Same is defined as having the same set
+   * of non-empty files with matching file sizes (and matching modified times if set in the
+   * constructor)
+   *
+   * @param srcDir source directory
+   * @param destDir destination directory
+   * @param usePathFilter whether use PathFilter
+   * @return whether directories are equal
+   *
+   * @throws IOException if there's an error reading the filesystem
+   */
+  public boolean equalDirs(Path srcDir, Path destDir, boolean usePathFilter) throws IOException {
+
+    return FsUtils.equalDirs(conf, srcDir, destDir, pathFilterOptional, checkFileModificationTimes);
+
+  }
+
+
 }

@@ -510,7 +510,7 @@ public class MetastoreReplicationJob extends Configured implements Tool {
 
     LOG.info("Starting job for step 2...");
 
-    Job job = Job.getInstance(this.getConf(), "Stage 2: HDFS Copy Job");
+    Job job = Job.getInstance(this.getConf(), "Stage2: HDFS Copy Job");
 
     //because this step need large resource , individual set the REDUCE_CPU_VCORES.
     job.getConfiguration().set(MRJobConfig.REDUCE_CPU_VCORES,
@@ -574,9 +574,10 @@ public class MetastoreReplicationJob extends Configured implements Tool {
     FileOutputFormat.setOutputPath(job, output);
     FileOutputFormat.setOutputCompressorClass(job, GzipCodec.class);
 
-    job.setNumReduceTasks(getConf().getInt(
-        ConfigurationKeys.BATCH_JOB_METASTORE_PARALLELISM,
-        150));
+
+//    job.setNumReduceTasks(getConf().getInt(
+//        ConfigurationKeys.BATCH_JOB_METASTORE_PARALLELISM,
+//        150));
 
     boolean success = job.waitForCompletion(true);
 

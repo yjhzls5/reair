@@ -87,12 +87,12 @@ public class ObjectConflictHandler implements Configurable {
       LOG.warn("Not dropping data at location " + ReplicationUtils.getLocation(existingDestTable));
       HiveMetastoreClient destMs = destCluster.getMetastoreClient();
 
-      LOG.debug(String.format("Dropping %s on destination (delete " + "data: %s)", spec, dropData));
+      LOG.info(String.format("Dropping %s on destination (delete " + "data: %s)", spec, dropData));
       // TODO: 2019/10/8 ensure to drop the dest new db's table
       destMs.dropTable(
               spec.getDbName(),
               spec.getTableName(), dropData);
-      LOG.warn("Dropped src:" +srcTable.getDbName() + "." + srcTable.getTableName() + " ,dest table:" +
+      LOG.info("Dropped src:" +srcTable.getDbName() + "." + srcTable.getTableName() + " ,dest table:" +
               spec );
     }
 
