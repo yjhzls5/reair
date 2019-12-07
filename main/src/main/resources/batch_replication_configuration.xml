@@ -242,6 +242,17 @@
   </property>
 
   <property>
+    <name>airbnb.reair.batch.subdir.only</name>
+    <value>true</value>
+    <comment>
+      Whether  only deal the partition has subdir,
+      true:only deal partition talbe;
+      default false:all data path deal .
+    </comment>
+  </property>
+
+
+  <property>
     <name>io.file.buffer.size</name>
     <value>4096000</value>
     <comment>

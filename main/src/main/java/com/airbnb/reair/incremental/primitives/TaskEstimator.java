@@ -110,6 +110,7 @@ public class TaskEstimator {
 
     // If both src and dest exist, and the dest is newer, and we don't overwrite newer partitions,
     // then it's a NO_OP.
+    // we use true ,will overwrite dest tabel , src is always the right table .
     if (!conf.getBoolean(ConfigurationKeys.BATCH_JOB_OVERWRITE_NEWER, true)) {
       if (ReplicationUtils.isSrcOlder(tableOnSrc, tableOnDest)) {
         LOG.warn(String.format(
@@ -230,14 +231,10 @@ public class TaskEstimator {
 
     HiveMetastoreClient destMs = destCluster.getMetastoreClient();
 
-    // TODO: 2019/10/8
     // change dest to new db
     Partition partitionOnDest = destMs.getPartition(
             this.destObjectFactory.modifyDestDb(spec.getDbName()),
             spec.getTableName(), spec.getPartitionName());
-
-
-
 
     // If the source partition does not exist, but the destination does,
     // it's most likely a drop.
@@ -276,7 +273,6 @@ public class TaskEstimator {
       }
     }
 
-    // TODO: 2019/10/8
     // change dest to new db
     Partition expectedDestPartition = destObjectFactory.createDestPartition(srcCluster, destCluster,
         partitionOnSrc, partitionOnDest);
@@ -285,7 +281,18 @@ public class TaskEstimator {
     Optional<Path> destPath = ReplicationUtils.getLocation(expectedDestPartition);
 
     // See if we need to update the data
-    if (srcPath.isPresent() && !srcPath.equals(destPath)) {
+    // TODO: 2019/12/7 增加逻辑，由于之前同步分区下有子目录存在问题，该处仅处理分区下面有子文件夹的分区
+
+    if ( conf.getBoolean(ConfigurationKeys.BATCH_JOB_SUBDIR_ONLY, false) ){
+
+
+    }
+
+
+    if (srcPath.isPresent()
+            // TODO: 2019/12/7  是否需要同步数据，此处有bug？该判断逻辑应该去掉，直接判断文件夹是否相等？　
+            && !srcPath.equals(destPath)
+    ) {
       updateData = !directoryCopier.equalDirs(srcPath.get(), destPath.get(), true);
     }
 

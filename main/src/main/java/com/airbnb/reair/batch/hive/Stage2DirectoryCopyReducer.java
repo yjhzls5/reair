@@ -58,6 +58,9 @@ public class Stage2DirectoryCopyReducer extends Reducer<LongWritable, Text, Text
       SimpleFileStatus fileStatus = new SimpleFileStatus(srcFileName, size, 0L);
       FileSystem srcFs = (new Path(srcFileName)).getFileSystem(this.conf);
       FileSystem dstFs = (new Path(dstDirectory)).getFileSystem(this.conf);
+
+
+
       String result = BatchUtils.doCopyFileAction(
           conf,
           fileStatus,
