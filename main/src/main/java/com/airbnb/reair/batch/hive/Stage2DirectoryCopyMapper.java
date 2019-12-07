@@ -12,10 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.io.LongWritable;
@@ -23,6 +20,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Stage 2 Mapper to handle copying of HDFS directories.
@@ -117,7 +116,13 @@ public class Stage2DirectoryCopyMapper extends Mapper<LongWritable, Text, LongWr
       FileSystem srcFs = src.getFileSystem(this.conf);
       LOG.info("src file: " + src.toString());
 
-      for (FileStatus status : srcFs.listStatus(src, hiddenFileFilter)) {
+
+
+      //只拷贝有子文件夹的分区
+        FileStatus[] fileStatuses =  handleSubDirectory(src);
+
+    //for (FileStatus status : srcFs.listStatus(src, hiddenFileFilter)) {
+      for (FileStatus status : fileStatuses) {
         LOG.info("file: " + status.getPath().toString());
 
         long hashValue = Hashing.murmur3_128().hashLong(
@@ -137,4 +142,42 @@ public class Stage2DirectoryCopyMapper extends Mapper<LongWritable, Text, LongWr
       LOG.warn("Error listing " + src, e);
     }
   }
+
+  private FileStatus[] handleSubDirectory(
+                                  Path src) throws IOException, InterruptedException{
+
+      FileSystem srcFs = src.getFileSystem(this.conf);
+      FileStatus[] fsArray = srcFs.listStatus(src,hiddenFileFilter);
+      boolean isDirectory = false;
+      for (FileStatus f:fsArray) {
+        if(f.isDirectory()) {
+          isDirectory = true;
+          break;
+        }
+      }
+
+      if(!isDirectory){
+        return new FileStatus[0];
+      }
+
+      RemoteIterator iterator = srcFs.listFiles(src,true);
+      LocatedFileStatus locatedFileStatus = null;
+      List<LocatedFileStatus> list = new ArrayList<>();
+      while (iterator.hasNext()){
+        locatedFileStatus = (LocatedFileStatus)iterator.next();
+
+        LOG.info("handleSubDirectory,"+locatedFileStatus.getPath());
+
+        list.add(locatedFileStatus);
+
+      }
+      FileStatus[] fileStatuses = new FileStatus[list.size()];
+      int i = -1;
+      for (FileStatus fileStatus: list) {
+        fileStatuses[++i] = fileStatus;
+      }
+
+     return fileStatuses;
+  }
+
 }
